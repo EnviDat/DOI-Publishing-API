@@ -26,9 +26,9 @@ set-vars:
     - cat .env >> build.env
     - source build.env
     - echo CHART_VERSION=$(yq '.version' chart/Chart.yaml) >> build.env
-    - "echo DOI_PUB_IMAGE=${INTERNAL_REG}/doi_publishing_api:\
+    - "echo DOI_PUB_IMAGE=${INTERNAL_REG}/doi-publishing-api:\
       ${APP_VERSION}-${CI_COMMIT_REF_NAME} >> build.env"
-    - "echo PROXY_IMAGE=${INTERNAL_REG}/doi_publishing_api/proxy:\
+    - "echo PROXY_IMAGE=${INTERNAL_REG}/doi-publishing-api/proxy:\
       ${NGINX_VERSION}-${CI_COMMIT_REF_NAME} >> build.env"
   artifacts:
     reports:
@@ -178,4 +178,35 @@ create-helm-chart:
       --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
     - helm package chart
     - CHART_VER=$(yq '.version' chart/Chart.yaml)
-    - helm push "doi-publishing-api-${CHART_VER}.tgz" "oci://${INTERNAL_REG}/doi_publishing_api"
+    - helm push "doi-publishing-api-${CHART_VER}.tgz" "oci://${INTERNAL_REG}/doi-publishing-api"
+
+build-docs:
+  stage: package
+  image: docker.io/python:3.10
+  before_script:
+    - export REG_HOST=${INTERNAL_REG%/*}
+    - >
+      echo "{\"hosts\":{\"${REG_HOST}\":{\"tls\":\"enabled\",\"hostname\":
+      \"${REG_HOST}\",\"user\":\"${IMAGE_REGISTRY_USER}\",\"pass\":
+      \"${IMAGE_REGISTRY_PASS}\"}}}" >> /home/appuser/.regctl/config.json
+  script:
+    - >
+      regctl --verbosity debug image copy
+      "${IMAGE_NAME}-unverified" "${IMAGE_NAME}"
+    - regctl --verbosity debug tag delete "${IMAGE_NAME}-unverified"
+
+pages:
+  stage: deploy
+  image: docker.io/python:3.10
+  before_script:
+    - wget https://github.com/swagger-api/swagger-ui/archive/refs/tags/v4.18.2.zip
+    - unzip v4.18.2.zip
+    - cp -r swagger-ui-4.18.2/dist/ public/
+  script:
+    - pip install pdm>=2.5.6
+    - pdm install
+    - pdm run python scripts/gen_openapi_json.py
+    - mv openapi.json public/
+  artifacts:
+    paths:
+      - public
