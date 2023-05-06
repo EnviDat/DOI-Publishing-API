@@ -69,6 +69,7 @@ class Settings(BaseSettings):
         """Pydantic settings config."""
 
         case_sensitive = True
+        env_file = ".env"
 
 
 @lru_cache
