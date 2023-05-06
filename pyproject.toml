@@ -1,0 +1,90 @@
+[project]
+name = "DOI Publishing API"
+dynamic = ["version"]
+description = "API for publishing DOIs to DataCite."
+authors = [
+    {name = "Rebecca Kurup Buchholz", email = "rebecca.kurup@wsl.ch"},
+    {name = "Sam Woodcock", email = "samuel.woodocck@wsl.ch"},
+]
+dependencies = [
+    "envidat-utils>=1.4.1",
+    "fastapi[all]>=0.95.1",
+    "tortoise-orm[asyncpg]>=0.19.3",
+    "fastapi-mail>=1.2.8",
+]
+requires-python = ">=3.9,<3.11"
+license = {text = "MIT"}
+keywords = ["doi", "ckan", "envidat", "wsl"]
+classifiers = [
+    "Topic :: Utilities",
+    "Framework :: FastAPI",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+]
+[project.urls]
+homepage = "https://gitlabext.wsl.ch/EnviDat/doi-publishing-api"
+documentation = "https://envidat.gitlab-pages.wsl.ch/doi-publishing-api"
+repository = "https://gitlabext.wsl.ch/EnviDat/doi-publishing-api"
+
+[build-system]
+requires = ["pdm-pep517>=1.0.0"]
+build-backend = "pdm.pep517.api"
+
+[tool.pdm]
+includes = ["app"]
+source-includes = ["CHANGELOG.md", "LICENSE", "README.md"]
+version = {from = "app/__version__.py"}
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "debugpy>=1.6.7",
+    "python-dotenv>=1.0.0",
+]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+version_files = [
+    "pyproject.toml:version",
+    "app/__version__.py",
+    ".env:APP_VERSION",
+    "chart/Chart.yaml:appVersion",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+select = ["I", "E", "W", "D", "B", "F", "N", "Q"]
+ignore = ["N805", "B008"]
+exclude = [
+    ".git",
+    ".ruff_cache",
+    ".vscode",
+    "__pypackages__",
+    "build",
+    "dist",
+    "chart",
+    "migrations",
+    "nginx",
+    "postgresql",
+    "secret",
+    "app/__version__.py",
+]
+[tool.ruff.pydocstyle]
+convention = "google"
+[tool.ruff.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.params.Depends",
+    "fastapi.Query",
+    "fastapi.params.Query",
+    "fastapi.File",
+    "fastapi.Security",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]

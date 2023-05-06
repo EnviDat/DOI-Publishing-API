@@ -1,0 +1,11 @@
+apiVersion: v2
+type: application
+name: doi-publishing-api
+description: API for publishing DOIs to DataCite.
+version: "0.1.0-chart"
+appVersion: "0.1.0"
+maintainers:
+- email: samuel.woodcock@wsl.ch
+  name: Sam Woodcock
+home: https://gitlabext.wsl.ch/EnviDat/doi-publishing-api/-/tree/main/chart
+icon: https://www.wsl.ch/typo3conf/ext/wsl_template/Resources/Public/Images/favicon_wsl.ico

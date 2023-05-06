@@ -1,0 +1,12 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Secret files
+secret/**/*
+*.secret
+**/debug.env
+
+# Packaging
+.pdm.toml
+__pypackages__/

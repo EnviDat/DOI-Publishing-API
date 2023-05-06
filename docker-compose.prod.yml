@@ -1,0 +1,31 @@
+version: "3"
+
+networks:
+  net:
+
+services:
+  api:
+    container_name: doi_publishing
+    image: "${INTERNAL_REG}/doi_publishing_api:${APP_VERSION}-main"
+    build:
+      context: .
+      args:
+        - APP_VERSION=${APP_VERSION}
+        - PYTHON_IMG_TAG=${PYTHON_IMG_TAG}
+        - MAINTAINER_APP=${MAINTAINER_APP}
+        - MAINTAINER_DEVOPS=${MAINTAINER_DEVOPS}
+        - EXTERNAL_REG=${EXTERNAL_REG}
+      target: prod
+    ports:
+      - "50010:8000"
+    extra_hosts:
+      - "pgdboapp.wsl.ch:10.30.1.156"
+      - "mail.wsl.ch:10.30.1.224"
+    env_file:
+      - .env
+      - secret/db.env
+      - secret/fastapi.env
+      - secret/smtp.env
+    networks:
+      - net
+    restart: unless-stopped
