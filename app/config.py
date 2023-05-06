@@ -1,8 +1,12 @@
 """Config file for Pydantic and FastAPI, using environment variables."""
 
+import logging
+from functools import lru_cache
 from typing import Any, Optional, Union
 
 from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, validator
+
+log = logging.getLogger(__name__)
 
 
 class Settings(BaseSettings):
@@ -67,4 +71,12 @@ class Settings(BaseSettings):
         case_sensitive = True
 
 
-settings = Settings()
+@lru_cache
+def get_settings():
+    """Cache settings, for calling in multiple modules."""
+    _settings = Settings()
+    log.info("Loaded settings from cache")
+    return _settings
+
+
+settings = get_settings()
