@@ -40,6 +40,6 @@ Requires secrets to be pre-populated.
 
 ## Deployment
 
-```shell
+```bash
 helm upgrade --install doi-publishing-api oci://registry-gitlab.wsl.ch/envidat/doi-publishing-api --namespace envidat --create-namespace
 ```
