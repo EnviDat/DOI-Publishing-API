@@ -41,5 +41,5 @@ Requires secrets to be pre-populated.
 ## Deployment
 
 ```shell
-helm upgrade --install doi-publishing-api oci://registry-gitlab.wsl.ch/envidat/doi_publishing_api --namespace envidat --create-namespace
+helm upgrade --install doi-publishing-api oci://registry-gitlab.wsl.ch/envidat/doi-publishing-api --namespace envidat --create-namespace
 ```
