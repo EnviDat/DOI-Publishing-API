@@ -4,7 +4,6 @@ import requests
 
 from app.config import settings
 from app.email.constants import PublishAction, PublishSubject, PublishTemplateName
-from app.utils import load_dotenv_if_in_debug_mode
 
 log = getLogger(__name__)
 
@@ -12,9 +11,6 @@ log = getLogger(__name__)
 # TODO improve exception handling with more specific exceptions
 # TODO write docstring
 def get_user_show(user_id: str) -> dict | None:
-
-    # Extract environment variables from config needed to call CKAN
-    load_dotenv_if_in_debug_mode()
 
     api_host = settings.API_HOST
     api_user_show = settings.API_USER_SHOW

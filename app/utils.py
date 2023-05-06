@@ -35,20 +35,22 @@ def _is_docker() -> bool:
 
 
 def load_dotenv_if_in_debug_mode(
-    env_file: Union[Path, str] = Path(__file__).parent.parent / "debug.env"
+    env_file: Union[Path, str] = Path(__file__).parent.parent / "secret" / "debug.env",
+    bypass_checks=False,
 ) -> NoReturn:
     """Load secret .env variables from repo for debugging.
 
     Args:
         env_file (Union[Path, str]): String or Path like object pointer to
             secret dot env file to read.
-            Defaults to file 'debug.env' in repo root.
+            Defaults to './secret/debug.env' from the repo root.
+        bypass_checks (bool): Skip checking for debug mode or docker and run anyway.
     """
-    if not _debugger_is_active():
+    if not bypass_checks and not _debugger_is_active():
         return
 
     is_docker_from_env = os.getenv("IS_DOCKER", default=False)
-    if _is_docker() or is_docker_from_env:
+    if not bypass_checks and _is_docker() or is_docker_from_env:
         return
 
     try:
@@ -59,27 +61,25 @@ def load_dotenv_if_in_debug_mode(
             Unable to import dotenv.
             Note: The logger should be invoked after reading the dotenv file
             so that the debug level is by the environment.
+
+            Is python-dotenv installed?
+            Try installing this package using pip install envidat[dotenv].
             """
         )
         log.error(e)
-        raise ImportError(
-            """
-            Unable to import dotenv, is python-dotenv installed?
-            Try installing this package using pip install envidat[dotenv].
-            """
-        ) from e
 
     secret_env = Path(env_file)
     if not secret_env.is_file():
         log.error(
-            """
-            Attempted to import dotenv, but the file does not exist.
+            f"""
+            Attempted to import dotenv, but the file does not exist: {secret_env}
             Note: The logger should be invoked after reading the dotenv file
             so that the debug level is by the environment.
             """
         )
-        raise FileNotFoundError(
-            f"Attempted to import dotenv, but the file does not exist: {env_file}"
-        ) from None
     else:
-        load_dotenv(secret_env)
+        try:
+            load_dotenv(secret_env)
+        except Exception as e:
+            log.error(e)
+            log.error(f"Failed to load dotenv file: {secret_env}")
