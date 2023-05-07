@@ -192,6 +192,7 @@ pages:
     - pdm install
     - pdm run python scripts/gen_openapi_json.py
     - mv openapi.json public/
+    - sed -i "s|https://petstore.swagger.io/v2/swagger.json|https://envidat.gitlab-pages.wsl.ch/doi-publishing-api/openapi.json|g" public/swagger-initializer.js
   artifacts:
     paths:
       - public
