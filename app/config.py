@@ -26,15 +26,6 @@ class Settings(BaseSettings):
     DATACITE_PASSWORD: str
     DOI_PREFIX: str
 
-    SMTP_SERVER: str
-    SMTP_PORT: int = 25
-    SMTP_MAIL_FROM: str
-    SMTP_MAIL_FROM_NAME: str
-    SMTP_USER: str = None
-    SMTP_PASS: str = None
-    SMTP_STARTTLS: bool = False
-    SMTP_SSL_TLS: bool = False
-
     BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
