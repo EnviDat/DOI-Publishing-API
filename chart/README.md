@@ -23,17 +23,6 @@ Requires secrets to be pre-populated.
   --from-literal=BACKEND_CORS_ORIGINS='["xxx", "xxx"]'
   ```
 
-- **smtp-vars** SMTP credentials for email
-
-  - key: SMTP_SERVER
-  - key: SMTP_MAIL_FROM
-
-  ```bash
-  kubectl create secret generic smtp-vars \
-    --from-literal=SMTP_SERVER=xxxxxxx \
-    --from-literal=SMTP_MAIL_FROM=xxxxxxx \
-  ```
-
 - **envidat-star** for https / tls certs
 
   - Standard Kubernetes TLS secret for \*.envidat.ch
