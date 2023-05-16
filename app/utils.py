@@ -34,7 +34,7 @@ def load_dotenv_if_not_docker(
             Defaults to './secret/debug.env' from the repo root.
         force (bool): Skip checking for docker and run anyway.
     """
-    if os.getenv("IS_DOCKER", default=False) is True:
+    if bool(os.getenv("IS_DOCKER", default=False)) is True:
         return
     if not force and _is_docker():
         return
