@@ -38,7 +38,7 @@ pdm instal
 3. Run the FastAPI server directly with PDM:
 
 ```bash
-pdm run fastapi run
+pdm run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 4. Access at: http://127.0.0.1:8000

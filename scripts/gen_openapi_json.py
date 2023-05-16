@@ -6,10 +6,10 @@ from pathlib import Path
 
 from fastapi.openapi.utils import get_openapi
 
-from app.utils import load_dotenv_if_in_debug_mode
+from app.utils import load_dotenv_if_not_docker
 
-load_dotenv_if_in_debug_mode(
-    env_file=Path(__file__).parent.parent / "debug.env.example", bypass_checks=True
+load_dotenv_if_not_docker(
+    env_file=Path(__file__).parent.parent / "debug.env.example", force=True
 )
 
 from app.main import app  # noqa: E402

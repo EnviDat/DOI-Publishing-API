@@ -2,22 +2,10 @@
 
 import logging
 import os
-import sys
 from pathlib import Path
 from typing import NoReturn, Union
 
 log = logging.getLogger(__name__)
-
-
-def _debugger_is_active() -> bool:
-    """Check to see if running in debug mode.
-
-    Returns:
-    -------
-        bool: if a debug trace is present or not.
-    """
-    gettrace = getattr(sys, "gettrace", lambda: None)
-    return gettrace() is not None
 
 
 def _is_docker() -> bool:
@@ -34,9 +22,9 @@ def _is_docker() -> bool:
     )
 
 
-def load_dotenv_if_in_debug_mode(
+def load_dotenv_if_not_docker(
     env_file: Union[Path, str] = Path(__file__).parent.parent / "secret" / "debug.env",
-    bypass_checks=False,
+    force=False,
 ) -> NoReturn:
     """Load secret .env variables from repo for debugging.
 
@@ -44,13 +32,11 @@ def load_dotenv_if_in_debug_mode(
         env_file (Union[Path, str]): String or Path like object pointer to
             secret dot env file to read.
             Defaults to './secret/debug.env' from the repo root.
-        bypass_checks (bool): Skip checking for debug mode or docker and run anyway.
+        force (bool): Skip checking for docker and run anyway.
     """
-    if not bypass_checks and not _debugger_is_active():
+    if os.getenv("IS_DOCKER", default=False) is True:
         return
-
-    is_docker_from_env = os.getenv("IS_DOCKER", default=False)
-    if not bypass_checks and _is_docker() or is_docker_from_env:
+    if not force and _is_docker():
         return
 
     try:
