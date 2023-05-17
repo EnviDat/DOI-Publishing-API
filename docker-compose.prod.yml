@@ -18,9 +18,6 @@ services:
       target: prod
     ports:
       - "50010:8000"
-    extra_hosts:
-      - "pgdboapp.wsl.ch:10.30.1.156"
-      - "mail.wsl.ch:10.30.1.224"
     env_file:
       - .env
       - secret/db.env
