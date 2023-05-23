@@ -1,4 +1,0 @@
-Notifying publication request to CKAN System Administrator ({{ admin_email }}):
-	 - User: {{ user_name }} ({{ user_email}})
-	 - Package: {{ package }}
-	 - URL: https://www.envidat.ch/dataset/{{ package }}
