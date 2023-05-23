@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     DATACITE_CLIENT_ID: str
     DATACITE_PASSWORD: str
     DOI_PREFIX: str
+    DOI_SUFFIX_TAG: Optional[str] = ""
 
     BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []
 
