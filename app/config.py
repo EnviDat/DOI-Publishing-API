@@ -18,8 +18,6 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     API_URL: str = "https://www.envidat.ch"
-    API_TOKEN: str = None
-    API_USER_SHOW: str = "/api/3/action/user_show"
 
     DATACITE_API_URL: str
     DATACITE_CLIENT_ID: str
@@ -56,6 +54,9 @@ class Settings(BaseSettings):
             host=values.get("DB_HOST"),
             path=f"/{values.get('DB_NAME') or ''}",
         )
+
+    EMAIL_ENDPOINT: str
+    EMAIL_FROM: str
 
     class Config:
         """Pydantic settings config."""
