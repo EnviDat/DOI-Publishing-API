@@ -70,14 +70,29 @@ class DoiRealisation(models.Model):
 
 
 DoiPrefixPydantic = pydantic_model_creator(DoiPrefix, name="DoiPrefix")
+DoiPrefixInPydantic = pydantic_model_creator(
+    DoiPrefix,
+    name="DoiPrefixIn",
+    exclude_readonly=True,
+)
 DoiPrefixEditPydantic = pydantic_model_creator(
     DoiPrefix,
     name="DoiPrefixEdit",
     exclude_readonly=True,
+    optional=[
+        "prefix_id",
+        "description",
+    ],
 )
 DoiRealisationPydantic = pydantic_model_creator(DoiRealisation, name="DoiRealisation")
+DoiRealisationInPydantic = pydantic_model_creator(
+    DoiRealisation,
+    name="DoiRealisationIn",
+    exclude_readonly=True,
+)
 DoiRealisationEditPydantic = pydantic_model_creator(
     DoiRealisation,
     name="DoiRealisationEdit",
     exclude_readonly=True,
+    optional=[],
 )

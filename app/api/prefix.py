@@ -10,6 +10,7 @@ from app.auth import get_admin
 from app.models.doi import (
     DoiPrefix,
     DoiPrefixEditPydantic,
+    DoiPrefixInPydantic,
     DoiPrefixPydantic,
 )
 
@@ -44,12 +45,24 @@ async def get_doi_prefix(id: str):
     return await DoiPrefixPydantic.from_queryset_single(DoiPrefix.get(prefix_pk=id))
 
 
-@router.post("", response_model=DoiPrefixEditPydantic)
-async def create_doi_prefix(doi_prefix: DoiPrefixEditPydantic):
+@router.post("", response_model=DoiPrefixInPydantic)
+async def create_doi_prefix(doi_prefix: DoiPrefixInPydantic):
     """Create new doi prefix."""
     log.debug(f"Creating new doi prefix with params: {doi_prefix}")
     dois_obj = await DoiPrefix.create(**doi_prefix.dict(exclude_unset=True))
-    return await DoiPrefixEditPydantic.from_tortoise_orm(dois_obj)
+    return await DoiPrefixInPydantic.from_tortoise_orm(dois_obj)
+
+
+@router.put(
+    "/{id}",
+    response_model=DoiPrefixEditPydantic,
+    responses={404: {"model": HTTPNotFoundError}},
+)
+async def update_species(id: int, doi_prefix: DoiPrefixEditPydantic):
+    """Update specific doi prefix."""
+    log.debug(f"Attempting to update DOI prefix ID {id} with params: {doi_prefix}")
+    await DoiPrefix.filter(prefix_pk=id).update(**doi_prefix.dict(exclude_unset=True))
+    return await DoiPrefixEditPydantic.from_queryset_single(DoiPrefix.get(prefix_pk=id))
 
 
 @router.delete(

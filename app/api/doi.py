@@ -11,6 +11,7 @@ from app.logic.minter import get_next_doi_suffix_id
 from app.models.doi import (
     DoiRealisation,
     DoiRealisationEditPydantic,
+    DoiRealisationInPydantic,
     DoiRealisationPydantic,
 )
 
@@ -61,8 +62,8 @@ async def get_doi_by_prefix_suffix(prefix: str, suffix: str):
     )
 
 
-@router.post("", response_model=DoiRealisationEditPydantic)
-async def create_doi_db_only(doi: DoiRealisationEditPydantic):
+@router.post("", response_model=DoiRealisationInPydantic)
+async def create_doi_db_only(doi: DoiRealisationInPydantic):
     """Create new doi."""
     log.debug(f"Creating new DOI with params: {doi}")
 
@@ -75,7 +76,7 @@ async def create_doi_db_only(doi: DoiRealisationEditPydantic):
         HTTPException(status_code=409, detail=f"DOI already exists: {doi}")
 
     doi_obj = await DoiRealisation.create(**doi.dict(exclude_unset=True))
-    return await DoiRealisationEditPydantic.from_tortoise_orm(doi_obj)
+    return await DoiRealisationInPydantic.from_tortoise_orm(doi_obj)
 
 
 @router.delete(
@@ -122,7 +123,7 @@ async def create_doi_draft(package_id: str):
 
     log.debug(f"Creating new doi with params: {new_doi}")
     # dois_obj = await DoiRealisation.create(**new_doi)
-    # return await DoiRealisationEditPydantic.from_tortoise_orm(dois_obj)
+    # return await DoiRealisationInPydantic.from_tortoise_orm(dois_obj)
 
     return await DoiRealisationPydantic.from_queryset_single(DoiRealisation.first())
 
@@ -132,8 +133,10 @@ async def create_doi_draft(package_id: str):
     response_model=DoiRealisationEditPydantic,
     responses={404: {"model": HTTPNotFoundError}},
 )
-async def update_doi(package_id: str, dois: DoiRealisationEditPydantic):
+async def update_doi(package_id: str, doi: DoiRealisationEditPydantic):
     """Update specific DOI in DB and Datacite for CKAN Package ID."""
-    log.debug(f"Attempting to update dois ID {id} with params: {dois}")
-    await dois.filter(id=id).update(**dois.dict(exclude_unset=True))
-    return await DoiRealisationEditPydantic.from_queryset_single(dois.get(id=id))
+    log.debug(f"Attempting to update doi ID {id} with params: {doi}")
+    await DoiRealisation.filter(doi_pk=id).update(**doi.dict(exclude_unset=True))
+    return await DoiRealisationEditPydantic.from_queryset_single(
+        DoiRealisation.get(doi_pk=id)
+    )
