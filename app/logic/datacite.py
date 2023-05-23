@@ -1,33 +1,36 @@
 """Reserve and Publish DOIs to Datacite."""
 
+# TODO review and possibly remove dependencies in lib/envidat
+
 from typing import TypedDict
 from app.config import settings
 import json
 import requests
 
 
-class DraftDoiSuccess(TypedDict):
+class DoiSuccess(TypedDict):
     success: bool
     status_code: int
     result: dict
 
 
-class DraftDoiErrors(TypedDict):
+class DoiErrors(TypedDict):
     success: bool
     status_code: int
     errors: list[dict]
 
 
-def reserve_draft_doi_datacite(doi: str) -> DraftDoiSuccess | DraftDoiErrors:
+def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
     """Reserve a DOI identifer in "Draft" state with DataCite.
 
     For relevant DataCite documentation see:
     https://support.datacite.org/docs/api-create-dois#create-an-identifier-in-draft-state
 
-    Args: doi (str): DOI assigned to EnviDat package in "doi" field
+    Args:
+        doi (str): DOI assigned to EnviDat package in "doi" field
 
     Returns:
-        DraftDoiSuccess | DraftDoiErrors: See TypedDict class definitions
+        DoiSuccess | DoiErrors: See TypedDict class definitions
     """
 
     # Extract variables from config needed to call DataCite API
@@ -63,14 +66,32 @@ def reserve_draft_doi_datacite(doi: str) -> DraftDoiSuccess | DraftDoiErrors:
                              auth=(client_id, password),
                              data=payload_json)
 
-    # Return DOI success or errors object
-    if response.status_code == 201:
-        reserved_doi = response.json().get('data').get('id')
-        if reserved_doi:
+    # Return formatted DOI success or errors object
+    return format_response(response, 201)
+
+
+def format_response(response: requests.models.Response,
+                    expected_status_code: int) -> DoiSuccess | DoiErrors:
+    """
+    Checks if response has expected HTTP status code and returns DataCite
+        response object formatted in DoiSuccess or DoiErrors format.
+
+    Args:
+        response (requests.models.Response): Response from call to DataCite API
+        expected_status_code (int): Expected HTTP status code
+
+     Returns:
+        DoiSuccess | DoiErrors: See TypedDict class definitions
+    """
+    response_json = response.json()
+
+    if response.status_code == expected_status_code:
+        doi = response_json.get('data').get('id')
+        if doi:
             return {
                 "success": True,
                 "status_code": response.status_code,
-                "result": response.json()
+                "result": response_json
             }
         else:
             return {
@@ -78,9 +99,9 @@ def reserve_draft_doi_datacite(doi: str) -> DraftDoiSuccess | DraftDoiErrors:
                 "status_code": 500,
                 "errors": [
                     {
-                        "parsing_error": "Cannot parse reserved DOI from "
-                                         "DataCite response ",
-                        "datacite_response": response.json()
+                        "parsing_error": "Cannot parse DOI from DataCite "
+                                         "response",
+                        "datacite_response": response_json
                     }
                 ]
             }
@@ -88,7 +109,7 @@ def reserve_draft_doi_datacite(doi: str) -> DraftDoiSuccess | DraftDoiErrors:
         return {
             "success": False,
             "status_code": response.status_code,
-            "errors": response.json().get('errors')
+            "errors": response_json.get('errors')
         }
 
 
@@ -100,5 +121,5 @@ def reserve_draft_doi_datacite(doi: str) -> DraftDoiSuccess | DraftDoiErrors:
 # test = reserve_draft_doi_datacite("beautiful-doi")
 
 # Valid DOI
-# test = reserve_draft_doi_datacite("10.16904/envidat.test12")
+# test = reserve_draft_doi_datacite("10.16904/envidat.test15")
 # print(test)
