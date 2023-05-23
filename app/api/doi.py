@@ -146,6 +146,7 @@ async def update_doi(package_id: str, doi: DoiRealisationEditPydantic):
     log.debug(f"Attempting to update doi ID {id} with params: {doi}")
     await DoiRealisation.filter(doi_pk=id).update(**doi.dict(exclude_unset=True))
 
+    log.debug("Attempting update via Datacite API")
     # # Call Datacite update handler datacite.py
     # if datacite_error:
     #     HTTPException(
