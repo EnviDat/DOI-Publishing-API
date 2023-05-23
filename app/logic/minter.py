@@ -1,0 +1,1 @@
+"""Mints a new DOI."""
