@@ -24,9 +24,12 @@ class DoiPrefix(models.Model):
         """Tortoise config."""
 
         app = settings.APP_NAME
+        table = "doi_prefix"
 
 
-class CkanEntityType(Enum):
+class CkanEntityType(str, Enum):
+    """Options for DOI ckan_entity type."""
+
     PACKAGE = "package"
     RESOURCE = "resource"
 
@@ -38,7 +41,7 @@ class DoiRealisation(models.Model):
     prefix_id = fields.CharField(max_length=64, validators=[EmptyStringValidator()])
     suffix_id = fields.CharField(max_length=64, validators=[EmptyStringValidator()])
     ckan_id = fields.UUIDField()
-    ckan_name = fields.CharField(max_length=256, validators=[EmptyStringValidator()])
+    # ckan_name = fields.CharField(max_length=256, validators=[EmptyStringValidator()])
     site_id = fields.CharField(max_length=64, validators=[EmptyStringValidator()])
     tag_id = fields.CharField(
         max_length=64, default="envidat.", validators=[EmptyStringValidator()]
@@ -46,7 +49,7 @@ class DoiRealisation(models.Model):
     ckan_user = fields.CharField(
         max_length=256, default="admin", validators=[EmptyStringValidator()]
     )
-    metadata = fields.CharField(max_length=512, validators=[EmptyStringValidator()])
+    metadata = fields.CharField(max_length=1000000, validators=[EmptyStringValidator()])
     metadata_format = fields.CharField(
         max_length=64, default="ckan", validators=[EmptyStringValidator()]
     )
@@ -62,6 +65,8 @@ class DoiRealisation(models.Model):
         """Tortoise config."""
 
         app = settings.APP_NAME
+        table = "doi_realisation"
+        unique_together = ["prefix_id", "suffix_id"]
 
 
 DoiPrefixPydantic = pydantic_model_creator(DoiPrefix, name="DoiPrefix")
