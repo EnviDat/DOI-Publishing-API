@@ -17,9 +17,9 @@ class Settings(BaseSettings):
     DEBUG: str = False
     LOG_LEVEL: str = "INFO"
 
-    API_URL: str = "https://www.envidat.ch"
+    API_URL: AnyHttpUrl = "https://www.envidat.ch"
 
-    DATACITE_API_URL: str
+    DATACITE_API_URL: AnyHttpUrl
     DATACITE_CLIENT_ID: str
     DATACITE_PASSWORD: str
     DOI_PREFIX: str
@@ -55,7 +55,7 @@ class Settings(BaseSettings):
             path=f"/{values.get('DB_NAME') or ''}",
         )
 
-    EMAIL_ENDPOINT: str
+    EMAIL_ENDPOINT: AnyHttpUrl
     EMAIL_FROM: str
 
     class Config:
