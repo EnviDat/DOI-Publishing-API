@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
 
-from app.api import publish
+from app.api import approval, doi, prefix
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +34,9 @@ class RouteErrorHandler(APIRoute):
 
 
 api_router = APIRouter()
-api_router.include_router(publish.router)
+api_router.include_router(doi.router)
+api_router.include_router(prefix.router)
+api_router.include_router(approval.router)
 
 error_router = APIRouter(route_class=RouteErrorHandler)
 

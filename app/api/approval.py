@@ -1,15 +1,15 @@
-# """Endpoints to trigger emails."""
+"""Endpoints to trigger emails."""
 
-# import logging
+import logging
 
-# from fastapi import APIRouter
+from fastapi import APIRouter
 
-# log = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
-# router = APIRouter(
-#     prefix="/mail",
-#     tags=["mail"],
-# )
+router = APIRouter(
+    prefix="/approval",
+    tags=["approval"],
+)
 
 
 # @router.get("/request-approval")
