@@ -66,6 +66,10 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings():
     """Cache settings, for calling in multiple modules."""
+    # Dotenv loaded here to allow debugging files directly
+    from app.utils import load_dotenv_if_not_docker
+
+    load_dotenv_if_not_docker(force=True)
     _settings = Settings()
     log.info("Loaded settings from cache")
     return _settings

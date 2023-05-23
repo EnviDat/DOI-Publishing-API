@@ -6,14 +6,10 @@ import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.utils import load_dotenv_if_not_docker
-
-load_dotenv_if_not_docker(force=True)
-
-from app.__version__ import __version__  # noqa: E402
-from app.api.router import api_router, error_router  # noqa: E402
-from app.config import settings  # noqa: E402
-from app.db import init_db  # noqa: E402
+from app.__version__ import __version__
+from app.api.router import api_router, error_router
+from app.config import settings
+from app.db import init_db
 
 logging.basicConfig(
     level=settings.LOG_LEVEL,
