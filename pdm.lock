@@ -76,6 +76,18 @@ requires_python = ">=3.7.0"
 summary = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
 
 [[package]]
+name = "ckanapi"
+version = "4.7"
+summary = "A command line interface and Python module for accessing the CKAN Action API"
+dependencies = [
+    "docopt",
+    "python-slugify>=1.0",
+    "requests",
+    "setuptools",
+    "six<2.0,>=1.9",
+]
+
+[[package]]
 name = "click"
 version = "8.1.3"
 requires_python = ">=3.7"
@@ -107,6 +119,11 @@ name = "dnspython"
 version = "2.3.0"
 requires_python = ">=3.7,<4.0"
 summary = "DNS toolkit"
+
+[[package]]
+name = "docopt"
+version = "0.6.2"
+summary = "Pythonic argument parser, that will make you smile"
 
 [[package]]
 name = "email-validator"
@@ -308,6 +325,15 @@ requires_python = ">=3.7"
 summary = "A streaming multipart parser for Python"
 
 [[package]]
+name = "python-slugify"
+version = "8.0.1"
+requires_python = ">=3.7"
+summary = "A Python slugify application that also handles Unicode"
+dependencies = [
+    "text-unidecode>=1.3",
+]
+
+[[package]]
 name = "pytz"
 version = "2023.3"
 summary = "World timezone definitions, modern and historical"
@@ -340,6 +366,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "setuptools"
+version = "67.8.0"
+requires_python = ">=3.7"
+summary = "Easily download, build, install, upgrade, and uninstall Python packages"
+
+[[package]]
 name = "six"
 version = "1.16.0"
 requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
@@ -360,6 +392,11 @@ dependencies = [
     "anyio<5,>=3.4.0",
     "typing-extensions>=3.10.0; python_version < \"3.10\"",
 ]
+
+[[package]]
+name = "text-unidecode"
+version = "1.3"
+summary = "The most basic Text::Unidecode port"
 
 [[package]]
 name = "tortoise-orm"
@@ -467,7 +504,7 @@ summary = "Makes working with XML feel like you are working with JSON"
 
 [metadata]
 lock_version = "4.0"
-content_hash = "sha256:de0cd37aacbd8989bba29e677ef10e466da4e70318843a703a68090bd24d32f5"
+content_hash = "sha256:0495d5e647c3c368c7df0b1660d0b8dc47a1fc41215564bb4f10997dcfd5ac6d"
 
 [metadata.files]
 "aiosmtplib 2.0.1" = [
@@ -617,6 +654,9 @@ content_hash = "sha256:de0cd37aacbd8989bba29e677ef10e466da4e70318843a703a68090bd
     {url = "https://files.pythonhosted.org/packages/fa/8e/2e5c742c3082bce3eea2ddd5b331d08050cda458bc362d71c48e07a44719/charset_normalizer-3.1.0-cp37-cp37m-musllinux_1_1_ppc64le.whl", hash = "sha256:04afa6387e2b282cf78ff3dbce20f0cc071c12dc8f685bd40960cc68644cfea6"},
     {url = "https://files.pythonhosted.org/packages/ff/d7/8d757f8bd45be079d76309248845a04f09619a7b17d6dfc8c9ff6433cac2/charset-normalizer-3.1.0.tar.gz", hash = "sha256:34e0a2f9c370eb95597aae63bf85eb5e96826d81e3dcf88b8886012906f509b5"},
 ]
+"ckanapi 4.7" = [
+    {url = "https://files.pythonhosted.org/packages/c0/25/31430b0a5dabc95b3c37c6772e4bbf212000b50856cd88e8d8bb0bbae559/ckanapi-4.7.tar.gz", hash = "sha256:6cb1414faef384de58a0e1f648b977177db444e95073b65ed950f2a8b0f55d0d"},
+]
 "click 8.1.3" = [
     {url = "https://files.pythonhosted.org/packages/59/87/84326af34517fca8c58418d148f2403df25303e02736832403587318e9e8/click-8.1.3.tar.gz", hash = "sha256:7682dc8afb30297001674575ea00d1814d808d6a36af415a82bd481d37ba7b8e"},
     {url = "https://files.pythonhosted.org/packages/c2/f1/df59e28c642d583f7dacffb1e0965d0e00b218e0186d7858ac5233dce840/click-8.1.3-py3-none-any.whl", hash = "sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48"},
@@ -652,6 +692,9 @@ content_hash = "sha256:de0cd37aacbd8989bba29e677ef10e466da4e70318843a703a68090bd
 "dnspython 2.3.0" = [
     {url = "https://files.pythonhosted.org/packages/12/86/d305e87555430ff4630d729420d97dece3b16efcbf2b7d7e974d11b0d86c/dnspython-2.3.0-py3-none-any.whl", hash = "sha256:89141536394f909066cabd112e3e1a37e4e654db00a25308b0f130bc3152eb46"},
     {url = "https://files.pythonhosted.org/packages/91/8b/522301c50ca1f78b09c2ca116ffb0fd797eadf6a76085d376c01f9dd3429/dnspython-2.3.0.tar.gz", hash = "sha256:224e32b03eb46be70e12ef6d64e0be123a64e621ab4c0822ff6d450d52a540b9"},
+]
+"docopt 0.6.2" = [
+    {url = "https://files.pythonhosted.org/packages/a2/55/8f8cab2afd404cf578136ef2cc5dfb50baa1761b68c9da1fb1e4eed343c9/docopt-0.6.2.tar.gz", hash = "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491"},
 ]
 "email-validator 1.3.1" = [
     {url = "https://files.pythonhosted.org/packages/8e/db/5849bad11c5e03b41c7331370a2020bc98822dd8253b1861ec70351b8e75/email_validator-1.3.1.tar.gz", hash = "sha256:d178c5c6fa6c6824e9b04f199cf23e79ac15756786573c190d2ad13089411ad2"},
@@ -931,6 +974,10 @@ content_hash = "sha256:de0cd37aacbd8989bba29e677ef10e466da4e70318843a703a68090bd
     {url = "https://files.pythonhosted.org/packages/2d/23/abcfad10c3348cb6358400f8adbc21b523bbc6c954494fd0974428068672/python_multipart-0.0.6.tar.gz", hash = "sha256:e9925a80bb668529f1b67c7fdb0a5dacdd7cbfc6fb0bff3ea443fe22bdd62132"},
     {url = "https://files.pythonhosted.org/packages/b4/ff/b1e11d8bffb5e0e1b6d27f402eeedbeb9be6df2cdbc09356a1ae49806dbf/python_multipart-0.0.6-py3-none-any.whl", hash = "sha256:ee698bab5ef148b0a760751c261902cd096e57e10558e11aca17646b74ee1c18"},
 ]
+"python-slugify 8.0.1" = [
+    {url = "https://files.pythonhosted.org/packages/b4/85/6aa722a11307ec572682023b76cad4c52cda708dfc25fcb4b4a6051da7ab/python_slugify-8.0.1-py2.py3-none-any.whl", hash = "sha256:70ca6ea68fe63ecc8fa4fcf00ae651fc8a5d02d93dcd12ae6d4fc7ca46c4d395"},
+    {url = "https://files.pythonhosted.org/packages/de/63/0f60208d0d3dde1a87d30a82906fa9b00e902b57f1ae9565d780de4b41d1/python-slugify-8.0.1.tar.gz", hash = "sha256:ce0d46ddb668b3be82f4ed5e503dbc33dd815d83e2eb6824211310d3fb172a27"},
+]
 "pytz 2023.3" = [
     {url = "https://files.pythonhosted.org/packages/5e/32/12032aa8c673ee16707a9b6cdda2b09c0089131f35af55d443b6a9c69c1d/pytz-2023.3.tar.gz", hash = "sha256:1d8ce29db189191fb55338ee6d0387d82ab59f3d00eac103412d64e0ebd0c588"},
     {url = "https://files.pythonhosted.org/packages/7f/99/ad6bd37e748257dd70d6f85d916cafe79c0b0f5e2e95b11f7fbc82bf3110/pytz-2023.3-py2.py3-none-any.whl", hash = "sha256:a151b3abb88eda1d4e34a9814df37de2a80e301e68ba0fd856fb9b46bfbbbffb"},
@@ -985,6 +1032,10 @@ content_hash = "sha256:de0cd37aacbd8989bba29e677ef10e466da4e70318843a703a68090bd
     {url = "https://files.pythonhosted.org/packages/5e/c6/af903b5fab3f9b5b1e883f49a770066314c6dcceb589cf938d48c89556c1/s3transfer-0.6.0-py3-none-any.whl", hash = "sha256:06176b74f3a15f61f1b4f25a1fc29a4429040b7647133a463da8fa5bd28d5ecd"},
     {url = "https://files.pythonhosted.org/packages/e1/eb/e57c93d5cd5edf8c1d124c831ef916601540db70acd96fa21fe60cef1365/s3transfer-0.6.0.tar.gz", hash = "sha256:2ed07d3866f523cc561bf4a00fc5535827981b117dd7876f036b0c1aca42c947"},
 ]
+"setuptools 67.8.0" = [
+    {url = "https://files.pythonhosted.org/packages/03/20/630783571e76e5fa5f3e9f29398ca3ace377207b8196b54e0ffdf09f12c1/setuptools-67.8.0.tar.gz", hash = "sha256:62642358adc77ffa87233bc4d2354c4b2682d214048f500964dbe760ccedf102"},
+    {url = "https://files.pythonhosted.org/packages/f5/2c/074ab1c5be9c7d523d8d6d69d1f46f450fe7f11713147dc9e779aa4ca4ea/setuptools-67.8.0-py3-none-any.whl", hash = "sha256:5df61bf30bb10c6f756eb19e7c9f3b473051f48db77fddbe06ff2ca307df9a6f"},
+]
 "six 1.16.0" = [
     {url = "https://files.pythonhosted.org/packages/71/39/171f1c67cd00715f190ba0b100d606d440a28c93c7714febeca8b79af85e/six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
     {url = "https://files.pythonhosted.org/packages/d9/5a/e7c31adbe875f2abbb91bd84cf2dc52d792b5a01506781dbcf25c91daf11/six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
@@ -996,6 +1047,10 @@ content_hash = "sha256:de0cd37aacbd8989bba29e677ef10e466da4e70318843a703a68090bd
 "starlette 0.26.1" = [
     {url = "https://files.pythonhosted.org/packages/12/48/f9c1ec6bee313aba264fbc2483d9070f4e4526f2538e2b55b1e4a391d938/starlette-0.26.1-py3-none-any.whl", hash = "sha256:e87fce5d7cbdde34b76f0ac69013fd9d190d581d80681493016666e6f96c6d5e"},
     {url = "https://files.pythonhosted.org/packages/52/55/98746af96f57a0ff4f108c5ac84c130af3c4e291272acf446afc67d5d5d8/starlette-0.26.1.tar.gz", hash = "sha256:41da799057ea8620e4667a3e69a5b1923ebd32b1819c8fa75634bbe8d8bea9bd"},
+]
+"text-unidecode 1.3" = [
+    {url = "https://files.pythonhosted.org/packages/a6/a5/c0b6468d3824fe3fde30dbb5e1f687b291608f9473681bbf7dabbf5a87d7/text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8"},
+    {url = "https://files.pythonhosted.org/packages/ab/e2/e9a00f0ccb71718418230718b3d900e71a5d16e701a3dae079a21e9cd8f8/text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93"},
 ]
 "tortoise-orm 0.19.3" = [
     {url = "https://files.pythonhosted.org/packages/58/cf/286eb8997113dd04a61c430b5a0d3b2aef9ee51031440d18357bf21740a9/tortoise_orm-0.19.3-py3-none-any.whl", hash = "sha256:9e368820c70a0866ef9c521d43aa5503485bd7a20a561edc0933b7b0f7036fbc"},
