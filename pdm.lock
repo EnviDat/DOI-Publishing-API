@@ -1,10 +1,4 @@
 [[package]]
-name = "aiosmtplib"
-version = "2.0.1"
-requires_python = ">=3.7,<4.0"
-summary = "asyncio SMTP client"
-
-[[package]]
 name = "aiosqlite"
 version = "0.17.0"
 requires_python = ">=3.6"
@@ -34,12 +28,6 @@ name = "attrs"
 version = "23.1.0"
 requires_python = ">=3.7"
 summary = "Classes Without Boilerplate"
-
-[[package]]
-name = "blinker"
-version = "1.6.2"
-requires_python = ">=3.7"
-summary = "Fast, simple object-to-object and broadcast signaling"
 
 [[package]]
 name = "boto3"
@@ -156,20 +144,6 @@ summary = "FastAPI framework, high performance, easy to learn, fast to code, rea
 dependencies = [
     "pydantic!=1.7,!=1.7.1,!=1.7.2,!=1.7.3,!=1.8,!=1.8.1,<2.0.0,>=1.6.2",
     "starlette<0.27.0,>=0.26.1",
-]
-
-[[package]]
-name = "fastapi-mail"
-version = "1.2.8"
-requires_python = ">=3.8.1,<4.0"
-summary = "Simple lightweight mail library for FastApi"
-dependencies = [
-    "Jinja2<4.0,>=3.0",
-    "aiosmtplib<3.0,>=2.0",
-    "blinker<2.0,>=1.5",
-    "email-validator<2.0,>=1.1",
-    "pydantic<2.0,>=1.8",
-    "starlette<1.0,>=0.24",
 ]
 
 [[package]]
@@ -504,13 +478,9 @@ summary = "Makes working with XML feel like you are working with JSON"
 
 [metadata]
 lock_version = "4.0"
-content_hash = "sha256:0495d5e647c3c368c7df0b1660d0b8dc47a1fc41215564bb4f10997dcfd5ac6d"
+content_hash = "sha256:8ab5aa2424c4ff342aa49bfbb7dd2869a6cf2c7ee82ff57887c0872d1962888b"
 
 [metadata.files]
-"aiosmtplib 2.0.1" = [
-    {url = "https://files.pythonhosted.org/packages/1c/01/85a66daad6ccbe9cfdb774c349c2758b295feb3a4de7bf8f01a1ff593bd2/aiosmtplib-2.0.1-py3-none-any.whl", hash = "sha256:2f619f900d1bfe25a8f453005958ba78870abbfeeffb2fdef11265be0df26913"},
-    {url = "https://files.pythonhosted.org/packages/67/cd/77e7b7dc52618e5f49059bbe17b4fc7dbfaf4174c3a891c6f14f63624d06/aiosmtplib-2.0.1.tar.gz", hash = "sha256:a20aae28f67169dd761beef4c62e4bb3073d035f9ee20c2e4f18baa1a73e7c88"},
-]
 "aiosqlite 0.17.0" = [
     {url = "https://files.pythonhosted.org/packages/40/e0/ad1edd74311831ca71b32a5b83352b490d78d11a90a1cde04e1b6830e018/aiosqlite-0.17.0.tar.gz", hash = "sha256:f0e6acc24bc4864149267ac82fb46dfb3be4455f99fe21df82609cc6e6baee51"},
     {url = "https://files.pythonhosted.org/packages/a0/48/77c0092f716c4bf9460dca44f5120f70b8f71f14a12f40d22551a7152719/aiosqlite-0.17.0-py3-none-any.whl", hash = "sha256:6c49dc6d3405929b1d08eeccc72306d3677503cc5e5e43771efc1e00232e8231"},
@@ -560,10 +530,6 @@ content_hash = "sha256:0495d5e647c3c368c7df0b1660d0b8dc47a1fc41215564bb4f10997dc
 "attrs 23.1.0" = [
     {url = "https://files.pythonhosted.org/packages/97/90/81f95d5f705be17872843536b1868f351805acf6971251ff07c1b8334dbb/attrs-23.1.0.tar.gz", hash = "sha256:6279836d581513a26f1bf235f9acd333bc9115683f14f7e8fae46c98fc50e015"},
     {url = "https://files.pythonhosted.org/packages/f0/eb/fcb708c7bf5056045e9e98f62b93bd7467eb718b0202e7698eb11d66416c/attrs-23.1.0-py3-none-any.whl", hash = "sha256:1f28b4522cdc2fb4256ac1a020c78acf9cba2c6b461ccd2c126f3aa8e8335d04"},
-]
-"blinker 1.6.2" = [
-    {url = "https://files.pythonhosted.org/packages/0d/f1/5f39e771cd730d347539bb74c6d496737b9d5f0a53bc9fdbf3e170f1ee48/blinker-1.6.2-py3-none-any.whl", hash = "sha256:c3d739772abb7bc2860abf5f2ec284223d9ad5c76da018234f6f50d6f31ab1f0"},
-    {url = "https://files.pythonhosted.org/packages/e8/f9/a05287f3d5c54d20f51a235ace01f50620984bc7ca5ceee781dc645211c5/blinker-1.6.2.tar.gz", hash = "sha256:4afd3de66ef3a9f8067559fb7a1cbe555c17dcbe15971b05d1b625c3e7abe213"},
 ]
 "boto3 1.26.125" = [
     {url = "https://files.pythonhosted.org/packages/4a/67/b808d4cad9e20d673210a68f1b1a8b8caf401e51b6b89493fe9f21fcd61e/boto3-1.26.125.tar.gz", hash = "sha256:fe8248b80c4f0fdaed8b8779467c4431a5e52177e02ccd137d51ec51194ebb00"},
@@ -707,10 +673,6 @@ content_hash = "sha256:0495d5e647c3c368c7df0b1660d0b8dc47a1fc41215564bb4f10997dc
 "fastapi 0.95.1" = [
     {url = "https://files.pythonhosted.org/packages/2e/84/d289e941ffec2f107d9097c8f7c2dbc874b0fc3fab9776aa3cc366d45ab2/fastapi-0.95.1-py3-none-any.whl", hash = "sha256:a870d443e5405982e1667dfe372663abf10754f246866056336d7f01c21dab07"},
     {url = "https://files.pythonhosted.org/packages/a9/7b/ec011cf46d78627159ab869556f246b5f823a6df8d94f7577e043a63fffd/fastapi-0.95.1.tar.gz", hash = "sha256:9569f0a381f8a457ec479d90fa01005cfddaae07546eb1f3fa035bc4797ae7d5"},
-]
-"fastapi-mail 1.2.8" = [
-    {url = "https://files.pythonhosted.org/packages/43/e4/51632219174e92b6ec383ee696998ec21d24a8768ce11ba0410a35c49ce1/fastapi_mail-1.2.8.tar.gz", hash = "sha256:5c650ffa92ca6922f700b4001a201f52e25999aafbf3c4d0f9150126aebe2df0"},
-    {url = "https://files.pythonhosted.org/packages/cf/0f/27dd6bd8a6b0b5e781fef5e58f8069fa6125c96cc2a582cdedf5211b1d58/fastapi_mail-1.2.8-py3-none-any.whl", hash = "sha256:1ea39d0b26943cb6e94d2b512cfc1295cfc5133df8d913c7db8da0f835802706"},
 ]
 "h11 0.14.0" = [
     {url = "https://files.pythonhosted.org/packages/95/04/ff642e65ad6b90db43e668d70ffb6736436c7ce41fcc549f4e9472234127/h11-0.14.0-py3-none-any.whl", hash = "sha256:e3fe4ac4b851c468cc8363d500db52c2ead036020723024a109d37346efaa761"},
