@@ -18,7 +18,9 @@ router = APIRouter(
 
 
 @router.get("/request")
-async def request_publish_approval(package_id: str, authorization: str = Header(None)):
+async def request_publish_approval(
+    package_id: str, update: bool = False, authorization: str = Header(None)
+):
     """Request approval to publish."""
     # Send email to admin
     request_approval_email()
@@ -26,9 +28,15 @@ async def request_publish_approval(package_id: str, authorization: str = Header(
     # Requires testing
     log.debug("Initialising CKAN connection")
     ckan = ckanapi.RemoteCKAN(settings.API_URL)
-    log.debug(f"Updating package {id} to publication_status=pub_pending")
+
+    log.debug(
+        f"Updating package {id} to publication_status="
+        f"{'update_pending' if update else 'pub_pending'}"
+    )
     ckan.call_action(
-        "package_update", {"publication_status": "pub_pending"}, api_key=authorization
+        "package_update",
+        {"publication_status": "update_pending" if update else "pub_pending"},
+        api_key=authorization,
     )
     return JSONResponse(status_code=200, content={"success": True})
 
