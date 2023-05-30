@@ -2,6 +2,7 @@ version: "3"
 
 networks:
   net:
+    name: doi-publishing
 
 services:
   api:
@@ -16,8 +17,6 @@ services:
         - MAINTAINER_DEVOPS=${MAINTAINER_DEVOPS}
         - EXTERNAL_REG=${EXTERNAL_REG}
       target: prod
-    ports:
-      - "50010:8000"
     env_file:
       - .env
       - secret/db.env
@@ -26,3 +25,22 @@ services:
     networks:
       - net
     restart: unless-stopped
+
+  proxy:
+    container_name: doi_publishing_proxy
+    image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-main"
+    build:
+      context: ./nginx
+      args:
+        - EXTERNAL_REG=${EXTERNAL_REG}
+        - NGINX_IMG_TAG=${NGINX_IMG_TAG}
+        - MAINTAINER_DEVOPS=${MAINTAINER_DEVOPS}
+    depends_on:
+      - api
+    environment:
+      - API_HOST=api:8000
+      - AUTH_COOKIE_NAME=envidat
+    ports:
+      - "50010:80"
+    networks:
+      - net
