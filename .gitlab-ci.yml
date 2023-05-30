@@ -29,7 +29,7 @@ set-vars:
     - "echo DOI_PUB_IMAGE=${INTERNAL_REG}/doi-publishing-api:\
       ${APP_VERSION}-${CI_COMMIT_REF_NAME} >> build.env"
     - "echo PROXY_IMAGE=${INTERNAL_REG}/doi-publishing-api/proxy:\
-      ${NGINX_VERSION}-${CI_COMMIT_REF_NAME} >> build.env"
+      ${NGINX_IMG_TAG}-${CI_COMMIT_REF_NAME} >> build.env"
   artifacts:
     reports:
       dotenv: build.env
@@ -59,7 +59,7 @@ set-vars:
       --build-arg INTERNAL_REG="${INTERNAL_REG}"
       --build-arg PYTHON_IMG_TAG="${PYTHON_IMG_TAG}"
       --build-arg APP_VERSION="${APP_VERSION}"
-      --build-arg NGINX_VERSION="${NGINX_VERSION}"
+      --build-arg NGINX_IMG_TAG="${NGINX_IMG_TAG}"
 
 doi-pub-build:
   extends:
