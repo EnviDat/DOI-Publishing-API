@@ -1,26 +1,25 @@
+upstream api {
+    server ${API_HOST} max_fails=1 fail_timeout=2s;
+    keepalive 32;
+}
+
 server {
 
-    listen 80 default_server;
+    listen 80 default_server reuseport;
     server_name _;
 
-    client_max_body_size 50M;
+    client_max_body_size 5M;
 
+    # Response headers
     add_header 'Content-Security-Policy' $upgrade_policy;
     add_header 'Access-Control-Allow-Credentials' 'true';
     # For opentelemetry
     add_header 'Access-Control-Allow-Headers' 'traceparent,tracestate';
 
     location / {
+        proxy_pass http://api;
 
-        default_type   text/html;
-        error_page     404 = @app;
-
-        try_files $uri @app;
-    }
-
-    location @app {
-        proxy_pass http://${DOI_PUBLISHING_HOST};
-
+        # Requests headers
         proxy_set_header Host                $http_host;
         proxy_set_header X-Real-IP           $remote_addr;
         proxy_set_header X-Forwarded-Proto   $scheme;
@@ -29,6 +28,14 @@ server {
         proxy_set_header X-Forwarded-Server  $http_host;
         proxy_set_header X-Forwarded-Port    $server_port;
 
+        # Add cookie content to Authorization request header
+        proxy_set_header 'Authorization' $cookie_${AUTH_COOKIE_NAME};
+
+        # Disable buffer to temp files, tweak buffer for memory
+        proxy_max_temp_file_size 0;
+        proxy_buffer_size 64k;
+        proxy_buffers 8 64k;
+        proxy_busy_buffers_size 64k;
     }
 
     error_page   500 502 503 504  /50x.html;
