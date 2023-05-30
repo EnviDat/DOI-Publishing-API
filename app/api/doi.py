@@ -2,9 +2,10 @@
 
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from tortoise.contrib.fastapi import HTTPNotFoundError
+from user.auth import get_admin
 
 from app.config import settings
 from app.logic.minter import get_next_doi_suffix_id
@@ -17,10 +18,7 @@ from app.models.doi import (
 
 log = logging.getLogger(__name__)
 
-router = APIRouter(
-    prefix="/dois",
-    tags=["dois"],
-)
+router = APIRouter(prefix="/dois", tags=["dois"], dependencies=[Depends(get_admin)])
 
 
 class Status(BaseModel):
@@ -115,25 +113,27 @@ async def create_doi_draft(package_id: str):
         "ckan_entity": "package",
     }
 
-    doi_exists = await DoiRealisation.get_or_none(
+    database_doi = await DoiRealisation.get_or_none(
         prefix_id=new_doi.prefix_id,
         suffix_id=new_doi.suffix_id,
     )
 
-    if doi_exists:
+    if database_doi:
         log.debug("DOI database already exists, continuing to datacite logic")
     else:
         log.debug(f"Creating new DOI with params: {new_doi}")
         await DoiRealisation.create(**new_doi)
 
+    # Continue logic
     # # Call Datacite draft handler datacite.py
-    # if datacite_error:
-    #     HTTPException(
-    #         status_code=409,
-    #         detail=f"Error with datacite draft creation: {datacite_error}"
-    #     )
+    response = some_function_to_submit_datacite_draft()
+    if response.status_code != 201:
+        log.error(f"Datacite draft failed: {response.errors}")
+        return HTTPException(
+            status_code=response.status_code, message="Error in datacite draft"
+        )
 
-    # return await DoiRealisationInPydantic.from_tortoise_orm(dois_obj)
+    return await DoiRealisationInPydantic.from_tortoise_orm(database_doi)
 
 
 @router.put(
