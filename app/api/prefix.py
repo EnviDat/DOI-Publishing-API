@@ -17,7 +17,9 @@ from app.models.doi import (
 log = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/prefix", tags=["doi_prefix"], dependencies=[Depends(get_admin)]
+    prefix="/prefix",
+    tags=["doi_prefix"],
+    dependencies=[Depends(get_admin)],
 )
 
 

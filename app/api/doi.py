@@ -5,8 +5,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from tortoise.contrib.fastapi import HTTPNotFoundError
-from user.auth import get_admin
 
+from app.auth import get_admin
 from app.config import settings
 from app.logic.minter import get_next_doi_suffix_id
 from app.models.doi import (
