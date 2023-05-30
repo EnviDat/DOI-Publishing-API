@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     APP_NAME: str
     SECRET_KEY: str
-    DEBUG: str = False
+    DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
 
     API_URL: AnyHttpUrl = "https://www.envidat.ch"
