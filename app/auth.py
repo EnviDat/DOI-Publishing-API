@@ -47,3 +47,8 @@ def get_admin(user_info=Depends(get_user)):
         raise HTTPException(status_code=401, detail=f"User {user_info} is not an admin")
 
     return user_info
+
+
+def get_token(authorization: Annotated[str | None, Header()] = None):
+    """Get Authorization header token."""
+    return authorization
