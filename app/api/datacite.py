@@ -72,4 +72,16 @@ def reserve_draft_doi(user: Annotated[str, Query(alias="user-id",
         raise HTTPException(status_code=500,
                             detail="Failed to parse doi from package")
 
-    return package
+    # TODO remove test_doi
+    test_doi = "10.16904/envidat.test18"
+
+    # TODO revert to calling DataCite API with doi, test
+    # Reserve DOI in "Draft" state with DataCite,
+    # datacite_response = reserve_draft_doi_datacite(doi)
+    datacite_response = reserve_draft_doi_datacite(test_doi)
+
+    # Set response status code
+    response.status_code = datacite_response.get('status_code', 500)
+
+    # Return formatted response
+    return datacite_response
