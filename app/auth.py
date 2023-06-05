@@ -11,6 +11,8 @@ import logging
 log = logging.getLogger(__name__)
 
 
+# TODO review exception formatting
+
 # TODO test with admin user
 # TODO review if DEBUG needed
 def get_user(user_id: str,
