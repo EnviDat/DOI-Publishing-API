@@ -8,6 +8,7 @@ import requests
 
 from ckanapi import RemoteCKAN, NotFound, NotAuthorized
 from fastapi import HTTPException, Header
+# from pydantic import BaseModel
 from app.config import settings
 
 import logging
@@ -38,15 +39,24 @@ def get_package(package_id: str,
 
 
 class DoiSuccess(TypedDict):
-    success: bool
     status_code: int
     result: dict
 
 
 class DoiErrors(TypedDict):
-    success: bool
     status_code: int
     errors: list[dict]
+
+
+# TODO review if Pydantic model appropriate for function arguments
+# class DoiSuccess(BaseModel):
+#     status_code: int
+#     result: dict
+#
+#
+# class DoiErrors(BaseModel):
+#     status_code: int
+#     errors: list[dict]#
 
 
 def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
@@ -69,7 +79,6 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
         password = settings.DATACITE_PASSWORD
     except KeyError as e:
         return {
-            "success": False,
             "status_code": 500,
             "errors": [
                 {"config_error": f"config setting '{e}' does not exist"}
@@ -96,6 +105,7 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
                              data=payload_json)
 
     # Return formatted DOI success or errors object
+    # Expected status_code is 201
     return format_response(response, 201)
 
 
@@ -118,17 +128,15 @@ def format_response(response: requests.models.Response,
         doi = response_json.get('data').get('id')
         if doi:
             return {
-                "success": True,
                 "status_code": response.status_code,
                 "result": response_json
             }
         else:
             return {
-                "success": False,
                 "status_code": 500,
                 "errors": [
                     {
-                        "parsing_error": "Cannot parse DOI from DataCite "
+                        "parsing_error": "Failed to parse DOI from DataCite "
                                          "response",
                         "datacite_response": response_json
                     }
@@ -136,7 +144,6 @@ def format_response(response: requests.models.Response,
             }
     else:
         return {
-            "success": False,
             "status_code": response.status_code,
             "errors": response_json.get('errors')
         }
