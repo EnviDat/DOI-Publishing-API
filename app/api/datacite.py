@@ -1,24 +1,27 @@
 """DataCite API Router"""
 
-import logging
 
+from typing import Annotated
 # from fastapi import APIRouter, Depends, Header
-# from typing import Annotated
-from fastapi import APIRouter, HTTPException, Security
+from fastapi import APIRouter, HTTPException, Security, Response, Query
 from fastapi.security.api_key import APIKeyHeader
 
 from app.auth import get_user
-from app.logic.datacite import get_package
+from app.logic.datacite import get_package, reserve_draft_doi_datacite, \
+    DoiSuccess, DoiErrors
 
+import logging
 log = logging.getLogger(__name__)
 
-# TODO review if sign out working properly
+
+# TODO verify signout
 # TODO review exception formatting
 # TODO improve Swagger documentation of endpoints (title, description,
 #  query parameters etc.)
 # TODO implement authorization
 
 # TODO remove dependencies if unused
+# Setup datacite router
 router = APIRouter(prefix="/datacite", tags=["datacite"]
                    # dependencies=[Depends(get_user)]
                    )
@@ -29,11 +32,28 @@ authorization_header = APIKeyHeader(name='Authorization')
 
 # TODO remove endpoint after testing and move to logic/datacite.py,
 #  call from doi/create_doi_draft
+# TODO potentially remove responses, response arg
+#  and response.status_code block
 # TODO test dataset without doi
-# TODO improve docstring
-@router.get("/draft")
-def reserve_draft_doi(user: str,
-                      package: str,
+@router.get("/draft",
+            status_code=201,
+            responses={
+                201: {"model": DoiSuccess,
+                      "description": "Draft DOI successfully reserved with "
+                                     "DataCite"},
+                403: {"model": DoiErrors},
+                422: {"model": DoiErrors},
+                500: {"model": DoiErrors}
+            }
+            )
+def reserve_draft_doi(user: Annotated[str, Query(alias="user-id",
+                                                 description="CKAN user id "
+                                                             "or name")],
+                      package: Annotated[str, Query(alias="package-id",
+                                                    description="CKAN "
+                                                                "package id "
+                                                                "or name")],
+                      response: Response,
                       authorization: str = Security(authorization_header)):
     """
     Authenticate user, extract DOI from package, and reserve draft DOI in
