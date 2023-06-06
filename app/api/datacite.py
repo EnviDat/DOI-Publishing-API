@@ -101,3 +101,43 @@ def reserve_draft_doi(
 
     # Return formatted response
     return datacite_response
+
+
+# TODO finish endpoint, currently WIP
+# TODO potentially remove responses, response arg
+#  and response.status_code block
+# TODO test with user id and package id (not just names)
+# TODO test dataset without doi
+@router.get(
+    "/request",
+    name="Request approval to publish/update"
+)
+async def request_publish_approval(
+        user: Annotated[str, Query(alias="user-id",
+                                   description="CKAN user id or name")],
+        package: Annotated[str, Query(alias="package-id",
+                                      description="CKAN package id or name")],
+        response: Response,
+        authorization: str = Security(authorization_header)
+):
+    """
+    Request approval from admin to publish or update dataset with DataCite.
+    """
+
+    # Authorize user, if user invalid then HTTPException raised
+    get_user(user, authorization)
+
+    # TODO review if doi validation needed
+    # TODO check if doi prefix should be validated
+    # Get package
+    # If package id invalid or user not authorized then raises HTTPException
+    package = get_ckan_package_show(package, authorization)
+    # Extract doi
+    doi = package.get('doi')
+    if not doi:
+        raise HTTPException(status_code=500,
+                            detail="Package does not have a doi")
+
+    # TODO start dev here
+
+    return package
