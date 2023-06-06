@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from ckanapi import RemoteCKAN, NotFound
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, Header, HTTPException, Cookie
 from app.config import settings
 
 import logging
@@ -13,8 +13,13 @@ log = logging.getLogger(__name__)
 
 # TODO review exception formatting
 
+
 # TODO test with admin user
 # TODO review if DEBUG needed
+# TODO review if more generic exceptions should be returned
+#  (for example status 500, detail User not Found)
+# TODO review if auth method should use cookie or authorization header,
+#  this version uses authorization in header
 def get_user(user_id: str,
              authorization: Annotated[str | None, Header()] = None):
     """Authorize and return CKAN user."""
@@ -39,6 +44,39 @@ def get_user(user_id: str,
                             detail="User not found")
 
     return user
+
+
+# TODO test with admin user
+# TODO review if DEBUG needed
+# TODO review if more generic exceptions should be returned
+#  (for example status 500, detail User not Found)
+# TODO review if auth method should use cookie or authorization header,
+#  this version uses cookie which will only work on same website,
+#  NOTE: cookie may not work when sending to an external site
+# def get_user(user_id: str = None,
+#              ckan: Annotated[str | None, Cookie()] = None):
+#     """Authorize and return CKAN user."""
+#     # if not authorization:
+#     #     log.error("No Authorization header present")
+#     #     raise HTTPException(status_code=401,
+#     #                         detail="No Authorization header present")
+#
+#     try:
+#         ckan = RemoteCKAN(settings.API_URL, apikey=ckan)
+#         user = ckan.call_action("user_show", {'id': user_id})
+#
+#         # Check if user has email property,
+#         # this indicates the user is authorized.
+#         # If email not present then raise HTTPException.
+#         if not user.get('email'):
+#             raise HTTPException(status_code=403, detail="User not authorized")
+#
+#     except NotFound as e:
+#         log.exception(e)
+#         raise HTTPException(status_code=404,
+#                             detail="User not found")
+#
+#     return user
 
 
 # TODO revew
