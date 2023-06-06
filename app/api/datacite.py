@@ -8,7 +8,7 @@ from fastapi.security.api_key import APIKeyHeader, APIKeyCookie
 from app.auth import authorize_user
 from app.logic.datacite import reserve_draft_doi_datacite, DoiSuccess, \
     DoiErrors
-from app.logic.remote_ckan import get_ckan_package_show
+from app.logic.remote_ckan import ckan_package_show, ckan_package_patch
 
 # Setup logging
 import logging
@@ -59,10 +59,10 @@ ckan_cookie = APIKeyCookie(name="ckan",
     }
 )
 def reserve_draft_doi(
-        user: Annotated[str, Query(alias="user-id",
-                                   description="CKAN user id or name")],
-        package: Annotated[str, Query(alias="package-id",
-                                      description="CKAN package id or name")],
+        user_id: Annotated[str, Query(alias="user-id",
+                                      description="CKAN user id or name")],
+        package_id: Annotated[str, Query(alias="package-id",
+                                         description="CKAN package id or name")],
         response: Response,
         # ckan: str = Security(ckan_cookie),
         authorization: str = Security(authorization_header),
@@ -73,14 +73,14 @@ def reserve_draft_doi(
     """
 
     # Authorize user, if user invalid then raises HTTPException
-    authorize_user(user, authorization)
+    authorize_user(user_id, authorization)
     # user_info = get_user(user, ckan)
 
     # TODO clarify if doi will already be assigned to package
     #  or should be passed as arg
     # Get package
     # If package id invalid or user not authorized then raises HTTPException
-    package = get_ckan_package_show(package, authorization)
+    package = ckan_package_show(package_id, authorization)
 
     # Extract doi
     doi = package.get('doi')
@@ -89,7 +89,7 @@ def reserve_draft_doi(
                             detail="Package does not have a doi")
 
     # TODO remove test_doi
-    test_doi = "10.16904/envidat.test20"
+    test_doi = "10.16904/envidat.test22"
 
     # TODO revert to calling DataCite API with doi, test
     # Reserve DOI in "Draft" state with DataCite,
@@ -108,14 +108,15 @@ def reserve_draft_doi(
 #  and response.status_code block
 # TODO test with user id and package id (not just names)
 # TODO test dataset without doi
+# TODO test dataset with all publication_state choices
 @router.get(
     "/request",
     name="Request approval to publish/update"
 )
 async def request_publish_approval(
-        user: Annotated[str, Query(alias="user-id",
+        user_id: Annotated[str, Query(alias="user-id",
                                    description="CKAN user id or name")],
-        package: Annotated[str, Query(alias="package-id",
+        package_id: Annotated[str, Query(alias="package-id",
                                       description="CKAN package id or name")],
         response: Response,
         authorization: str = Security(authorization_header)
@@ -125,19 +126,40 @@ async def request_publish_approval(
     """
 
     # Authorize user, if user invalid then HTTPException raised
-    authorize_user(user, authorization)
+    authorize_user(user_id, authorization)
 
     # TODO review if doi validation needed
     # TODO check if doi prefix should be validated
     # Get package
     # If package id invalid or user not authorized then raises HTTPException
-    package = get_ckan_package_show(package, authorization)
+    package = ckan_package_show(package_id, authorization)
     # Extract doi
     doi = package.get('doi')
     if not doi:
         raise HTTPException(status_code=500,
-                            detail="Package does not have a doi")
+                            detail="Package does not have a 'doi'")
 
-    # TODO start dev here
+    # Extract publication_state
+    publication_state = package.get('publication_state')
+    if not publication_state:
+        raise HTTPException(status_code=500,
+                            detail="Package does not have "
+                                   "a 'publication_state'")
 
-    return package
+    # TODO remove
+    test_publication_state = "reserved"
+
+    # TODO revert to publication_state
+    # Check publication_state
+    # match publication_state:
+    match test_publication_state:
+
+        # User requests publication
+        case "reserved":
+            data = {'publication_state': 'pub_requested'}
+            package_patch = ckan_package_patch(package_id, data, authorization)
+            return package_patch
+
+        # TODO start dev here
+
+    return
