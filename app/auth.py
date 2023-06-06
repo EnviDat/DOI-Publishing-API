@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 # TODO review if DEBUG needed
 def get_user(user_id: str,
              authorization: Annotated[str | None, Header()] = None):
-    """Return CKAN user"""
+    """Authorize and return CKAN user."""
     if not authorization:
         log.error("No Authorization header present")
         raise HTTPException(status_code=401,
@@ -26,6 +26,13 @@ def get_user(user_id: str,
     try:
         ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
         user = ckan.call_action("user_show", {'id': user_id})
+
+        # Check if user has email property,
+        # this indicates the user is authorized.
+        # If email not present then raise HTTPException.
+        if not user.get('email'):
+            raise HTTPException(status_code=403, detail="User not authorized")
+
     except NotFound as e:
         log.exception(e)
         raise HTTPException(status_code=404,
