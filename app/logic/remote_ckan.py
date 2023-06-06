@@ -13,7 +13,10 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def get_ckan_package_show(
+# TODO review if authorization should be in header or cookie
+
+
+def ckan_package_show(
         package_id: str,
         authorization: Annotated[str | None, Header()] = None
 ):
@@ -41,3 +44,34 @@ def get_ckan_package_show(
                             detail="User not authorized to read package")
 
     return package
+
+
+def ckan_package_patch(
+        package_id: str,
+        data: dict,
+        authorization: Annotated[str | None, Header()] = None
+):
+    """
+    Patch a CKAN package.
+    """
+
+    if not authorization:
+        log.error("No Authorization header present")
+        raise HTTPException(status_code=401,
+                            detail="No Authorization header present")
+
+    try:
+        data_dict = {'id': package_id, **data}
+        ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
+        package = ckan.call_action("package_patch", data_dict)
+    except NotFound as e:
+        log.exception(e)
+        raise HTTPException(status_code=404,
+                            detail="Package not found")
+    except NotAuthorized as e:
+        log.exception(e)
+        raise HTTPException(status_code=403,
+                            detail="User not authorized to patch package")
+
+    return package
+
