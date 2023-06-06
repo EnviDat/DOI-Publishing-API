@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 #  (for example status 500, detail User not Found)
 # TODO review if auth method should use cookie or authorization header,
 #  this version uses authorization in header
-def get_user(user_id: str,
+def authorize_user(user_id: str,
              authorization: Annotated[str | None, Header()] = None):
     """Authorize and return CKAN user."""
     if not authorization:
@@ -106,7 +106,7 @@ def get_user(user_id: str,
 #     return user_info
 
 
-def get_admin(user=Depends(get_user)):
+def get_admin(user=Depends(authorize_user)):
     """Admin CKAN user."""
     # Determine if is an admin
     admin = user.get("sysadmin", False)

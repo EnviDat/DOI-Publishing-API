@@ -6,7 +6,7 @@ import ckanapi
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from app.auth import get_user, get_token
+from app.auth import authorize_user, get_token
 from app.config import settings
 from app.logic.mail import request_approval_email
 
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/approval", tags=["approval"])
 async def request_publish_approval(
     package_id: str,
     update: bool = False,
-    user=Depends(get_user),
+    user=Depends(authorize_user),
     auth_token=Depends(get_token),
 ):
     """Request approval to publish."""

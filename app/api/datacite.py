@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Security, Response, Query, Cookie
 from fastapi.security.api_key import APIKeyHeader, APIKeyCookie
 
-from app.auth import get_user
+from app.auth import authorize_user
 from app.logic.datacite import reserve_draft_doi_datacite, DoiSuccess, \
     DoiErrors
 from app.logic.remote_ckan import get_ckan_package_show
@@ -73,7 +73,7 @@ def reserve_draft_doi(
     """
 
     # Authorize user, if user invalid then raises HTTPException
-    get_user(user, authorization)
+    authorize_user(user, authorization)
     # user_info = get_user(user, ckan)
 
     # TODO clarify if doi will already be assigned to package
@@ -125,7 +125,7 @@ async def request_publish_approval(
     """
 
     # Authorize user, if user invalid then HTTPException raised
-    get_user(user, authorization)
+    authorize_user(user, authorization)
 
     # TODO review if doi validation needed
     # TODO check if doi prefix should be validated
