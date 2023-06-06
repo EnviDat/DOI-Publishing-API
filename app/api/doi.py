@@ -126,12 +126,14 @@ async def create_doi_draft(package_id: str):
 
     # Continue logic
     # # Call Datacite draft handler datacite.py
-    response = some_function_to_submit_datacite_draft()
-    if response.status_code != 201:
-        log.error(f"Datacite draft failed: {response.errors}")
-        return HTTPException(
-            status_code=response.status_code, message="Error in datacite draft"
-        )
+    # TODO implement
+    # TODO email admin successful/fails
+    # response = some_function_to_submit_datacite_draft()
+    # if response.status_code != 201:
+    #     log.error(f"Datacite draft failed: {response.errors}")
+    #     return HTTPException(
+    #         status_code=response.status_code, message="Error in datacite draft"
+    #     )
 
     return await DoiRealisationInPydantic.from_tortoise_orm(database_doi)
 

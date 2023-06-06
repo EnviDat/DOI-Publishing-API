@@ -15,6 +15,7 @@ log = logging.getLogger(__name__)
 router = APIRouter(prefix="/approval", tags=["approval"])
 
 
+# TODO review, similar logic moved to api.datacite.request
 @router.get("/request")
 async def request_publish_approval(
     package_id: str,
