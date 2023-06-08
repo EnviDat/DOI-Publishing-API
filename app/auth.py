@@ -21,8 +21,9 @@ log = logging.getLogger(__name__)
 # TODO review if auth method should use cookie or authorization header,
 #  this version uses authorization in header
 def authorize_user(user_id: str,
-             authorization: Annotated[str | None, Header()] = None):
+                   authorization: Annotated[str | None, Header()] = None):
     """Authorize and return CKAN user."""
+
     if not authorization:
         log.error("No Authorization header present")
         raise HTTPException(status_code=401,
@@ -69,7 +70,8 @@ def authorize_user(user_id: str,
 #         # this indicates the user is authorized.
 #         # If email not present then raise HTTPException.
 #         if not user.get('email'):
-#             raise HTTPException(status_code=403, detail="User not authorized")
+#             raise HTTPException(
+#             status_code=403, detail="User not authorized")
 #
 #     except NotFound as e:
 #         log.exception(e)
@@ -106,31 +108,38 @@ def authorize_user(user_id: str,
 #     return user_info
 
 
-def get_admin(user=Depends(authorize_user)):
-    """Admin CKAN user."""
-    # Determine if is an admin
-    admin = user.get("sysadmin", False)
+# TODO possibly implement more generic HTTPException message
+def authorize_admin(authorization: Annotated[str | None, Header()] = None):
+    """Authorize and return admin CKAN user."""
 
-    if not admin:
+    try:
+        admin_user_id = settings.ADMIN_USER_ID
+    except KeyError:
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+    user = authorize_user(admin_user_id, authorization)
+
+    is_sysadmin = user.get("sysadmin", False)
+    if not is_sysadmin:
         log.error(f"User {user} is not an admin")
         raise HTTPException(status_code=401,
-                            detail=f"User {user} is not an admin")
+                            detail="User not authorized")
 
     return user
 
 
 # TODO review
-# def get_admin(user_info=Depends(get_user)):
-#     """Admin CKAN user."""
-#     # Determine if is an admin
-#     admin = user_info.get("sysadmin", False)
-#
-#     if not admin:
-#         log.error(f"User {user_info} is not an admin")
-#         raise HTTPException(status_code=401,
-#                             detail=f"User {user_info} is not an admin")
-#
-#     return user_info
+def get_admin(user=Depends(authorize_user)):
+    """Authorize and return admin CKAN user."""
+
+    admin = user.get("sysadmin", False)
+
+    if not admin:
+        log.error(f"User {user} is not an admin")
+        raise HTTPException(status_code=401,
+                            detail="User not authorized")
+
+    return user
 
 
 def get_token(authorization: Annotated[str | None, Header()] = None):
