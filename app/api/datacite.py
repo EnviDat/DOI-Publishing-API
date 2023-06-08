@@ -17,9 +17,8 @@ log = logging.getLogger(__name__)
 
 # TODO verify signout
 # TODO review exception formatting, consider returning generic response
-# TODO add Swagger documentation of endpoints (title, description,
-#  query parameters etc.)
-# TODO implement authorization
+# TODO finalize authorization method (header vs. cookie)
+# TODO review HTTPException formatting, possibly use more generic messages
 
 
 # TODO review and remove dependencies if unused
@@ -46,7 +45,6 @@ ckan_cookie = APIKeyCookie(name="ckan",
 # TODO potentially remove responses, response arg
 #  and response.status_code block
 # TODO test dataset without doi
-# TODO test with user id and package id (not just names)
 @router.get(
     "/draft",
     name="Reserve draft DOI",
@@ -89,7 +87,7 @@ def reserve_draft_doi(
                             detail="Package does not have a doi")
 
     # TODO remove test_doi
-    test_doi = "10.16904/envidat.test22"
+    test_doi = "10.16904/envidat.test23"
 
     # TODO revert to calling DataCite API with doi, test
     # Reserve DOI in "Draft" state with DataCite,
@@ -103,26 +101,32 @@ def reserve_draft_doi(
     return datacite_response
 
 
-# TODO finish endpoint, currently WIP
-# TODO potentially remove responses, response arg
+# TODO potentially remove responses, response arg.
 #  and response.status_code block
-# TODO test with user id and package id (not just names)
+#  If response kept finalize format.
 # TODO test dataset without doi
-# TODO test dataset with all publication_state choices
+# TODO implement email sending
 @router.get(
     "/request",
     name="Request approval to publish/update"
 )
 async def request_publish_approval(
         user_id: Annotated[str, Query(alias="user-id",
-                                   description="CKAN user id or name")],
+                                      description="CKAN user id or name")],
         package_id: Annotated[str, Query(alias="package-id",
-                                      description="CKAN package id or name")],
+                                         description="CKAN package id "
+                                                     "or name")],
         response: Response,
         authorization: str = Security(authorization_header)
 ):
     """
     Request approval from admin to publish or update dataset with DataCite.
+
+    Sends email to admin.
+
+    # TODO clarify
+    If initial 'publication_state' is 'reserved' or 'published'
+    then update to 'pub_pending'.
     """
 
     # Authorize user, if user invalid then HTTPException raised
@@ -133,6 +137,7 @@ async def request_publish_approval(
     # Get package
     # If package id invalid or user not authorized then raises HTTPException
     package = ckan_package_show(package_id, authorization)
+
     # Extract doi
     doi = package.get('doi')
     if not doi:
@@ -147,19 +152,37 @@ async def request_publish_approval(
                                    "a 'publication_state'")
 
     # TODO remove
-    test_publication_state = "reserved"
+    publication_state = "published"
 
-    # TODO revert to publication_state
-    # Check publication_state
-    # match publication_state:
-    match test_publication_state:
+    # TODO refactor with if branching and simplify if 'publication_state'
+    #  is 'pub_pending' for both "reserved" and "published" cases
+    # Possible 'publication_state' values in EnviDat CKAN:
+    # ['', 'reserved', 'pub_requested', 'pub_pending', 'approved', 'published']
+    # Send email to admin  publication_state
+    match publication_state:
 
         # User requests publication
         case "reserved":
-            data = {'publication_state': 'pub_requested'}
-            package_patch = ckan_package_patch(package_id, data, authorization)
-            return package_patch
 
-        # TODO start dev here
+            # TODO send “Publication request” email to admin and user
 
-    return
+            data = {'publication_state': 'pub_pending'}
+            package = ckan_package_patch(package_id, data, authorization)
+
+        # User requests metadata update
+        case "published":
+
+            # TODO send "Update request" email to admin and user
+
+            # TODO clairify appropriate 'publication_state'
+            data = {'publication_state': 'pub_pending'}
+            package = ckan_package_patch(package_id, data, authorization)
+
+        # Default case, raise HTTP excpetion
+        case _:
+            raise HTTPException(status_code=500,
+                                detail="Value for 'publication_state' cannot "
+                                       "be processed")
+
+    return {'publication_state': package.get('publication_state')}
+

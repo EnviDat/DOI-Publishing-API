@@ -41,7 +41,7 @@ def ckan_package_show(
     except NotAuthorized as e:
         log.exception(e)
         raise HTTPException(status_code=403,
-                            detail="User not authorized to read package")
+                            detail="User not authorized")
 
     return package
 
@@ -71,7 +71,7 @@ def ckan_package_patch(
     except NotAuthorized as e:
         log.exception(e)
         raise HTTPException(status_code=403,
-                            detail="User not authorized to patch package")
+                            detail="User not authorized")
 
     return package
 
