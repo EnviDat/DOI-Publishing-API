@@ -194,3 +194,37 @@ async def request_publish_or_update(
 
     return {'publication_state': package.get('publication_state')}
 
+
+# TODO potentially remove responses, response arg.
+#  and response.status_code block
+#  If response kept finalize format
+# TODO implement email sending
+# TODO clarify 'publication_state'
+@router.get(
+    "/publish",
+    name="Publish/update dataset"
+)
+async def publish_or_update_datacite(
+        package_id: Annotated[str, Query(alias="package-id",
+                                         description="CKAN package id "
+                                                     "or name")],
+        # response: Response,
+        authorization: str = Security(authorization_header)
+):
+    """
+    Publish or update dataset with DataCite.
+
+    Only authorized admin can use this endpoint.
+    Send email to admin and user.
+    If initial 'publication_state' is 'reserved' or 'published'
+    then update to 'pub_pending'.
+    """
+
+    # Authorize admin user, if user invalid then HTTPException raised
+    admin_user = authorize_admin(authorization)
+
+    # TODO start dev here
+
+    return admin_user
+
+
