@@ -47,6 +47,7 @@ ckan_cookie = APIKeyCookie(name="ckan",
 # TODO potentially remove responses, response arg
 #  and response.status_code block
 # TODO test dataset without doi
+# TODO review when 'publication_state' will be changed to 'reserved'
 @router.get(
     "/draft",
     name="Reserve draft DOI",
@@ -148,16 +149,15 @@ async def request_publish_or_update(
                                    "a 'publication_state'")
 
     # TODO remove
-    publication_state = "published"
+    # publication_state = "published"
 
-    # TODO refactor with if branching and simplify if 'publication_state'
-    #  is 'pub_pending' for both "reserved" and "published" cases
     # Possible 'publication_state' values in EnviDat CKAN:
     # ['', 'reserved', 'pub_requested', 'pub_pending', 'approved', 'published']
-    # Send email to admin  publication_state
+    # Send email to admin requesting publication/update
     match publication_state:
 
-        # User requests publication
+        # User requests publication,
+        # if 'publication_state' fails to update then raises HTTPExcpetion
         case "reserved":
 
             # TODO send “Publication request” email to admin and user
@@ -167,12 +167,8 @@ async def request_publish_or_update(
 
         # User requests metadata update
         case "published":
-
             # TODO send "Update request" email to admin and user
-
-            # TODO clairify appropriate 'publication_state'
-            data = {'publication_state': 'pub_pending'}
-            package = ckan_package_patch(package_id, data, authorization)
+            pass
 
         # Default case, raise HTTP excpetion
         case _:
@@ -214,5 +210,3 @@ async def publish_or_update_datacite(
     # TODO start dev here
 
     return admin_user
-
-
