@@ -58,10 +58,11 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
         password = settings.DATACITE_PASSWORD
         timeout = settings.DATACITE_TIMEOUT
     except KeyError as e:
+        log.error(f'KeyError: {e} does not exist in config')
         return {
             "status_code": 500,
             "errors": [
-                {"config_error": f"config setting '{e}' does not exist"}
+                {"config_error": "config setting does not exist"}
             ]
         }
 
@@ -88,14 +89,21 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
 
     except requests.exceptions.ConnectTimeout as e:
         log.exception(e)
-        raise HTTPException(status_code=408,
-                            detail="Connection timeout")
+        return {
+            "status_code": 408,
+            "errors": [
+                {"error": "Connection timed out"}
+            ]
+        }
 
     except Exception as e:
         log.exception(e)
-        raise HTTPException(status_code=500,
-                            detail="Internal server error from DataCite")
-
+        return {
+            "status_code": 500,
+            "errors": [
+                {"error": "Internal server error from DataCite"}
+            ]
+        }
 
     # Return formatted DOI success or errors object
     return format_response(response)
@@ -134,7 +142,7 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
         return {
             "status_code": 500,
             "errors": [
-                {"config_error": f"config setting '{e}' does not exist"}
+                {"config_error": "config setting does not exist"}
             ]
         }
 
@@ -193,13 +201,21 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
 
     except requests.exceptions.ConnectTimeout as e:
         log.exception(e)
-        raise HTTPException(status_code=408,
-                            detail="Connection timeout")
+        return {
+            "status_code": 408,
+            "errors": [
+                {"error": "Connection timed out"}
+            ]
+        }
 
     except Exception as e:
         log.exception(e)
-        raise HTTPException(status_code=500,
-                            detail="Internal server error from DataCite")
+        return {
+            "status_code": 500,
+            "errors": [
+                {"error": "Internal server error from DataCite"}
+            ]
+        }
 
     # Return formatted DOI success or errors object
     return format_response(response)
