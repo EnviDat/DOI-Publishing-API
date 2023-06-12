@@ -8,7 +8,7 @@ from fastapi.security.api_key import APIKeyHeader, APIKeyCookie
 from app.auth import authorize_user, get_admin, authorize_admin
 from app.config import settings
 from app.logic.datacite import reserve_draft_doi_datacite, DoiSuccess, \
-    DoiErrors, validate_doi
+    DoiErrors, validate_doi, publish_datacite
 from app.logic.remote_ckan import ckan_package_show, ckan_package_patch
 
 # Setup logging
@@ -90,7 +90,7 @@ def reserve_draft_doi(
                             detail="Package does not have a doi")
 
     # TODO remove test_doi
-    test_doi = "10.16904/envidat.test24"
+    test_doi = "10.16904/envidat.test25"
 
     # TODO revert to calling DataCite API with doi
     # Reserve DOI in "Draft" state with DataCite,
@@ -183,10 +183,17 @@ async def request_publish_or_update(
 #  and response.status_code block
 #  If response kept finalize format
 # TODO implement email sending
-# TODO clarify 'publication_state'
 @router.get(
     "/publish",
-    name="Publish/update dataset"
+    name="Publish/update dataset",
+    status_code=200,
+    responses={
+        200: {"model": DoiSuccess,
+              "description": "DOI successfully published/updated "
+                             "with DataCite"},
+        422: {"model": DoiErrors},
+        500: {"model": DoiErrors}
+    }
 )
 async def publish_or_update_datacite(
         package_id: Annotated[str, Query(alias="package-id",
@@ -199,14 +206,32 @@ async def publish_or_update_datacite(
     Publish or update dataset with DataCite.
 
     Only authorized admin can use this endpoint.
-    Send email to admin and user.
-    If initial 'publication_state' is 'reserved' or 'published'
-    then update to 'pub_pending'.
+    Sends email to admin and user.
+    Updates 'publication_state' to 'published' in CKAN for datasets that were
+    published the first time and had a value of ‘pub_pending’.
     """
 
     # Authorize admin user, if user invalid then HTTPException raised
-    admin_user = authorize_admin(authorization)
+    authorize_admin(authorization)
+
+    # Get package,
+    # if package_id invalid or user not authorized then raises HTTPException
+    package = ckan_package_show(package_id, authorization)
+
+    # Extract publication_state
+    publication_state = package.get('publication_state')
+    if not publication_state:
+        raise HTTPException(status_code=500,
+                            detail="Package does not have "
+                                   "a 'publication_state'")
+
+    # TODO investigate if 'maintainer' or 'creator_user_id'
+    #  should be user notified by email
+    # Publish/update dataset in Datacite
+    # Send notification email to admin and user
 
     # TODO start dev here
+    # TEST
+    test = publish_datacite(package)
 
-    return admin_user
+    return test
