@@ -2,6 +2,7 @@
 
 from typing import Annotated
 
+import requests
 from ckanapi import RemoteCKAN, NotFound, NotAuthorized
 from fastapi import HTTPException, Header
 
@@ -42,6 +43,10 @@ def ckan_package_show(
         log.exception(e)
         raise HTTPException(status_code=403,
                             detail="User not authorized")
+    except requests.exceptions.ConnectionError as e:
+        log.exception(e)
+        raise HTTPException(status_code=502,
+                            detail="Connection error")
 
     return package
 
@@ -72,6 +77,10 @@ def ckan_package_patch(
         log.exception(e)
         raise HTTPException(status_code=403,
                             detail="User not authorized")
+    except requests.exceptions.ConnectionError as e:
+        log.exception(e)
+        raise HTTPException(status_code=502,
+                            detail="Connection error")
 
     return package
 

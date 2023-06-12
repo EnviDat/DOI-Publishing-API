@@ -2,6 +2,7 @@
 
 from typing import Annotated
 
+import requests
 from ckanapi import RemoteCKAN, NotFound
 from fastapi import Depends, Header, HTTPException, Cookie
 from app.config import settings
@@ -41,6 +42,11 @@ def authorize_user(user_id: str,
         log.exception(e)
         raise HTTPException(status_code=404,
                             detail="User not found")
+
+    except requests.exceptions.ConnectionError as e:
+        log.exception(e)
+        raise HTTPException(status_code=502,
+                            detail="Connection error")
 
     return user
 
