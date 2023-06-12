@@ -56,6 +56,7 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
         api_url = settings.DATACITE_API_URL
         client_id = settings.DATACITE_CLIENT_ID
         password = settings.DATACITE_PASSWORD
+        timeout = settings.DATACITE_TIMEOUT
     except KeyError as e:
         return {
             "status_code": 500,
@@ -78,10 +79,23 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
     payload_json = json.dumps(payload)
     headers = {"Content-Type": "application/vnd.api+json"}
 
-    response = requests.post(api_url,
-                             headers=headers,
-                             auth=(client_id, password),
-                             data=payload_json)
+    try:
+        response = requests.post(api_url,
+                                 headers=headers,
+                                 auth=(client_id, password),
+                                 data=payload_json,
+                                 timeout=timeout)
+
+    except requests.exceptions.ConnectTimeout as e:
+        log.exception(e)
+        raise HTTPException(status_code=408,
+                            detail="Connection timeout")
+
+    except Exception as e:
+        log.exception(e)
+        raise HTTPException(status_code=500,
+                            detail="Internal server error from DataCite")
+
 
     # Return formatted DOI success or errors object
     return format_response(response)
@@ -114,6 +128,7 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
         client_id = settings.DATACITE_CLIENT_ID
         password = settings.DATACITE_PASSWORD
         site_url = settings.SITE_DATASET_URL
+        timeout = settings.DATACITE_TIMEOUT
     except KeyError as e:
         log.error(f'KeyError: {e} does not exist in config')
         return {
@@ -141,7 +156,7 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     if xml:
         xml_encoded = xml_to_base64(xml)
     else:
-        log.error("ERROR unable to convert record to DataCite XML format")
+        log.error("Failed to convert record to DataCite XML format")
         return {
             "status_code": 500,
             "errors": [
@@ -150,8 +165,7 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
             ]
         }
 
-    # Create payload
-    # Set "event" to "publish"
+    # Create payload, set "event" to "publish"
     payload = {
         "data": {
             "id": doi,
@@ -170,10 +184,22 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     payload_json = json.dumps(payload)
     headers = {"Content-Type": "application/vnd.api+json"}
 
-    response = requests.put(url,
-                            headers=headers,
-                            auth=(client_id, password),
-                            data=payload_json)
+    try:
+        response = requests.put(url,
+                                headers=headers,
+                                auth=(client_id, password),
+                                data=payload_json,
+                                timeout=timeout)
+
+    except requests.exceptions.ConnectTimeout as e:
+        log.exception(e)
+        raise HTTPException(status_code=408,
+                            detail="Connection timeout")
+
+    except Exception as e:
+        log.exception(e)
+        raise HTTPException(status_code=500,
+                            detail="Internal server error from DataCite")
 
     # Return formatted DOI success or errors object
     return format_response(response)
@@ -183,7 +209,7 @@ def format_response(
         response: requests.models.Response
 ) -> DoiSuccess | DoiErrors:
     """
-    Checks if response has successful HTTP status code(200-299) and returns
+    Checks if response has successful HTTP status code (200-299) and returns
         DataCite response object formatted in DoiSuccess or DoiErrors format.
 
     Args:
