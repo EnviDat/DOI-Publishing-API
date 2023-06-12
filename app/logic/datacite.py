@@ -1,18 +1,19 @@
 """Reserve and Publish DOIs to Datacite."""
-
+import base64
 # TODO review and possibly remove dependencies in lib/envidat
 
 from typing import TypedDict
 import json
 import requests
+from envidat.converters.datacite_converter import convert_datacite
 from fastapi import HTTPException
 
 # from pydantic import BaseModel
 from app.config import settings
 
-
 # Setup logging
 import logging
+
 log = logging.getLogger(__name__)
 
 
@@ -83,26 +84,119 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
                              data=payload_json)
 
     # Return formatted DOI success or errors object
-    # Expected status_code is 201
-    return format_response(response, 201)
+    return format_response(response)
 
 
-def format_response(response: requests.models.Response,
-                    expected_status_code: int) -> DoiSuccess | DoiErrors:
+# TODO review exception formatting, including from calls to helpers
+# TODO test
+def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
+    """Publish/update an EnviDat record in DataCite.
+
+       Converts EnviDat record to DataCite XML format before publication.
+       Assumption: DOI is already published in DataCite in "draft" state
+
+       For DataCite documentation of this process see:
+       https://support.datacite.org/docs/api-create-dois#changing-the-doi-state
+       https://support.datacite.org/docs/api-create-dois#provide-metadata-in-formats
+       -other-than-json
+
+    Args:
+        package (dict): Individual EnviDat metadata entry record
+                                    dictionary.
+
+    Returns:
+        str/None: DOI reserved in DataCite or None if DOI reservation failed
     """
-    Checks if response has expected HTTP status code and returns DataCite
-        response object formatted in DoiSuccess or DoiErrors format.
+
+    # Extract variables from config needed to call DataCite API
+    try:
+        api_url = settings.DATACITE_API_URL
+        client_id = settings.DATACITE_CLIENT_ID
+        password = settings.DATACITE_PASSWORD
+        site_url = settings.SITE_DATASET_URL
+    except KeyError as e:
+        log.error(f'KeyError: {e} does not exist in config')
+        return {
+            "status_code": 500,
+            "errors": [
+                {"config_error": f"config setting '{e}' does not exist"}
+            ]
+        }
+
+    # Get doi and validate,
+    # if doi not truthy or has invalid prefix then raises HTTPException
+    doi = validate_doi(package)
+
+    # Get metadata record URL
+    name = package.get("name", package["id"])
+    url = f"{site_url}/{name}"
+
+    # Assign name_doi_map used in DataCite conversion
+    name_doi_map = {name: doi}
+
+    # Convert metadata record to DataCite XML and encode to base64 formatted
+    # string
+    xml = convert_datacite(package, name_doi_map)
+
+    if xml:
+        xml_encoded = xml_to_base64(xml)
+    else:
+        log.error("ERROR unable to convert record to DataCite XML format")
+        return {
+            "status_code": 500,
+            "errors": [
+                {"config_error": "Failed to convert package to DataCite "
+                                 "format xml"}
+            ]
+        }
+
+    # Create payload
+    # Set "event" to "publish"
+    payload = {
+        "data": {
+            "id": doi,
+            "type": "dois",
+            "attributes": {
+                "event": "publish",
+                "doi": doi,
+                "url": url,
+                "xml": xml_encoded
+            }
+        }
+    }
+
+    # Convert payload to JSON and then send PUT request to DataCite
+    url = f"{api_url}/{doi}"
+    payload_json = json.dumps(payload)
+    headers = {"Content-Type": "application/vnd.api+json"}
+
+    response = requests.put(url,
+                            headers=headers,
+                            auth=(client_id, password),
+                            data=payload_json)
+
+    # Return formatted DOI success or errors object
+    return format_response(response)
+
+
+def format_response(
+        response: requests.models.Response
+) -> DoiSuccess | DoiErrors:
+    """
+    Checks if response has successful HTTP status code(200-299) and returns
+        DataCite response object formatted in DoiSuccess or DoiErrors format.
 
     Args:
         response (requests.models.Response): Response from call to DataCite API
-        expected_status_code (int): Expected HTTP status code
 
      Returns:
         DoiSuccess | DoiErrors: See TypedDict class definitions
     """
     response_json = response.json()
 
-    if response.status_code == expected_status_code:
+    successful_status_codes = range(200, 300)
+
+    if response.status_code in successful_status_codes:
         doi = response_json.get('data').get('id')
         if doi:
             return {
@@ -155,3 +249,21 @@ def validate_doi(package: dict):
                             detail=f"Config setting does not exist: {e}")
 
     return doi
+
+
+def xml_to_base64(xml: str) -> str:
+    """Converts XML formatted string to base64 formatted string.
+
+       Returns string in base64 format (not bytes)
+
+    Args:
+        xml (str): String in XML format
+
+    Returns:
+        str: base64 formatted string conversion of input xml_str
+    """
+    if isinstance(xml, str):
+        xml_bytes = xml.encode('utf-8')
+        xml_encoded = base64.b64encode(xml_bytes)
+        xml_str = xml_encoded.decode()
+        return xml_str
