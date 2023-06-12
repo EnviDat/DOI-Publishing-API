@@ -1,12 +1,11 @@
 """DataCite API Router"""
-
+import time
 from typing import Annotated
 # from fastapi import Depends, Header
 from fastapi import APIRouter, HTTPException, Security, Response, Query, Cookie
 from fastapi.security.api_key import APIKeyHeader, APIKeyCookie
 
-from app.auth import authorize_user, get_admin, authorize_admin
-from app.config import settings
+from app.auth import authorize_user, authorize_admin
 from app.logic.datacite import reserve_draft_doi_datacite, DoiSuccess, \
     DoiErrors, validate_doi, publish_datacite
 from app.logic.remote_ckan import ckan_package_show, ckan_package_patch
@@ -56,17 +55,22 @@ ckan_cookie = APIKeyCookie(name="ckan",
         201: {"model": DoiSuccess,
               "description": "Draft DOI successfully reserved with DataCite"},
         422: {"model": DoiErrors},
-        500: {"model": DoiErrors}
+        500: {"model": DoiErrors},
+        502: {"model": DoiErrors}
     }
 )
 def reserve_draft_doi(
         user_id: Annotated[str, Query(alias="user-id",
                                       description="CKAN user id or name")],
         package_id: Annotated[str, Query(alias="package-id",
-                                         description="CKAN package id or name")],
+                                         description="CKAN package id or "
+                                                     "name")],
         response: Response,
         # ckan: str = Security(ckan_cookie),
         authorization: str = Security(authorization_header),
+        attempts: Annotated[int, Query(description="Number of attempts to "
+                                                   "reserve DOI with DataCite "
+                                                   "API")] = 1
 ):
     """
     Authenticate user, extract DOI from package, and reserve draft DOI in
@@ -90,17 +94,38 @@ def reserve_draft_doi(
                             detail="Package does not have a doi")
 
     # TODO remove test_doi
-    test_doi = "10.16904/envidat.test25"
+    test_doi = "10.16904/envidat.test32"
 
-    # TODO revert to calling DataCite API with doi
-    # Reserve DOI in "Draft" state with DataCite,
+    # Reserve DOI in draft state with DataCite,
+    # if response status_code not in successful_status_codes
+    # then retry "attempts" times
     # datacite_response = reserve_draft_doi_datacite(doi)
-    datacite_response = reserve_draft_doi_datacite(test_doi)
+    successful_status_codes = range(200, 300)
+    datacite_response = {}
+    attempt_count = 0
 
-    # Set response status code
+    while attempt_count <= attempts:
+
+        # TODO remove print staement
+        print('LOOP')
+
+        # TODO revert to calling DataCite API with doi
+        datacite_response = reserve_draft_doi_datacite(test_doi)
+
+        if datacite_response.get('status_code') in successful_status_codes:
+            response.status_code = datacite_response.get('status_code')
+            return datacite_response
+
+        # Else attempt to call DataCite API again
+        attempt_count += 1
+
+        # TODO review because it seems laggy
+        # Wait 3 seconds before trying to call DataCite again
+        # time.sleep(3)
+
+    # TODO email admin to notify of failure to reserve DOI with datacite
+
     response.status_code = datacite_response.get('status_code', 500)
-
-    # Return formatted response
     return datacite_response
 
 
@@ -183,6 +208,7 @@ async def request_publish_or_update(
 #  and response.status_code block
 #  If response kept finalize format
 # TODO implement email sending
+# TODO review exception formatting
 @router.get(
     "/publish",
     name="Publish/update dataset",
@@ -192,7 +218,8 @@ async def request_publish_or_update(
               "description": "DOI successfully published/updated "
                              "with DataCite"},
         422: {"model": DoiErrors},
-        500: {"model": DoiErrors}
+        500: {"model": DoiErrors},
+        502: {"model": DoiErrors}
     }
 )
 async def publish_or_update_datacite(
@@ -211,7 +238,7 @@ async def publish_or_update_datacite(
     published the first time and had a value of ‘pub_pending’.
     """
 
-    # Authorize admin user, if user invalid then HTTPException raised
+    # Authorize admin user, if authorization invalid then HTTPException raised
     authorize_admin(authorization)
 
     # Get package,
@@ -225,13 +252,37 @@ async def publish_or_update_datacite(
                             detail="Package does not have "
                                    "a 'publication_state'")
 
-    # TODO investigate if 'maintainer' or 'creator_user_id'
+    # TODO check if 'maintainer' or 'creator_user_id'
     #  should be user notified by email
+    # TODO refactor to handle invalid publication_state first
     # Publish/update dataset in Datacite
     # Send notification email to admin and user
+    if publication_state in ['pub_pending', 'published']:
 
-    # TODO start dev here
-    # TEST
-    test = publish_datacite(package)
+        # TODO refactor to set up loop to retry
+        # TODO email admin is fails to publish/update to DataCite
+        # Send package to DataCite
+        response = publish_datacite(package)
 
-    return test
+        if publication_state == 'pub_pending':
+
+            # TODO test
+            data = {'publication_state': 'published'}
+            ckan_package_patch(package_id, data, authorization)
+
+            # TODO send "Publication Finished" email to admin and user
+            pass
+
+        elif publish_datacite == 'published':
+            # TODO send "DOI Metadata Updated" email to admin and user
+            pass
+
+    else:
+        raise HTTPException(status_code=500,
+                            detail="Value for 'publication_state' cannot "
+                                   "be processed")
+
+    return response
+
+
+
