@@ -8,7 +8,7 @@ from fastapi.security.api_key import APIKeyHeader, APIKeyCookie
 from app.auth import authorize_user, get_admin, authorize_admin
 from app.config import settings
 from app.logic.datacite import reserve_draft_doi_datacite, DoiSuccess, \
-    DoiErrors
+    DoiErrors, validate_doi
 from app.logic.remote_ckan import ckan_package_show, ckan_package_patch
 
 # Setup logging
@@ -16,6 +16,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+# TODO test with production
 # TODO verify signout
 # TODO review exception formatting, consider returning generic response
 # TODO finalize authorization method (header vs. cookie)
@@ -73,14 +74,14 @@ def reserve_draft_doi(
 
     # Authorize user, if user invalid then raises HTTPException
     authorize_user(user_id, authorization)
-    # user_info = get_user(user, ckan)
 
-    # TODO clarify if doi will already be assigned to package
-    #  or should be passed as arg
     # Get package
     # If package id invalid or user not authorized then raises HTTPException
     package = ckan_package_show(package_id, authorization)
 
+    # TODO clarify if doi will already be assigned to package
+    #  or will be assigned after reserving doi with DataCite
+    # TODO possibly validate doi by calling validate_doi()
     # Extract doi
     doi = package.get('doi')
     if not doi:
@@ -90,7 +91,7 @@ def reserve_draft_doi(
     # TODO remove test_doi
     test_doi = "10.16904/envidat.test24"
 
-    # TODO revert to calling DataCite API with doi, test
+    # TODO revert to calling DataCite API with doi
     # Reserve DOI in "Draft" state with DataCite,
     # datacite_response = reserve_draft_doi_datacite(doi)
     datacite_response = reserve_draft_doi_datacite(test_doi)
@@ -131,26 +132,13 @@ async def request_publish_or_update(
     # Authorize user, if user invalid then HTTPException raised
     authorize_user(user_id, authorization)
 
-    # Get package
-    # If package id invalid or user not authorized then raises HTTPException
+    # Get package,
+    # if package_id invalid or user not authorized then raises HTTPException
     package = ckan_package_show(package_id, authorization)
 
-    # TODO extract doi and doi prefix validation to logic\datacite.py
-    # Extract doi
-    doi = package.get('doi')
-    if not doi:
-        raise HTTPException(status_code=500,
-                            detail="Package does not have a 'doi'")
-
-    # Validate doi prefix
-    try:
-        doi_prefix = settings.DOI_PREFIX
-        prefix = doi.partition('/')
-        if prefix != doi_prefix:
-            raise HTTPException(status_code=403, detail="Invalid DOI prefix")
-    except KeyError as e:
-        raise HTTPException(status_code=500,
-                            detail=f"Config setting does not exist: {e}")
+    # Validate doi,
+    # if doi not truthy or has invalid prefix then raises HTTPException
+    validate_doi(package)
 
     # Extract publication_state
     publication_state = package.get('publication_state')

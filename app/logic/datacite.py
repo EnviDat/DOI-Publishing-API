@@ -5,6 +5,7 @@
 from typing import TypedDict
 import json
 import requests
+from fastapi import HTTPException
 
 # from pydantic import BaseModel
 from app.config import settings
@@ -124,3 +125,33 @@ def format_response(response: requests.models.Response,
             "status_code": response.status_code,
             "errors": response_json.get('errors')
         }
+
+
+def validate_doi(package: dict):
+    """
+    Returns doi if it truthy and has EnviDat doi prefix.
+
+    Args:
+        package (dict): CKAN EnviDat package dictionary
+
+    Returns:
+        doi (str): validated doi from input package
+    """
+
+    # Check if doi is truthy in package
+    doi = package.get('doi')
+    if not doi:
+        raise HTTPException(status_code=500,
+                            detail="Package does not have a doi")
+
+    # Validate doi prefix
+    try:
+        doi_prefix = settings.DOI_PREFIX
+        prefix = (doi.partition('/'))[0]
+        if prefix != doi_prefix:
+            raise HTTPException(status_code=403, detail="Invalid DOI prefix")
+    except KeyError as e:
+        raise HTTPException(status_code=500,
+                            detail=f"Config setting does not exist: {e}")
+
+    return doi
