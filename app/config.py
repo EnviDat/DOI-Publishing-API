@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     DOI_PREFIX: str
     DOI_SUFFIX_TAG: Optional[str] = ""
     ADMIN_USER_ID: str
+    SITE_DATASET_URL: str
 
     BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []
 

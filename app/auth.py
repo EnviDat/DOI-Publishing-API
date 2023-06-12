@@ -14,8 +14,6 @@ log = logging.getLogger(__name__)
 # TODO review exception formatting
 
 
-# TODO test with admin user
-# TODO review if DEBUG needed
 # TODO review if more generic exceptions should be returned
 #  (for example status 500, detail User not Found)
 # TODO review if auth method should use cookie or authorization header,
