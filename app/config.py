@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     DATACITE_API_URL: AnyHttpUrl
     DATACITE_CLIENT_ID: str
     DATACITE_PASSWORD: str
-    DATACITE_TIMEOUT: int
+    DATACITE_TIMEOUT: int | float
     DOI_PREFIX: str
     DOI_SUFFIX_TAG: Optional[str] = ""
     ADMIN_USER_ID: str
