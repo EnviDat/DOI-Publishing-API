@@ -1,4 +1,5 @@
 """DataCite API Router"""
+
 import time
 from typing import Annotated
 # from fastapi import Depends, Header
@@ -94,7 +95,7 @@ def reserve_draft_doi(
                             detail="Package does not have a doi")
 
     # TODO remove test_doi
-    test_doi = "10.16904/envidat.test32"
+    test_doi = "10.16904/envidat.test33"
 
     # Reserve DOI in draft state with DataCite,
     # if response status_code not in successful_status_codes
@@ -106,7 +107,7 @@ def reserve_draft_doi(
 
     while attempt_count <= attempts:
 
-        # TODO remove print staement
+        # TODO remove print statement
         print('LOOP')
 
         # TODO revert to calling DataCite API with doi
@@ -226,8 +227,11 @@ async def publish_or_update_datacite(
         package_id: Annotated[str, Query(alias="package-id",
                                          description="CKAN package id "
                                                      "or name")],
-        # response: Response,
-        authorization: str = Security(authorization_header)
+        response: Response,
+        authorization: str = Security(authorization_header),
+        attempts: Annotated[int, Query(description="Number of attempts to "
+                                                   "publish/update DOI with"
+                                                   " DataCite API")] = 1
 ):
     """
     Publish or update dataset with DataCite.
@@ -252,37 +256,42 @@ async def publish_or_update_datacite(
                             detail="Package does not have "
                                    "a 'publication_state'")
 
-    # TODO check if 'maintainer' or 'creator_user_id'
-    #  should be user notified by email
-    # TODO refactor to handle invalid publication_state first
-    # Publish/update dataset in Datacite
-    # Send notification email to admin and user
-    if publication_state in ['pub_pending', 'published']:
-
-        # TODO refactor to set up loop to retry
-        # TODO email admin is fails to publish/update to DataCite
-        # Send package to DataCite
-        response = publish_datacite(package)
-
-        if publication_state == 'pub_pending':
-
-            # TODO test
-            data = {'publication_state': 'published'}
-            ckan_package_patch(package_id, data, authorization)
-
-            # TODO send "Publication Finished" email to admin and user
-            pass
-
-        elif publish_datacite == 'published':
-            # TODO send "DOI Metadata Updated" email to admin and user
-            pass
-
-    else:
+    # Check if publication_state can be processed
+    if publication_state not in ['pub_pending', 'published']:
         raise HTTPException(status_code=500,
                             detail="Value for 'publication_state' cannot "
                                    "be processed")
 
-    return response
+    # TODO check if 'maintainer' or 'creator_user_id'
+    #  should be user notified by email
+    # Publish/update dataset in Datacite,
+    # if response status_code not in successful_status_codes
+    # then retry "attempts" times
+    # Send notification email to admin and user
+    successful_status_codes = range(200, 300)
+    datacite_response = {}
+    attempt_count = 0
 
+    while attempt_count <= attempts:
 
+        # TODO remove print statement
+        print('LOOP')
 
+        # Send package to DataCite
+        datacite_response = publish_datacite(package)
+
+        if datacite_response.get('status_code') in successful_status_codes:
+            response.status_code = datacite_response.get('status_code')
+            return datacite_response
+
+        # Else attempt to call DataCite API again
+        attempt_count += 1
+
+        # TODO review because it seems laggy
+        # Wait 3 seconds before trying to call DataCite again
+        # time.sleep(3)
+
+    # TODO email admin to notify of failure to publish/update DOI with datacite
+
+    response.status_code = datacite_response.get('status_code', 500)
+    return datacite_response
