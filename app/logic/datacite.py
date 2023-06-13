@@ -110,12 +110,11 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
 
 
 # TODO review exception formatting, including from calls to helpers
-# TODO test
 def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
-    """Publish/update an EnviDat record in DataCite.
+    """
+       Publish/update an EnviDat record in DataCite.
 
        Converts EnviDat record to DataCite XML format before publication.
-       Assumption: DOI is already published in DataCite in "draft" state
 
        For DataCite documentation of this process see:
        https://support.datacite.org/docs/api-create-dois#changing-the-doi-state
@@ -157,21 +156,28 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     # Assign name_doi_map used in DataCite conversion
     name_doi_map = {name: doi}
 
-    # Convert metadata record to DataCite XML and encode to base64 formatted
-    # string
-    xml = convert_datacite(package, name_doi_map)
+    # Assign conversion_error to return if conversion of package to
+    # DataCite XML fails
+    conversion_error = {
+        "status_code": 500,
+        "errors": [
+            {"error": "Failed to convert package to DataCite format XML"}
+        ]
+    }
 
-    if xml:
-        xml_encoded = xml_to_base64(xml)
-    else:
-        log.error("Failed to convert record to DataCite XML format")
-        return {
-            "status_code": 500,
-            "errors": [
-                {"config_error": "Failed to convert package to DataCite "
-                                 "format xml"}
-            ]
-        }
+    # Convert metadata record to DataCite formatted XML
+    # and encode to base64 formatted string
+    try:
+        xml = convert_datacite(package, name_doi_map)
+        if xml:
+            xml_encoded = xml_to_base64(xml)
+            if not xml_encoded:
+                return conversion_error
+        else:
+            return conversion_error
+    except ValueError as e:
+        log.error(e)
+        return conversion_error
 
     # Create payload, set "event" to "publish"
     payload = {
@@ -266,6 +272,8 @@ def format_response(
 def validate_doi(package: dict):
     """
     Returns doi if it truthy and has EnviDat doi prefix.
+
+    Else raises HTTPException
 
     Args:
         package (dict): CKAN EnviDat package dictionary

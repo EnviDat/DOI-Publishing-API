@@ -40,6 +40,7 @@ ckan_cookie = APIKeyCookie(name="ckan",
                            description="ckan cookie for logged in user")
 
 
+# TODO REVIEW endpoint
 # TODO review if authorizations should use cookie or header,
 #  NOTE: cookie may not work when sending to an external site
 # TODO remove endpoint after testing and move to logic/datacite.py,
@@ -130,6 +131,7 @@ def reserve_draft_doi(
     return datacite_response
 
 
+# TODO REVIEW endpoint
 # TODO potentially remove responses, response arg.
 #  and response.status_code block
 #  If response kept finalize format

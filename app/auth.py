@@ -125,7 +125,7 @@ def authorize_admin(authorization: Annotated[str | None, Header()] = None):
 
     is_sysadmin = user.get("sysadmin", False)
     if not is_sysadmin:
-        log.error(f"User {user} is not an admin")
+        log.error(f"User is not an admin: {user}")
         raise HTTPException(status_code=401,
                             detail="User not authorized")
 
