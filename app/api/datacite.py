@@ -281,6 +281,19 @@ async def publish_or_update_datacite(
         datacite_response = publish_datacite(package)
 
         if datacite_response.get('status_code') in successful_status_codes:
+
+            if publication_state == 'pub_pending':
+
+                data = {'publication_state': 'published'}
+                ckan_package_patch(package_id, data, authorization)
+
+                # TODO send "Publication Finished" email to admin and user
+
+            else:
+                # TODO send "DOI Metadata Updated" email to admin and user
+                pass
+
+            # Return successful datacite_response
             response.status_code = datacite_response.get('status_code')
             return datacite_response
 
@@ -293,5 +306,6 @@ async def publish_or_update_datacite(
 
     # TODO email admin to notify of failure to publish/update DOI with datacite
 
+    # Return error datacite_response
     response.status_code = datacite_response.get('status_code', 500)
     return datacite_response
