@@ -10,6 +10,7 @@ from app.auth import authorize_user, authorize_admin
 from app.logic.datacite import reserve_draft_doi_datacite, DoiSuccess, \
     DoiErrors, validate_doi, publish_datacite
 from app.logic.remote_ckan import ckan_package_show, ckan_package_patch
+from app.config import settings
 
 # Setup logging
 import logging
@@ -18,7 +19,6 @@ log = logging.getLogger(__name__)
 
 # TODO test with production
 # TODO verify signout
-# TODO review exception formatting, consider returning generic response
 # TODO finalize authorization method (header vs. cookie)
 # TODO review HTTPException formatting, possibly use more generic messages
 
@@ -40,10 +40,9 @@ ckan_cookie = APIKeyCookie(name="ckan",
                            description="ckan cookie for logged in user")
 
 
-# TODO REVIEW endpoint
 # TODO review if authorizations should use cookie or header,
 #  NOTE: cookie may not work when sending to an external site
-# TODO remove endpoint after testing and move to logic/datacite.py,
+# TODO possibly remove endpoint after testing and move to logic/datacite.py,
 #  call from doi/create_doi_draft
 # TODO potentially remove responses, response arg
 #  and response.status_code block
@@ -69,10 +68,7 @@ def reserve_draft_doi(
                                                      "name")],
         response: Response,
         # ckan: str = Security(ckan_cookie),
-        authorization: str = Security(authorization_header),
-        attempts: Annotated[int, Query(description="Number of attempts to "
-                                                   "reserve DOI with DataCite "
-                                                   "API")] = 1
+        authorization: str = Security(authorization_header)
 ):
     """
     Authenticate user, extract DOI from package, and reserve draft DOI in
@@ -81,6 +77,19 @@ def reserve_draft_doi(
 
     # Authorize user, if user invalid then raises HTTPException
     authorize_user(user_id, authorization)
+
+    # Extract variables needed from config
+    try:
+        retries = settings.DATACITE_RETRIES
+        sleep_time = settings.DATACITE_SLEEP_TIME
+    except KeyError as e:
+        log.error(f'KeyError: {e} does not exist in config')
+        return {
+            "status_code": 500,
+            "errors": [
+                {"error": "config setting does not exist"}
+            ]
+        }
 
     # Get package
     # If package id invalid or user not authorized then raises HTTPException
@@ -96,20 +105,17 @@ def reserve_draft_doi(
                             detail="Package does not have a doi")
 
     # TODO remove test_doi
-    test_doi = "10.16904/envidat.test33"
+    test_doi = "10.16904/envidat.test36"
 
     # Reserve DOI in draft state with DataCite,
     # if response status_code not in successful_status_codes
-    # then retry "attempts" times
+    # then try again "retries" times
     # datacite_response = reserve_draft_doi_datacite(doi)
     successful_status_codes = range(200, 300)
     datacite_response = {}
-    attempt_count = 0
+    retry_count = 0
 
-    while attempt_count <= attempts:
-
-        # TODO remove print statement
-        print('LOOP')
+    while retry_count <= retries:
 
         # TODO revert to calling DataCite API with doi
         datacite_response = reserve_draft_doi_datacite(test_doi)
@@ -119,11 +125,10 @@ def reserve_draft_doi(
             return datacite_response
 
         # Else attempt to call DataCite API again
-        attempt_count += 1
+        retry_count += 1
 
-        # TODO review because it seems laggy
-        # Wait 3 seconds before trying to call DataCite again
-        # time.sleep(3)
+        # Wait sleep_time seconds before trying to call DataCite again
+        time.sleep(sleep_time)
 
     # TODO email admin to notify of failure to reserve DOI with datacite
 
@@ -178,14 +183,15 @@ async def request_publish_or_update(
 
     # TODO remove
     # publication_state = "published"
-
     # Possible 'publication_state' values in EnviDat CKAN:
     # ['', 'reserved', 'pub_requested', 'pub_pending', 'approved', 'published']
+
     # Send email to admin requesting publication/update
     match publication_state:
 
         # User requests publication,
         # if 'publication_state' fails to update then raises HTTPExcpetion
+        # TODO clarify
         case "reserved":
 
             # TODO send “Publication request” email to admin and user
@@ -204,7 +210,8 @@ async def request_publish_or_update(
                                 detail="Value for 'publication_state' cannot "
                                        "be processed")
 
-    return {'publication_state': package.get('publication_state')}
+    # TODO finalize return value
+    return "Successfully requested approval to publish or update dataset"
 
 
 # TODO potentially remove responses, response arg.
@@ -230,10 +237,7 @@ async def publish_or_update_datacite(
                                          description="CKAN package id "
                                                      "or name")],
         response: Response,
-        authorization: str = Security(authorization_header),
-        attempts: Annotated[int, Query(description="Number of attempts to "
-                                                   "publish/update DOI with"
-                                                   " DataCite API")] = 1
+        authorization: str = Security(authorization_header)
 ):
     """
     Publish or update dataset with DataCite.
@@ -246,6 +250,19 @@ async def publish_or_update_datacite(
 
     # Authorize admin user, if authorization invalid then HTTPException raised
     authorize_admin(authorization)
+
+    # Extract variables needed from config
+    try:
+        retries = settings.DATACITE_RETRIES
+        sleep_time = settings.DATACITE_SLEEP_TIME
+    except KeyError as e:
+        log.error(f'KeyError: {e} does not exist in config')
+        return {
+            "status_code": 500,
+            "errors": [
+                {"error": "config setting does not exist"}
+            ]
+        }
 
     # Get package,
     # if package_id invalid or user not authorized then raises HTTPException
@@ -264,20 +281,15 @@ async def publish_or_update_datacite(
                             detail="Value for 'publication_state' cannot "
                                    "be processed")
 
-    # TODO check if 'maintainer' or 'creator_user_id'
-    #  should be user notified by email
     # Publish/update dataset in Datacite,
     # if response status_code not in successful_status_codes
-    # then retry "attempts" times
+    # then try again "retries" times
     # Send notification email to admin and user
     successful_status_codes = range(200, 300)
     datacite_response = {}
-    attempt_count = 0
+    retry_count = 0
 
-    while attempt_count <= attempts:
-
-        # TODO remove print statement
-        print('LOOP')
+    while retry_count <= retries:
 
         # Send package to DataCite
         datacite_response = publish_datacite(package)
@@ -289,10 +301,11 @@ async def publish_or_update_datacite(
                 data = {'publication_state': 'published'}
                 ckan_package_patch(package_id, data, authorization)
 
-                # TODO send "Publication Finished" email to admin and user
+                # TODO send "Publication Finished"
+                #  email to admin and maintainer
 
             else:
-                # TODO send "DOI Metadata Updated" email to admin and user
+                # TODO send "DOI Metadata Updated" to only admin
                 pass
 
             # Return successful datacite_response
@@ -300,11 +313,10 @@ async def publish_or_update_datacite(
             return datacite_response
 
         # Else attempt to call DataCite API again
-        attempt_count += 1
+        retry_count += 1
 
-        # TODO review because it seems laggy
-        # Wait 3 seconds before trying to call DataCite again
-        # time.sleep(3)
+        # Wait sleep_time seconds before trying to call DataCite again
+        time.sleep(sleep_time)
 
     # TODO email admin to notify of failure to publish/update DOI with datacite
 

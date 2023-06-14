@@ -62,7 +62,7 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
         return {
             "status_code": 500,
             "errors": [
-                {"config_error": "config setting does not exist"}
+                {"error": "config setting does not exist"}
             ]
         }
 
