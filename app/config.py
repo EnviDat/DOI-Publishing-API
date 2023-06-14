@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     DATACITE_CLIENT_ID: str
     DATACITE_PASSWORD: str
     DATACITE_TIMEOUT: int | float
+    DATACITE_RETRIES: int
+    DATACITE_SLEEP_TIME: int
     DOI_PREFIX: str
     DOI_SUFFIX_TAG: Optional[str] = ""
     ADMIN_USER_ID: str
