@@ -1,0 +1,48 @@
+{
+  "externalApi": {
+    "zenodoRecords": "https://zenodo.org/api/records",
+    "zenodoLicenses": "https://zenodo.org/api/licenses"
+  },
+  "ckanApi": {
+    "package_create": "/api/action/package_create"
+  },
+  "envidatLicenses": {
+    "cc-by": {
+      "id": "cc-by",
+      "title": "Creative Commons Attribution",
+      "url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "cc-by-sa": {
+      "id": "cc-by-sa",
+      "title": "Creative Commons Attribution Share-Alike (CC-BY-SA)",
+      "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    "cc-by-nc": {
+      "id": "cc-by-nc",
+      "title": "Creative Commons Attribution-NonCommercial (CC-BY-NC)",
+      "url": "https://creativecommons.org/licenses/by-nc/4.0/"
+    },
+    "other-undefined": {
+      "id": "other-undefined",
+      "title": "Other (Specified in the description)"
+    }
+  },
+  "language": {
+    "default": "en"
+  },
+  "maintainer": {
+    "default": {
+      "email": "envidat@wsl.ch",
+      "name": "EnviDat"
+    }
+  },
+  "notes": {
+    "default": "Automatic message from EnviDat Admin: the description of this dataset is too short and therefore, not informative enough. Please improve and then delete this message."
+  },
+  "owner_org": {
+    "default": "bd536a0f-d6ac-400e-923c-9dd351cb05fa"
+  },
+  "spatial": {
+    "default": "{\"type\": \"Point\", \"coordinates\": [8.4545978, 47.3606372]}"
+  }
+}

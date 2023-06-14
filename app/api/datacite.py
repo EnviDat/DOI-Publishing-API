@@ -14,7 +14,6 @@ from app.config import settings
 
 # Setup logging
 import logging
-
 log = logging.getLogger(__name__)
 
 # TODO test with production

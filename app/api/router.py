@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
 
-from app.api import datacite, approval, doi, prefix
+from app.api import datacite, external_doi, approval, doi, prefix
 
 log = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class RouteErrorHandler(APIRoute):
     """Custom APIRoute that handles application errors and exceptions."""
 
     def get_route_handler(self) -> Callable:
-        """Original route handler for exetension."""
+        """Original route handler for extension."""
         original_route_handler = super().get_route_handler()
 
         async def custom_route_handler(request: Request) -> Response:
@@ -35,6 +35,7 @@ class RouteErrorHandler(APIRoute):
 
 api_router = APIRouter()
 api_router.include_router(datacite.router)
+api_router.include_router(external_doi.router)
 api_router.include_router(doi.router)
 api_router.include_router(prefix.router)
 api_router.include_router(approval.router)
