@@ -125,8 +125,8 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
         package (dict): Individual EnviDat metadata entry record
                                     dictionary.
 
-    Returns:
-        str/None: DOI reserved in DataCite or None if DOI reservation failed
+      Returns:
+        DoiSuccess | DoiErrors: See TypedDict class definitions
     """
 
     # Extract variables from config needed to call DataCite API

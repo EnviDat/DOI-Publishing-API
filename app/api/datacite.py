@@ -83,6 +83,7 @@ def reserve_draft_doi(
         sleep_time = settings.DATACITE_SLEEP_TIME
     except KeyError as e:
         log.error(f'KeyError: {e} does not exist in config')
+        response.status_code = 500
         return {
             "status_code": 500,
             "errors": [
@@ -100,6 +101,7 @@ def reserve_draft_doi(
     # Extract doi
     doi = package.get('doi')
     if not doi:
+        response.status_code = 500
         raise HTTPException(status_code=500,
                             detail="Package does not have a doi")
 
@@ -256,6 +258,7 @@ async def publish_or_update_datacite(
         sleep_time = settings.DATACITE_SLEEP_TIME
     except KeyError as e:
         log.error(f'KeyError: {e} does not exist in config')
+        response.status_code = 500
         return {
             "status_code": 500,
             "errors": [
@@ -270,12 +273,14 @@ async def publish_or_update_datacite(
     # Extract publication_state
     publication_state = package.get('publication_state')
     if not publication_state:
+        response.status_code = 500
         raise HTTPException(status_code=500,
                             detail="Package does not have "
                                    "a 'publication_state'")
 
     # Check if publication_state can be processed
     if publication_state not in ['pub_pending', 'published']:
+        response.status_code = 500
         raise HTTPException(status_code=500,
                             detail="Value for 'publication_state' cannot "
                                    "be processed")
