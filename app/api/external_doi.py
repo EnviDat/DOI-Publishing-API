@@ -39,8 +39,6 @@ authorization_header = APIKeyHeader(name='Authorization',
     name="Convert external DOI"
 )
 def convert_external_doi(
-        # doi: Annotated[str, Query(description="DOI from external platform",
-        #                           example="10.5281/zenodo.6514932")],
         doi: Annotated[str, Query(
             description="DOI from external platform",
             examples={
@@ -56,7 +54,12 @@ def convert_external_doi(
             alias="user-id",
             description="CKAN user id or name")],
         response: Response,
-        authorization: str = Security(authorization_header)
+        authorization: str = Security(authorization_header),
+        add_placeholders: Annotated[bool, Query(
+            alias="add-placeholders",
+            description="If true placeholder values are added for "
+                        "required EnviDat package fields"
+        )] = False
 ):
     """
     Convert DOI and associated metadata from external plaforms
@@ -72,11 +75,12 @@ def convert_external_doi(
 
     # TODO handle default in case external_platform is None or not matched,
     #  try calling supported APIs
+    # TODO set response status codes, use returned dicts from converters
     match external_platform:
 
         # TODO call ZenodoAPI
         case ExternalPlatform.ZENODO:
-            result = convert_zenodo_doi(doi)
+            result = convert_zenodo_doi(doi, add_placeholders)
 
         # TODO loop through different converters for default case
         case _:
