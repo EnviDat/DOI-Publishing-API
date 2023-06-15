@@ -1,7 +1,6 @@
 """Reserve and Publish DOIs to Datacite."""
-import base64
-# TODO review and possibly remove dependencies in lib/envidat
 
+import base64
 from typing import TypedDict
 import json
 import requests
@@ -26,6 +25,8 @@ class DoiErrors(TypedDict):
     status_code: int
     errors: list[dict]
 
+
+# TODO review and possibly remove dependencies in lib/envidat
 
 # TODO review if Pydantic model appropriate for function arguments
 # class DoiSuccess(BaseModel):
