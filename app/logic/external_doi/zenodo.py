@@ -1,7 +1,10 @@
 """Retrieve and convert Zenodo DOI metadata to EnviDat CKAN package format"""
 
+import json
+import requests
 
-# TODO review error formatting
+
+# TODO review error messages
 def convert_zenodo_doi(doi: str) -> dict:
     """
     Return metadata for input doi and convert metadata to EnviDat
@@ -23,7 +26,6 @@ def convert_zenodo_doi(doi: str) -> dict:
     """
 
     record_id = get_zenodo_record_id(doi)
-
     if not record_id:
         return {
             "status_code": 400,
@@ -31,9 +33,28 @@ def convert_zenodo_doi(doi: str) -> dict:
             "message": f"The following DOI was not found: {doi}"
         }
 
-    # TODO start dev here
+    with open("app/config/zenodo.json", "r") as zenodo_config:
+        config = json.load(zenodo_config)
 
-    return record_id
+    records_url = config.get("externalApi", {}).get("zenodoRecords")
+    if not record_id:
+        # TODO email admin config error
+        return {
+            "status_code": 500,
+            "error": "Cannot not get externalApi.zenodoRecords from config",
+            "message": "Cannot process DOI. Please contact EnviDat team."
+        }
+
+    api_url = f"{records_url}/{record_id}"
+    timeout = config.get("timeout", 3)
+
+    response = requests.get(api_url, timeout=timeout)
+
+    # TODO start dev here
+    # TODO handle non 200 status code on response from zenodo
+    # TODO convert Zenodo response to EnviDat format
+
+    return response.json()
 
 
 def get_zenodo_record_id(doi: str) -> str | None:

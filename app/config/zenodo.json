@@ -3,6 +3,7 @@
     "zenodoRecords": "https://zenodo.org/api/records",
     "zenodoLicenses": "https://zenodo.org/api/licenses"
   },
+  "timeout": 3,
   "ckanApi": {
     "package_create": "/api/action/package_create"
   },
