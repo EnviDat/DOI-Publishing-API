@@ -9,23 +9,23 @@
   },
   "envidatLicenses": {
     "cc-by": {
-      "id": "cc-by",
-      "title": "Creative Commons Attribution",
-      "url": "https://creativecommons.org/licenses/by/4.0/"
+      "license_id": "cc-by",
+      "license_title": "Creative Commons Attribution",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
     },
     "cc-by-sa": {
-      "id": "cc-by-sa",
-      "title": "Creative Commons Attribution Share-Alike (CC-BY-SA)",
-      "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+      "license_id": "cc-by-sa",
+      "license_title": "Creative Commons Attribution Share-Alike (CC-BY-SA)",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
     },
     "cc-by-nc": {
-      "id": "cc-by-nc",
-      "title": "Creative Commons Attribution-NonCommercial (CC-BY-NC)",
-      "url": "https://creativecommons.org/licenses/by-nc/4.0/"
+      "license_id": "cc-by-nc",
+      "license_title": "Creative Commons Attribution-NonCommercial (CC-BY-NC)",
+      "license_url": "https://creativecommons.org/licenses/by-nc/4.0/"
     },
     "other-undefined": {
-      "id": "other-undefined",
-      "title": "Other (Specified in the description)"
+      "license_id": "other-undefined",
+      "license_title": "Other (Specified in the description)"
     }
   },
   "language": {
