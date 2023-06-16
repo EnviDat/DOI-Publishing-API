@@ -2,6 +2,7 @@
 
 import json
 import requests
+import datetime
 
 
 # TODO review error messages
@@ -143,7 +144,12 @@ def convert_zenodo_to_envidat(
 
     pkg.update({"creator_user_id": user_id})
 
-    # TODO start dev here, assign date
+    publication_date = data.get("publication_date", "")
+    date = get_date(publication_date, add_placeholders)
+    if date:
+        pkg.update({"date": json.dumps(date)})
+
+    # TODO start dev here, assign doi
 
     return pkg
 
@@ -201,6 +207,36 @@ def get_authors(creators: list, add_placeholders: bool = False) -> list:
     return authors
 
 
+def get_date(publication_date: str, add_placeholders: bool = False) -> list:
+    """
+    Returns dates in Envidat format
+
+     Args:
+        publication_date (str) : publication_date string in Zenodo record
+        add_placeholders (bool): If true placeholder values are added for
+                     required EnviDat package fields. Default value is False.
+    """
+    dates = []
+
+    # TODO finalize placeholder date and date_type
+    if add_placeholders and not publication_date:
+        date_today = datetime.date.today()
+        date_str = date_today.strftime("%Y-%m-%d")
+        date = {
+            "date": date_str,
+            "date_type": "created"
+        }
+        dates.append(date)
+
+    elif publication_date:
+        date = {
+            "date": publication_date,
+            "date_type": "created"
+        }
+        dates.append(date)
+
+    return dates
+
 # TODO remove tests
 # TEST
 # test = get_authors([{}], True)
@@ -210,4 +246,7 @@ def get_authors(creators: list, add_placeholders: bool = False) -> list:
 #
 # test = convert_zenodo_to_envidat({}, '123', True)
 # # test = convert_zenodo_to_envidat({}, '123')
+# print(test)
+
+# test = get_date("")
 # print(test)
