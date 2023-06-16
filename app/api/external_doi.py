@@ -31,7 +31,7 @@ authorization_header = APIKeyHeader(name='Authorization',
                                                 'user passed in authorization '
                                                 'header')
 
-
+# Test DOI 2635937
 # TODO potentially remove responses, response arg
 #  and response.status_code block
 @router.get(
@@ -43,10 +43,10 @@ def convert_external_doi(
             description="DOI from external platform",
             examples={
                 "doi only": {
-                    "value": "10.5281/zenodo.6514932"
+                    "value": "10.5281/zenodo.5230562"
                 },
                 "doi with url": {
-                    "value": "https://doi.org/10.5281/zenodo.6514932"
+                    "value": "https://doi.org/10.5281/zenodo.5230562"
                 }
             }
         )],
@@ -73,17 +73,18 @@ def convert_external_doi(
     # then convert the DOI's metadata to EnviDat CKAN package format
     external_platform = get_doi_external_platform(doi)
 
-    # TODO handle default in case external_platform is None or not matched,
+    # TODO handle default in case external_platform is None (not matched),
     #  try calling supported APIs
     # TODO set response status codes, use returned dicts from converters
     match external_platform:
 
         # TODO call ZenodoAPI
         case ExternalPlatform.ZENODO:
-            result = convert_zenodo_doi(doi, add_placeholders)
+            result = convert_zenodo_doi(doi, user_id, add_placeholders)
 
         # TODO loop through different converters for default case
         case _:
             result = ""
 
+    # response.status_code = result.get('status_code')
     return result
