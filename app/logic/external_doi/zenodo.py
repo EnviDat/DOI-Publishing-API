@@ -34,6 +34,7 @@ def convert_zenodo_doi(
                 or error dictionary
     """
 
+    # Extract record_id
     record_id = get_zenodo_record_id(doi)
     if not record_id:
         return {
@@ -42,9 +43,14 @@ def convert_zenodo_doi(
             "error": "Cannot extract record ID from input Zenodo DOI"
         }
 
+    # TODO review and remove unused key-value pairs
+    # TODO write validator that makes sure
+    #  all needed config keys and values exist
+    # Get config
     with open("app/config/zenodo.json", "r") as zenodo_config:
         config = json.load(zenodo_config)
 
+    # Assign records_url, return error if needed values not set in config
     records_url = config.get("externalApi", {}).get("zenodoRecords")
     if not records_url:
         # TODO email admin config error
@@ -57,12 +63,12 @@ def convert_zenodo_doi(
     api_url = f"{records_url}/{record_id}"
     timeout = config.get("timeout", 3)
 
+    # Get record from Zenodo API
     response = requests.get(api_url, timeout=timeout)
 
-    # TODO start dev here
-    # TODO handle non 200 status code on response from zenodo
     # TODO convert Zenodo response to EnviDat format
 
+    # Handle unsuccessful response
     if response.status_code != 200:
         return {
             "status_code": response.status_code,
@@ -70,9 +76,11 @@ def convert_zenodo_doi(
             "error": response.json()
         }
 
+    # Convert Zenodo record to EnviDat format
     envidat_record = convert_zenodo_to_envidat(
         response.json(),
         user_id,
+        config,
         add_placeholders
     )
 
@@ -109,11 +117,12 @@ def get_zenodo_record_id(doi: str) -> str | None:
 
 # TODO add placeholder values for required fields if add_placeholders true
 # TODO test creating CKAN package empty metadata
-#  and dict returned from add_placeholders true
+#  and dict returned if add_placeholders true
 # TODO add try/except handling
 def convert_zenodo_to_envidat(
-        metadata: dict,
+        data: dict,
         user_id: str,
+        config: dict,
         add_placeholders: bool = False
 ) -> dict:
     """
@@ -123,8 +132,9 @@ def convert_zenodo_to_envidat(
     Values added are required by EnviDat CKAN to create a new package.
 
      Args:
-        metadata (dict): Response data object from Zenodo API call
+        data (dict): Response data object from Zenodo API call
         user_id (str): CKAN user id or name
+        config (dict): config dictionary created from config/zenodo.json
         add_placeholders (bool): If true placeholder values are added for
                        required EnviDat package fields. Default value is False.
     """
@@ -133,23 +143,58 @@ def convert_zenodo_to_envidat(
     # to EnviDat CKAN package format
     pkg = {}
 
-    data = metadata.get("metadata", {})
+    # TODO determine if DOI should be validated (should it be mandatory?)
+    doi = data.get("doi")
+    if doi:
+        pkg.update({"doi": doi})
 
-    # TODO determine if DOI should be validated
+    # Extract "metadata" dictionary from input "data"
+    # User metadata to extract and convert values to EnviDat package format
+    metadata = data.get("metadata", {})
 
-    creators = data.get("creators", [])
+    # author
+    creators = metadata.get("creators", [])
     authors = get_authors(creators, add_placeholders)
     if authors:
         pkg.update({"author": json.dumps(authors, ensure_ascii=False)})
 
+    # creator_user_id
     pkg.update({"creator_user_id": user_id})
 
-    publication_date = data.get("publication_date", "")
+    # date
+    publication_date = metadata.get("publication_date", "")
     date = get_date(publication_date, add_placeholders)
     if date:
-        pkg.update({"date": json.dumps(date)})
+        pkg.update({"date": json.dumps(date, ensure_ascii=False)})
 
-    # TODO start dev here, assign doi
+    # funding
+    grants = metadata.get("grants", [])
+    funding = get_funding(grants, add_placeholders)
+    if funding:
+        pkg.update({"funding": json.dumps(funding, ensure_ascii=False)})
+
+    # TODO determine if language should be assigned
+    # language
+
+    # license
+    license_id = metadata.get("license", {}).get("id", "")
+    license_data = get_license(license_id, config, add_placeholders)
+
+    pkg.update({
+        "license_id": license_data.get("license_id", "other-undefined"),
+        "license_title": license_data.get("license_title", "other-undefined")
+    })
+
+    license_url = license_data.get("license_url")
+    if license_url:
+        pkg.update({"license_url": license_url})
+
+    # TODO determine if maintainer should be user
+    # TODO add placeholder values for maintainer because it is required
+    # maintainer
+
+    # TODO start dev here
+    # name
 
     return pkg
 
@@ -212,7 +257,7 @@ def get_date(publication_date: str, add_placeholders: bool = False) -> list:
     Returns dates in Envidat format
 
      Args:
-        publication_date (str) : publication_date string in Zenodo record
+        publication_date (str): publication_date string in Zenodo record
         add_placeholders (bool): If true placeholder values are added for
                      required EnviDat package fields. Default value is False.
     """
@@ -237,16 +282,91 @@ def get_date(publication_date: str, add_placeholders: bool = False) -> list:
 
     return dates
 
+
+def get_funding(grants: list, add_placeholders: bool = False) -> list:
+    """
+    Returns funding in EnviDat format
+
+    Args:
+        grants (list): grants list in Zenodo record
+        add_placeholders (bool): If true placeholder values are added for
+                     required EnviDat package fields. Default value is False.
+    """
+    funding = []
+
+    # TODO finalize placeholder funder
+    if add_placeholders and not grants:
+        funder = {"institution": "UNKNOWN"}
+        funding.append(funder)
+
+    for grant in grants:
+        institution = grant.get("funder", {}).get("name")
+        funding.append({"institution": institution})
+
+    # Remove duplicate funders
+    funding_no_duplicates = []
+    for funder in funding:
+        if funder not in funding_no_duplicates:
+            funding_no_duplicates.append(funder)
+
+    return funding_no_duplicates
+
+
+def get_license(
+        license_id: str,
+        config: dict,
+        add_placeholders: bool = False
+) -> dict:
+    """
+    Returns license data in dictionary with EnviDat formatted keys
+
+    Args:
+        license_id (str): license_id string in Zenodo record
+        config (dict):
+        add_placeholders (bool): If true placeholder values are added for
+                     required EnviDat package fields. Default value is False.
+    """
+
+    # Extract licenses from config
+    envidat_licenses = config.get("envidatLicenses", {})
+
+    # Assign other_undefined for placeholder values and unkown licenses
+    other_undefined = envidat_licenses.get(
+        "other-undefined", {
+            "license_id": "other-undefined",
+            "license_title": "Other (Specified in the description)"
+        }
+    )
+
+    # TODO finalize placeholder license
+    if add_placeholders and not license_id:
+        return other_undefined
+
+    match license_id:
+
+        case "CC-BY-4.0":
+            return envidat_licenses.get("cc-by", other_undefined)
+
+        case "CC-BY-SA-4.0":
+            return envidat_licenses.get("cc-by-sa", other_undefined)
+
+        case "CC-BY-NC-4.0":
+            return envidat_licenses.get("cc-by-nc", other_undefined)
+
+        case _:
+            return other_undefined
+
+
 # TODO remove tests
-# TEST
+# TESTS
 # test = get_authors([{}], True)
 # # test = get_authors([{}], True)
 # # test = get_authors([{}])
-# print(test)
 #
 # test = convert_zenodo_to_envidat({}, '123', True)
 # # test = convert_zenodo_to_envidat({}, '123')
-# print(test)
 
 # test = get_date("")
+# test = get_funding([], True)
+
 # print(test)
