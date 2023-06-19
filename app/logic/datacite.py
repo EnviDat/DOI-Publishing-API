@@ -53,19 +53,10 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
     """
 
     # Extract variables from config needed to call DataCite API
-    try:
-        api_url = settings.DATACITE_API_URL
-        client_id = settings.DATACITE_CLIENT_ID
-        password = settings.DATACITE_PASSWORD
-        timeout = settings.DATACITE_TIMEOUT
-    except KeyError as e:
-        log.error(f'KeyError: {e} does not exist in config')
-        return {
-            "status_code": 500,
-            "errors": [
-                {"error": "config setting does not exist"}
-            ]
-        }
+    api_url = settings.DATACITE_API_URL
+    client_id = settings.DATACITE_CLIENT_ID
+    password = settings.DATACITE_PASSWORD
+    timeout = settings.DATACITE_TIMEOUT
 
     # Assign DOI to payload in DataCite format
     payload = {
@@ -131,20 +122,11 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     """
 
     # Extract variables from config needed to call DataCite API
-    try:
-        api_url = settings.DATACITE_API_URL
-        client_id = settings.DATACITE_CLIENT_ID
-        password = settings.DATACITE_PASSWORD
-        site_url = settings.SITE_DATASET_URL
-        timeout = settings.DATACITE_TIMEOUT
-    except KeyError as e:
-        log.error(f'KeyError: {e} does not exist in config')
-        return {
-            "status_code": 500,
-            "errors": [
-                {"config_error": "config setting does not exist"}
-            ]
-        }
+    api_url = settings.DATACITE_API_URL
+    client_id = settings.DATACITE_CLIENT_ID
+    password = settings.DATACITE_PASSWORD
+    site_url = settings.SITE_DATASET_URL
+    timeout = settings.DATACITE_TIMEOUT
 
     # Get doi and validate,
     # if doi not truthy or has invalid prefix then raises HTTPException
