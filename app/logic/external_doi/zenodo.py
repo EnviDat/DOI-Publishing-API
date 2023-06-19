@@ -10,7 +10,7 @@ import datetime
 # TODO review error messages
 def convert_zenodo_doi(
         doi: str,
-        user_id: str,
+        user: dict,
         add_placeholders: bool = False
 ) -> dict:
     """
@@ -27,7 +27,7 @@ def convert_zenodo_doi(
 
     Args:
         doi (str): Input doi string
-        user_id (str): CKAN user id or name
+        user (dict): CKAN user dictionary
         add_placeholders (bool): If true placeholder values are added for
                        required EnviDat package fields. Default value is False.
 
@@ -58,7 +58,7 @@ def convert_zenodo_doi(
         return {
             "status_code": 500,
             "message": "Cannot process DOI. Please contact EnviDat team.",
-            "error": f"Cannot not find file: {config_path}"
+            "error": f"Cannot not find config file: {config_path}"
         }
 
     # Assign records_url, return error if needed values not set in config
@@ -90,7 +90,7 @@ def convert_zenodo_doi(
     # Convert Zenodo record to EnviDat format
     envidat_record = convert_zenodo_to_envidat(
         response.json(),
-        user_id,
+        user,
         config,
         add_placeholders
     )
@@ -132,7 +132,7 @@ def get_zenodo_record_id(doi: str) -> str | None:
 # TODO add try/except handling
 def convert_zenodo_to_envidat(
         data: dict,
-        user_id: str,
+        user: dict,
         config: dict,
         add_placeholders: bool = False
 ) -> dict:
@@ -144,7 +144,7 @@ def convert_zenodo_to_envidat(
 
      Args:
         data (dict): Response data object from Zenodo API call
-        user_id (str): CKAN user id or name
+        user (dict): CKAN user dictionary
         config (dict): config dictionary created from config/zenodo.json
         add_placeholders (bool): If true placeholder values are added for
                        required EnviDat package fields. Default value is False.
@@ -169,8 +169,12 @@ def convert_zenodo_to_envidat(
     if authors:
         pkg.update({"author": json.dumps(authors, ensure_ascii=False)})
 
+    # TODO review if function should throw error if id does not exist
+    #  (should it be mandatory?)
     # creator_user_id
-    pkg.update({"creator_user_id": user_id})
+    creator_user_id = user.get("id")
+    if creator_user_id:
+        pkg.update({"creator_user_id": creator_user_id})
 
     # date
     publication_date = metadata.get("publication_date", "")
