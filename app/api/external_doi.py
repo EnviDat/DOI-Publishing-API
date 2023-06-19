@@ -8,19 +8,16 @@ from typing import Annotated
 from fastapi import APIRouter, Query, Security, Response
 from fastapi.security import APIKeyHeader
 
-from app.auth import authorize_user
+from app.auth import get_user
 from app.logic.external_doi.constants import ExternalPlatform
 from app.logic.external_doi.utils import get_doi_external_platform
 from app.logic.external_doi.zenodo import convert_zenodo_doi
 
 # Setup logging
 import logging
-
 log = logging.getLogger(__name__)
 
 # TODO test with production
-# TODO finalize authorization method (header vs. cookie)
-
 
 # Setup external-doi router
 router = APIRouter(prefix="/external-doi", tags=["external-doi"])
@@ -32,7 +29,7 @@ authorization_header = APIKeyHeader(name='Authorization',
                                                 'header')
 
 # Test DOI 2635937
-# TODO potentially remove responses, response arg
+# TODO reivew responses, response arg
 #  and response.status_code block
 @router.get(
     "/convert",
@@ -50,9 +47,6 @@ def convert_external_doi(
                 }
             }
         )],
-        user_id: Annotated[str, Query(
-            alias="user-id",
-            description="CKAN user id or name")],
         response: Response,
         authorization: str = Security(authorization_header),
         add_placeholders: Annotated[bool, Query(
@@ -67,7 +61,7 @@ def convert_external_doi(
     """
 
     # Authorize user, if user invalid then raises HTTPException
-    authorize_user(user_id, authorization)
+    user = get_user(authorization)
 
     # Get external platform name and call corresponding API,
     # then convert the DOI's metadata to EnviDat CKAN package format
@@ -80,7 +74,7 @@ def convert_external_doi(
 
         # TODO call ZenodoAPI
         case ExternalPlatform.ZENODO:
-            result = convert_zenodo_doi(doi, user_id, add_placeholders)
+            result = convert_zenodo_doi(doi, user, add_placeholders)
 
         # TODO loop through different converters for default case
         case _:
