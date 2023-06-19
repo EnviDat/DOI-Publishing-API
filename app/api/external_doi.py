@@ -74,7 +74,7 @@ def convert_external_doi(
     external_platform = get_doi_external_platform(doi)
 
     # TODO handle default in case external_platform is None (not matched),
-    #  try calling supported APIs
+    #  try calling all supported APIs
     # TODO set response status codes, use returned dicts from converters
     match external_platform:
 

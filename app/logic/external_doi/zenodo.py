@@ -47,8 +47,17 @@ def convert_zenodo_doi(
     # TODO write validator that makes sure
     #  all needed config keys and values exist
     # Get config
-    with open("app/config/zenodo.json", "r") as zenodo_config:
-        config = json.load(zenodo_config)
+    config_path = "app/config/zenodo.json"
+    try:
+        with open(config_path, "r") as zenodo_config:
+            config = json.load(zenodo_config)
+    except FileNotFoundError:
+        # TODO email admin config error
+        return {
+            "status_code": 500,
+            "message": "Cannot process DOI. Please contact EnviDat team.",
+            "error": f"Cannot not find file: {config_path}"
+        }
 
     # Assign records_url, return error if needed values not set in config
     records_url = config.get("externalApi", {}).get("zenodoRecords")
@@ -60,10 +69,10 @@ def convert_zenodo_doi(
             "error": "Cannot not get externalApi.zenodoRecords from config"
         }
 
+    # Get record from Zenodo API
     api_url = f"{records_url}/{record_id}"
     timeout = config.get("timeout", 3)
 
-    # Get record from Zenodo API
     response = requests.get(api_url, timeout=timeout)
 
     # TODO convert Zenodo response to EnviDat format
@@ -112,7 +121,7 @@ def get_zenodo_record_id(doi: str) -> str | None:
     if not record_id:
         return None
 
-    return record_id
+    return record_id.strip()
 
 
 # TODO add placeholder values for required fields if add_placeholders true
@@ -182,7 +191,9 @@ def convert_zenodo_to_envidat(
 
     pkg.update({
         "license_id": license_data.get("license_id", "other-undefined"),
-        "license_title": license_data.get("license_title", "other-undefined")
+        "license_title": license_data.get("license_title", "Other (Specified "
+                                                           "in the "
+                                                           "description)")
     })
 
     license_url = license_data.get("license_url")
@@ -201,7 +212,7 @@ def convert_zenodo_to_envidat(
 
 def get_authors(creators: list, add_placeholders: bool = False) -> list:
     """
-    Returns authors in EnviDat format
+    Returns authors in EnviDat formattted list
 
     Args:
         creators (dict): creators list in Zenodo record
@@ -285,7 +296,7 @@ def get_date(publication_date: str, add_placeholders: bool = False) -> list:
 
 def get_funding(grants: list, add_placeholders: bool = False) -> list:
     """
-    Returns funding in EnviDat format
+    Returns funding in EnviDat formatted list
 
     Args:
         grants (list): grants list in Zenodo record
@@ -330,7 +341,7 @@ def get_license(
     # Extract licenses from config
     envidat_licenses = config.get("envidatLicenses", {})
 
-    # Assign other_undefined for placeholder values and unkown licenses
+    # Assign other_undefined for placeholder values and unknown licenses
     other_undefined = envidat_licenses.get(
         "other-undefined", {
             "license_id": "other-undefined",
