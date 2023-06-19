@@ -2,11 +2,12 @@
 
 import time
 from typing import Annotated
-# from fastapi import Depends, Header
-from fastapi import APIRouter, HTTPException, Security, Response, Query, Cookie
-from fastapi.security.api_key import APIKeyHeader, APIKeyCookie
+from fastapi import APIRouter, HTTPException, Security, Response, Query, \
+    Depends
+from fastapi.security.api_key import APIKeyHeader
 
-from app.auth import authorize_user, authorize_admin
+# from app.api.doi import create_doi_draft
+from app.auth import get_user, get_admin
 from app.logic.datacite import reserve_draft_doi_datacite, DoiSuccess, \
     DoiErrors, validate_doi, publish_datacite
 from app.logic.remote_ckan import ckan_package_show, ckan_package_patch
@@ -14,17 +15,20 @@ from app.config import settings
 
 # Setup logging
 import logging
+
 log = logging.getLogger(__name__)
 
 # TODO test with production
 # TODO verify signout
-# TODO finalize authorization method (header vs. cookie)
 # TODO review HTTPException formatting, possibly use more generic messages
+
+# TODO review implementation of auth and dependencies
 
 
 # TODO review and remove dependencies if unused
 # Setup datacite router
-router = APIRouter(prefix="/datacite", tags=["datacite"]
+router = APIRouter(prefix="/datacite",
+                   tags=["datacite"]
                    # dependencies=[Depends(get_user)]
                    )
 
@@ -34,19 +38,8 @@ authorization_header = APIKeyHeader(name='Authorization',
                                                 'user passed in authorization '
                                                 'header')
 
-# Setup ckan cookie used for authorization
-ckan_cookie = APIKeyCookie(name="ckan",
-                           description="ckan cookie for logged in user")
 
-
-# TODO review if authorizations should use cookie or header,
-#  NOTE: cookie may not work when sending to an external site
-# TODO possibly remove endpoint after testing and move to logic/datacite.py,
-#  call from doi/create_doi_draft
-# TODO potentially remove responses, response arg
-#  and response.status_code block
-# TODO test dataset without doi
-# TODO review when 'publication_state' will be changed to 'reserved'
+# TODO possibly remove similar endpoint in doi/create_doi_draft
 @router.get(
     "/draft",
     name="Reserve draft DOI",
@@ -59,14 +52,11 @@ ckan_cookie = APIKeyCookie(name="ckan",
         502: {"model": DoiErrors}
     }
 )
-def reserve_draft_doi(
-        user_id: Annotated[str, Query(alias="user-id",
-                                      description="CKAN user id or name")],
+async def reserve_draft_doi(
         package_id: Annotated[str, Query(alias="package-id",
                                          description="CKAN package id or "
                                                      "name")],
         response: Response,
-        # ckan: str = Security(ckan_cookie),
         authorization: str = Security(authorization_header)
 ):
     """
@@ -74,22 +64,13 @@ def reserve_draft_doi(
     DataCite.
     """
 
+    # TODO review authorization implementation
     # Authorize user, if user invalid then raises HTTPException
-    authorize_user(user_id, authorization)
+    user = get_user(authorization)
 
     # Extract variables needed from config
-    try:
-        retries = settings.DATACITE_RETRIES
-        sleep_time = settings.DATACITE_SLEEP_TIME
-    except KeyError as e:
-        log.error(f'KeyError: {e} does not exist in config')
-        response.status_code = 500
-        return {
-            "status_code": 500,
-            "errors": [
-                {"error": "config setting does not exist"}
-            ]
-        }
+    retries = settings.DATACITE_RETRIES
+    sleep_time = settings.DATACITE_SLEEP_TIME
 
     # Get package
     # If package id invalid or user not authorized then raises HTTPException
@@ -98,15 +79,19 @@ def reserve_draft_doi(
     # TODO clarify if doi will already be assigned to package
     #  or will be assigned after reserving doi with DataCite
     # TODO possibly validate doi by calling validate_doi()
+    # Get new DOI
+    # doi = await create_doi_draft(package_id)
+    # print(doi)
+
     # Extract doi
-    doi = package.get('doi')
-    if not doi:
-        response.status_code = 500
-        raise HTTPException(status_code=500,
-                            detail="Package does not have a doi")
+    # doi = package.get('doi')
+    # if not doi:
+    #     response.status_code = 500
+    #     raise HTTPException(status_code=500,
+    #                         detail="Package does not have a doi")
 
     # TODO remove test_doi
-    test_doi = "10.16904/envidat.test36"
+    test_doi = "10.16904/envidat.test40"
 
     # Reserve DOI in draft state with DataCite,
     # if response status_code not in successful_status_codes
@@ -121,7 +106,17 @@ def reserve_draft_doi(
         # TODO revert to calling DataCite API with doi
         datacite_response = reserve_draft_doi_datacite(test_doi)
 
-        if datacite_response.get('status_code') in successful_status_codes:
+        if datacite_response.get("status_code") in successful_status_codes:
+            # TODO update package doi value with doi variable
+            # Update publication_state and doi in CKAN package
+            data = {
+                "publication_state": "reserved",
+                "doi": test_doi
+            }
+            ckan_package_patch(package_id, data, authorization)
+
+            # TODO email admin that DOI was successfully reserved with DataCite
+
             response.status_code = datacite_response.get('status_code')
             return datacite_response
 
@@ -137,23 +132,16 @@ def reserve_draft_doi(
     return datacite_response
 
 
-# TODO REVIEW endpoint
-# TODO potentially remove responses, response arg.
-#  and response.status_code block
-#  If response kept finalize format
-# TODO test dataset without doi
 # TODO implement email sending
+# TODO finalize response returned
 @router.get(
     "/request",
     name="Request approval to publish/update"
 )
 async def request_publish_or_update(
-        user_id: Annotated[str, Query(alias="user-id",
-                                      description="CKAN user id or name")],
         package_id: Annotated[str, Query(alias="package-id",
                                          description="CKAN package id "
                                                      "or name")],
-        # response: Response,
         authorization: str = Security(authorization_header)
 ):
     """
@@ -164,8 +152,9 @@ async def request_publish_or_update(
     then update to 'pub_pending'.
     """
 
+    # TODO review authorization implementation
     # Authorize user, if user invalid then HTTPException raised
-    authorize_user(user_id, authorization)
+    user = get_user(authorization)
 
     # Get package,
     # if package_id invalid or user not authorized then raises HTTPException
@@ -182,23 +171,17 @@ async def request_publish_or_update(
                             detail="Package does not have "
                                    "a 'publication_state'")
 
-    # TODO remove
-    # publication_state = "published"
-    # Possible 'publication_state' values in EnviDat CKAN:
-    # ['', 'reserved', 'pub_requested', 'pub_pending', 'approved', 'published']
-
     # Send email to admin requesting publication/update
     match publication_state:
 
         # User requests publication,
         # if 'publication_state' fails to update then raises HTTPExcpetion
-        # TODO clarify
         case "reserved":
 
             # TODO send “Publication request” email to admin and user
 
             data = {'publication_state': 'pub_pending'}
-            package = ckan_package_patch(package_id, data, authorization)
+            ckan_package_patch(package_id, data, authorization)
 
         # User requests metadata update
         case "published":
@@ -215,11 +198,7 @@ async def request_publish_or_update(
     return "Successfully requested approval to publish or update dataset"
 
 
-# TODO potentially remove responses, response arg.
-#  and response.status_code block
-#  If response kept finalize format
 # TODO implement email sending
-# TODO review exception formatting
 @router.get(
     "/publish",
     name="Publish/update dataset",
@@ -239,6 +218,7 @@ async def publish_or_update_datacite(
                                                      "or name")],
         response: Response,
         authorization: str = Security(authorization_header)
+        # admin=Depends(get_admin)
 ):
     """
     Publish or update dataset with DataCite.
@@ -249,22 +229,13 @@ async def publish_or_update_datacite(
     published the first time and had a value of ‘pub_pending’.
     """
 
+    # TODO review authorization implementation
     # Authorize admin user, if authorization invalid then HTTPException raised
-    authorize_admin(authorization)
+    admin = get_admin(get_user(authorization))
 
     # Extract variables needed from config
-    try:
-        retries = settings.DATACITE_RETRIES
-        sleep_time = settings.DATACITE_SLEEP_TIME
-    except KeyError as e:
-        log.error(f'KeyError: {e} does not exist in config')
-        response.status_code = 500
-        return {
-            "status_code": 500,
-            "errors": [
-                {"error": "config setting does not exist"}
-            ]
-        }
+    retries = settings.DATACITE_RETRIES
+    sleep_time = settings.DATACITE_SLEEP_TIME
 
     # Get package,
     # if package_id invalid or user not authorized then raises HTTPException
@@ -301,7 +272,7 @@ async def publish_or_update_datacite(
         if datacite_response.get('status_code') in successful_status_codes:
 
             if publication_state == 'pub_pending':
-
+                # Update publication_state in CKAN package
                 data = {'publication_state': 'published'}
                 ckan_package_patch(package_id, data, authorization)
 
