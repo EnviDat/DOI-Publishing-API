@@ -10,11 +10,7 @@ from app.config import settings
 
 # Setup logging
 import logging
-
 log = logging.getLogger(__name__)
-
-
-# TODO review if authorization should be in header or cookie
 
 
 def ckan_package_show(
@@ -26,11 +22,6 @@ def ckan_package_show(
 
     In case of some errors raises HTTPException.
     """
-
-    if not authorization:
-        log.error("No Authorization header present")
-        raise HTTPException(status_code=401,
-                            detail="No Authorization header present")
 
     try:
         ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
@@ -58,6 +49,9 @@ def ckan_package_patch(
 ):
     """
     Patch a CKAN package.
+
+    Authorization header required to update package.
+    In case of some errors raises HTTPException.
     """
 
     if not authorization:
