@@ -1,6 +1,8 @@
 """Retrieve and convert Zenodo DOI metadata to EnviDat CKAN package format"""
 
 import json
+import re
+
 import requests
 import datetime
 
@@ -204,8 +206,15 @@ def convert_zenodo_to_envidat(
     # TODO add placeholder values for maintainer because it is required
     # maintainer
 
-    # TODO start dev here
     # name
+    title = metadata.get("title")
+    # TODO handle if title does not exist (name is required)
+
+    name = get_name(title, add_placeholders)
+    if name:
+        pkg.update({"name": name})
+
+    description = metadata.get("description", "")
 
     return pkg
 
@@ -333,7 +342,7 @@ def get_license(
 
     Args:
         license_id (str): license_id string in Zenodo record
-        config (dict):
+        config (dict): Zenodo config dictionary
         add_placeholders (bool): If true placeholder values are added for
                      required EnviDat package fields. Default value is False.
     """
@@ -366,6 +375,37 @@ def get_license(
 
         case _:
             return other_undefined
+
+
+def get_name(title: str, add_placeholders: bool = False) -> str:
+    """
+    Returns name (of metadata entry) in lowercase with words joined by hyphens.
+    If name with hyphens longer than 80 characters truncates name to last whole
+    word.
+
+    Args:
+        title (str): title string in Zenodo record
+        add_placeholders (bool): If true placeholder values are added for
+                     required EnviDat package fields. Default value is False.
+    """
+
+    # TODO finalize placeholder name (or return error)
+    if add_placeholders and not title:
+        pass
+
+    regex_replacement = "[^0-9a-z- ]"
+    name = re.sub(regex_replacement, "", title.lower())
+
+    name_split = name.split(" ")
+    name_join = "-".join(name_split)
+
+    if len(name_join) > 80:
+        name_trunc = name_join[:80]
+        name_trunc_split = name_trunc.split("-")
+        name_trunc_split.pop()
+        return "-".join(name_trunc_split)
+
+    return name_join
 
 
 # TODO remove tests
