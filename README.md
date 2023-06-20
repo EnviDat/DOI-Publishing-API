@@ -56,3 +56,27 @@ docker compose -f docker-compose.prod.yml up -d
 ```shell
 helm upgrade --install doi-publishing-api oci://registry-gitlab.wsl.ch/envidat/doi-publishing-api --namespace envidat --create-namespace
 ```
+
+## Pre-commit
+
+- Install pre-commit hooks
+
+```bash
+# Install pre-commit
+pip install pre-commit
+# Install the hooks
+pre-commit install
+```
+
+- The hooks should run every time you attempt to commit files.
+
+- Alternatively, run the hooks manually on all files with: `pre-commit run --all-files`
+
+- Or to run the hooks using PDM (if PATH doesn't work, e.g. on Windows):
+
+```bash
+pdm add pre-commit
+pdm run pre-commit run --all-files
+```
+
+> Note: Make sure you don't commit the updated `pyproject.toml` and `pdm.lock` files.
