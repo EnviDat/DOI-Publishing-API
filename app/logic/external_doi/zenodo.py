@@ -207,6 +207,12 @@ def convert_zenodo_to_envidat(
     if name:
         pkg.update({"name": name})
 
+    # title
+    # TODO handle if title does not exist (title is required)
+    # TODO possibly implement add_placeholders
+    if title:
+        pkg.update({"title": title})
+
     # notes
     description = metadata.get("description", "")
     notes = get_notes(description, config, add_placeholders)
