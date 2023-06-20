@@ -207,7 +207,10 @@ def convert_zenodo_to_envidat(
     if name:
         pkg.update({"name": name})
 
-    metadata.get("description", "")
+    # TODO start dev here
+    # notes
+    description = metadata.get("description", "")
+    notes = get_notes(description, config, add_placeholders)
 
     return pkg
 
