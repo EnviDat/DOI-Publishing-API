@@ -115,7 +115,7 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     api_url = settings.DATACITE_API_URL
     client_id = settings.DATACITE_CLIENT_ID
     password = settings.DATACITE_PASSWORD
-    site_url = settings.SITE_DATASET_URL
+    site_url = settings.DATACITE_DATA_URL_PREFIX
     timeout = settings.DATACITE_TIMEOUT
 
     # Get doi and validate,
@@ -194,7 +194,8 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
 
 
 def format_response(response: requests.models.Response) -> DoiSuccess | DoiErrors:
-    """
+    """Format the DataCite response.
+
     Checks if response has successful HTTP status code (200-299) and returns
     DataCite response object formatted in DoiSuccess or DoiErrors format.
 

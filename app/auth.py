@@ -15,21 +15,16 @@ def get_user(authorization: Annotated[str | None, Header()] = None):
     """Standard CKAN user."""
     if not settings.DEBUG and not authorization:
         log.error("No Authorization header present")
-        raise HTTPException(
-            status_code=401, detail="No Authorization header present"
-        )
-
-    log.warning(settings.DEBUG)
-    log.warning(type(settings.DEBUG))
+        raise HTTPException(status_code=401, detail="No Authorization header present")
 
     log.debug("Authorization header extracted from request headers")
 
     if settings.DEBUG:
         user_info = {
-            "id": "334cee1e-6afa-4639-88a2-f980e6ff42c3",
+            "id": settings.DEBUG_USER_ID,
             "name": "admin",
-            "display_name": "EnviDat Admin",
-            "email": "envidat@wsl.ch",
+            "display_name": "Admin (Debug)",
+            "email": settings.DEBUG_USER_EMAIL,
             "sysadmin": True,
         }
     else:

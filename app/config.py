@@ -14,8 +14,23 @@ class Settings(BaseSettings):
 
     APP_NAME: str
     SECRET_KEY: str
-    DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
+
+    DEBUG_USER_ID: Optional[str]
+    DEBUG_USER_EMAIL: Optional[str]
+    DEBUG: bool = False
+
+    @validator("DEBUG", pre=True)
+    def get_debug_user_details(cls, v: str, values: dict[str, Any]) -> Any:
+        """If DEBUG var set, ensure debug user details are set."""
+        if not v:
+            return v
+        if not values.get("DEBUG_USER_ID"):
+            log.error(values.get("DEBUG_USER_ID"))
+            raise ValueError("DEBUG_USER_ID is not present in the environment")
+        if not values.get("DEBUG_USER_EMAIL"):
+            raise ValueError("DEBUG_USER_EMAIL is not present in the environment")
+        return v
 
     API_URL: AnyHttpUrl = "https://www.envidat.ch"
 
@@ -25,10 +40,9 @@ class Settings(BaseSettings):
     DATACITE_TIMEOUT: int | float = 3
     DATACITE_RETRIES: int = 1
     DATACITE_SLEEP_TIME: int = 3
+    DATACITE_DATA_URL_PREFIX: Optional[str] = "https://www.envidat.ch/#/metadata"
     DOI_PREFIX: str
     DOI_SUFFIX_TAG: Optional[str] = ""
-    ADMIN_USER_ID: str
-    SITE_DATASET_URL: str
 
     BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []
 
