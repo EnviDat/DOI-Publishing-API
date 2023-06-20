@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Security, Response, Query, \
 from fastapi.security.api_key import APIKeyHeader
 
 # from app.api.doi import create_doi_draft
-from app.auth import get_user, get_admin
+from app.auth import get_user, get_admin, get_token
 from app.logic.datacite import reserve_draft_doi_datacite, DoiSuccess, \
     DoiErrors, validate_doi, publish_datacite
 from app.logic.remote_ckan import ckan_package_show, ckan_package_patch
@@ -32,12 +32,6 @@ router = APIRouter(prefix="/datacite",
                    # dependencies=[Depends(get_user)]
                    )
 
-# Setup authorization header
-authorization_header = APIKeyHeader(name='Authorization',
-                                    description='ckan cookie for logged in '
-                                                'user passed in authorization '
-                                                'header')
-
 
 # TODO possibly remove similar endpoint in doi/create_doi_draft
 @router.get(
@@ -57,7 +51,8 @@ async def reserve_draft_doi(
                                          description="CKAN package id or "
                                                      "name")],
         response: Response,
-        authorization: str = Security(authorization_header)
+        user=Depends(get_user),
+        auth_token=Depends(get_token)
 ):
     """
     Authenticate user, extract DOI from package, and reserve draft DOI in
@@ -66,7 +61,6 @@ async def reserve_draft_doi(
 
     # TODO review authorization implementation
     # Authorize user, if user invalid then raises HTTPException
-    user = get_user(authorization)
 
     # Extract variables needed from config
     retries = settings.DATACITE_RETRIES
@@ -74,7 +68,7 @@ async def reserve_draft_doi(
 
     # Get package
     # If package id invalid or user not authorized then raises HTTPException
-    package = ckan_package_show(package_id, authorization)
+    package = ckan_package_show(package_id, auth_token)
 
     # TODO clarify if doi will already be assigned to package
     #  or will be assigned after reserving doi with DataCite
@@ -91,7 +85,7 @@ async def reserve_draft_doi(
     #                         detail="Package does not have a doi")
 
     # TODO remove test_doi
-    test_doi = "10.16904/envidat.test40"
+    test_doi = "10.16904/envidat.test43"
 
     # Reserve DOI in draft state with DataCite,
     # if response status_code not in successful_status_codes
@@ -113,7 +107,7 @@ async def reserve_draft_doi(
                 "publication_state": "reserved",
                 "doi": test_doi
             }
-            ckan_package_patch(package_id, data, authorization)
+            ckan_package_patch(package_id, data, auth_token)
 
             # TODO email admin that DOI was successfully reserved with DataCite
 
@@ -142,7 +136,8 @@ async def request_publish_or_update(
         package_id: Annotated[str, Query(alias="package-id",
                                          description="CKAN package id "
                                                      "or name")],
-        authorization: str = Security(authorization_header)
+        user=Depends(get_user),
+        auth_token=Depends(get_token)
 ):
     """
     Request approval from admin to publish or update dataset with DataCite.
@@ -154,11 +149,11 @@ async def request_publish_or_update(
 
     # TODO review authorization implementation
     # Authorize user, if user invalid then HTTPException raised
-    user = get_user(authorization)
 
     # Get package,
     # if package_id invalid or user not authorized then raises HTTPException
-    package = ckan_package_show(package_id, authorization)
+    # package = ckan_package_show(package_id, authorization)
+    package = ckan_package_show(package_id, auth_token)
 
     # Validate doi,
     # if doi not truthy or has invalid prefix then raises HTTPException
@@ -181,7 +176,7 @@ async def request_publish_or_update(
             # TODO send “Publication request” email to admin and user
 
             data = {'publication_state': 'pub_pending'}
-            ckan_package_patch(package_id, data, authorization)
+            ckan_package_patch(package_id, data, auth_token)
 
         # User requests metadata update
         case "published":
@@ -217,8 +212,8 @@ async def publish_or_update_datacite(
                                          description="CKAN package id "
                                                      "or name")],
         response: Response,
-        authorization: str = Security(authorization_header)
-        # admin=Depends(get_admin)
+        admin=Depends(get_admin),
+        auth_token=Depends(get_token)
 ):
     """
     Publish or update dataset with DataCite.
@@ -231,7 +226,6 @@ async def publish_or_update_datacite(
 
     # TODO review authorization implementation
     # Authorize admin user, if authorization invalid then HTTPException raised
-    admin = get_admin(get_user(authorization))
 
     # Extract variables needed from config
     retries = settings.DATACITE_RETRIES
@@ -239,7 +233,7 @@ async def publish_or_update_datacite(
 
     # Get package,
     # if package_id invalid or user not authorized then raises HTTPException
-    package = ckan_package_show(package_id, authorization)
+    package = ckan_package_show(package_id, auth_token)
 
     # Extract publication_state
     publication_state = package.get('publication_state')
@@ -274,7 +268,7 @@ async def publish_or_update_datacite(
             if publication_state == 'pub_pending':
                 # Update publication_state in CKAN package
                 data = {'publication_state': 'published'}
-                ckan_package_patch(package_id, data, authorization)
+                ckan_package_patch(package_id, data, auth_token)
 
                 # TODO send "Publication Finished"
                 #  email to admin and maintainer
