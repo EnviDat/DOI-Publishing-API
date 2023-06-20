@@ -221,6 +221,12 @@ def convert_zenodo_to_envidat(
     if publication:
         pkg.update({"publication": json.dumps(publication, ensure_ascii=False)})
 
+    # related_publications
+    references = metadata.get("references", [])
+    related_publications = get_related_publications(references)
+    if related_publications:
+        pkg.update({"related_publications": related_publications})
+
     return pkg
 
 
@@ -448,6 +454,25 @@ def get_notes(description: str, config: dict, add_placeholders: bool = False) ->
         description = f"{notes_message}{description}"
 
     return description.strip()
+
+
+def get_related_publications(references: list) -> str:
+    """
+    Returns related_publications in markdown string (as an unordered list)
+
+    If references empty then returns empty string ""
+
+    Args:
+        references (list): references list in Zenodo record
+    """
+    related_publications = ""
+
+    if references:
+        start_str = "* "
+        related_publications = "\r\n * ".join(references)
+        return f"{start_str}{related_publications}"
+
+    return related_publications
 
 
 # TODO remove tests
