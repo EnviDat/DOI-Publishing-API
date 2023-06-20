@@ -169,6 +169,11 @@ def convert_zenodo_to_envidat(
     if dte:
         pkg.update({"date": json.dumps(dte, ensure_ascii=False)})
 
+    # publication
+    publication = get_publication(publication_date, add_placeholders)
+    if publication:
+        pkg.update({"publication": json.dumps(publication, ensure_ascii=False)})
+
     # funding
     grants = metadata.get("grants", [])
     funding = get_funding(grants, add_placeholders)
@@ -221,11 +226,6 @@ def convert_zenodo_to_envidat(
 
     # TODO determine how owner_org should be assigned (it is mandatory)
     # owner_org
-
-    # publication
-    publication = get_publication(publication_date, add_placeholders)
-    if publication:
-        pkg.update({"publication": json.dumps(publication, ensure_ascii=False)})
 
     # related_publications
     references = metadata.get("references", [])
