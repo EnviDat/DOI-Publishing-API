@@ -230,6 +230,16 @@ def convert_zenodo_to_envidat(
     # TODO review if default value of resource_type_general should be "dataset"
     pkg.update({"resource_type_general": "dataset"})
 
+    # spatial
+    # default spatial value is point set to WSl Birmsensdorf, Switzerland
+    # office coordinates
+    if add_placeholders:
+        spatial = config\
+            .get("spatial", {})\
+            .get("default",
+                 "{\"type\": \"Point\", \"coordinates\": [8.4545978, 47.3606372]}")
+        pkg.update({"spatial": spatial})
+
     return pkg
 
 
