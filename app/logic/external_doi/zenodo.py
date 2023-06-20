@@ -227,6 +227,9 @@ def convert_zenodo_to_envidat(
     if related_publications:
         pkg.update({"related_publications": related_publications})
 
+    # TODO review if default value of resource_type_general should be "dataset"
+    pkg.update({"resource_type_general": "dataset"})
+
     return pkg
 
 
