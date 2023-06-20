@@ -38,7 +38,7 @@
     }
   },
   "notes": {
-    "default": "Automatic message from EnviDat Admin: the description of this dataset is too short and therefore, not informative enough. Please improve and then delete this message."
+    "default": "Automatic message from EnviDat Admin: the description of this dataset is too short and therefore, not informative enough. Please improve and then delete this message. "
   },
   "owner_org": {
     "default": "bd536a0f-d6ac-400e-923c-9dd351cb05fa"

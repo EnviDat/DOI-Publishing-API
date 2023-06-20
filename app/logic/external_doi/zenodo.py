@@ -207,10 +207,11 @@ def convert_zenodo_to_envidat(
     if name:
         pkg.update({"name": name})
 
-    # TODO start dev here
     # notes
     description = metadata.get("description", "")
     notes = get_notes(description, config, add_placeholders)
+    if notes:
+        pkg.update({"notes": notes})
 
     return pkg
 
@@ -382,7 +383,7 @@ def get_name(title: str, add_placeholders: bool = False) -> str:
 
 
 # TODO confirm EnviDat CKAN can accept HTML strings for "notes" value
-# TODO START dev here
+# TODO determine if notes should still be returned if len(description) < 100
 def get_notes(description: str, config: dict, add_placeholders: bool = False) -> str:
     """
     Returns notes, if notes are less than 100 characters then inserts
@@ -394,15 +395,18 @@ def get_notes(description: str, config: dict, add_placeholders: bool = False) ->
         add_placeholders (bool): If true placeholder values are added for
                      required EnviDat package fields. Default value is False.
     """
-    config.get("notes", {}).get(
+    notes_message = config.get("notes", {}).get(
         "default",
         "Automatic message from EnviDat Admin: the "
         "description of this dataset is too short and "
         "therefore, not informative enough. Please improve "
-        "and then delete this message.",
+        "and then delete this message. ",
     )
 
-    return description
+    if add_placeholders and len(description) < 100:
+        description = f"{notes_message}{description}"
+
+    return description.strip()
 
 
 # TODO remove tests
@@ -422,5 +426,6 @@ def get_notes(description: str, config: dict, add_placeholders: bool = False) ->
 #          "human234576666"
 # test = get_name(string)
 
+# test = get_notes("134gdd ", {}, True)
 
 # print(test)
