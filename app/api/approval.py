@@ -6,7 +6,7 @@ import ckanapi
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from app.auth import get_user, get_token
+from app.auth import get_token, get_user
 from app.config import settings
 from app.logic.mail import request_approval_email
 

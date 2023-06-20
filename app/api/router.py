@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
 
-from app.api import datacite, external_doi, approval, doi, prefix
+from app.api import approval, datacite, doi, external_doi, prefix
 
 log = logging.getLogger(__name__)
 

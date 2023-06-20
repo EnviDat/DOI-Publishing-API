@@ -15,7 +15,9 @@ def get_user(authorization: Annotated[str | None, Header()] = None):
     """Standard CKAN user."""
     if not settings.DEBUG and not authorization:
         log.error("No Authorization header present")
-        raise HTTPException(status_code=401, detail="No Authorization header present")
+        raise HTTPException(
+            status_code=401, detail="No Authorization header present"
+        )
 
     log.warning(settings.DEBUG)
     log.warning(type(settings.DEBUG))
@@ -31,8 +33,16 @@ def get_user(authorization: Annotated[str | None, Header()] = None):
             "sysadmin": True,
         }
     else:
-        ckan = ckanapi.RemoteCKAN(settings.API_URL, apikey=authorization)
-        user_info = ckan.call_action("user_show")
+        try:
+            ckan = ckanapi.RemoteCKAN(settings.API_URL, apikey=authorization)
+            user_info = ckan.call_action("user_show")
+        except ckanapi.errors.NotFound as e:
+            raise HTTPException(status_code=404, detail="User not found") from e
+        except Exception as e:
+            log.error(e)
+            raise HTTPException(
+                status_code=500, detail="Could not authenticate user"
+            ) from e
 
     return user_info
 

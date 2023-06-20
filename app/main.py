@@ -28,7 +28,7 @@ def get_application() -> FastAPI:
     _app = FastAPI(
         title=settings.APP_NAME,
         description="API for publishing DOIs to DataCite and importing DOIs "
-                    "from external platforms.",
+        "from external platforms.",
         version=__version__,
         license_info={
             "name": "MIT",

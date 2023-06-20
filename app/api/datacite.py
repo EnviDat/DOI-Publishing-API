@@ -1,20 +1,23 @@
-"""DataCite API Router"""
-
-import time
-from typing import Annotated
-from fastapi import APIRouter, HTTPException, Security, Response, Query, \
-    Depends
-from fastapi.security.api_key import APIKeyHeader
-
-# from app.api.doi import create_doi_draft
-from app.auth import get_user, get_admin, get_token
-from app.logic.datacite import reserve_draft_doi_datacite, DoiSuccess, \
-    DoiErrors, validate_doi, publish_datacite
-from app.logic.remote_ckan import ckan_package_show, ckan_package_patch
-from app.config import settings
+"""DataCite API Router."""
 
 # Setup logging
 import logging
+import time
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+
+# from app.api.doi import create_doi_draft
+from app.auth import get_admin, get_token, get_user
+from app.config import settings
+from app.logic.datacite import (
+    DoiErrors,
+    DoiSuccess,
+    publish_datacite,
+    reserve_draft_doi_datacite,
+    validate_doi,
+)
+from app.logic.remote_ckan import ckan_package_patch, ckan_package_show
 
 log = logging.getLogger(__name__)
 
@@ -27,10 +30,11 @@ log = logging.getLogger(__name__)
 
 # TODO review and remove dependencies if unused
 # Setup datacite router
-router = APIRouter(prefix="/datacite",
-                   tags=["datacite"]
-                   # dependencies=[Depends(get_user)]
-                   )
+router = APIRouter(
+    prefix="/datacite",
+    tags=["datacite"]
+    # dependencies=[Depends(get_user)]
+)
 
 
 # TODO possibly remove similar endpoint in doi/create_doi_draft
@@ -39,24 +43,25 @@ router = APIRouter(prefix="/datacite",
     name="Reserve draft DOI",
     status_code=201,
     responses={
-        201: {"model": DoiSuccess,
-              "description": "Draft DOI successfully reserved with DataCite"},
+        201: {
+            "model": DoiSuccess,
+            "description": "Draft DOI successfully reserved with DataCite",
+        },
         422: {"model": DoiErrors},
         500: {"model": DoiErrors},
-        502: {"model": DoiErrors}
-    }
+        502: {"model": DoiErrors},
+    },
 )
 async def reserve_draft_doi(
-        package_id: Annotated[str, Query(alias="package-id",
-                                         description="CKAN package id or "
-                                                     "name")],
-        response: Response,
-        user=Depends(get_user),
-        auth_token=Depends(get_token)
+    package_id: Annotated[
+        str, Query(alias="package-id", description="CKAN package id or name")
+    ],
+    response: Response,
+    user=Depends(get_user),
+    auth_token=Depends(get_token),
 ):
     """
-    Authenticate user, extract DOI from package, and reserve draft DOI in
-    DataCite.
+    Authenticate user, extract DOI from package, and reserve draft DOI in DataCite.
     """
 
     # TODO review authorization implementation
@@ -68,7 +73,7 @@ async def reserve_draft_doi(
 
     # Get package
     # If package id invalid or user not authorized then raises HTTPException
-    package = ckan_package_show(package_id, auth_token)
+    ckan_package_show(package_id, auth_token)
 
     # TODO clarify if doi will already be assigned to package
     #  or will be assigned after reserving doi with DataCite
@@ -96,22 +101,18 @@ async def reserve_draft_doi(
     retry_count = 0
 
     while retry_count <= retries:
-
         # TODO revert to calling DataCite API with doi
         datacite_response = reserve_draft_doi_datacite(test_doi)
 
         if datacite_response.get("status_code") in successful_status_codes:
             # TODO update package doi value with doi variable
             # Update publication_state and doi in CKAN package
-            data = {
-                "publication_state": "reserved",
-                "doi": test_doi
-            }
+            data = {"publication_state": "reserved", "doi": test_doi}
             ckan_package_patch(package_id, data, auth_token)
 
             # TODO email admin that DOI was successfully reserved with DataCite
 
-            response.status_code = datacite_response.get('status_code')
+            response.status_code = datacite_response.get("status_code")
             return datacite_response
 
         # Else attempt to call DataCite API again
@@ -122,31 +123,26 @@ async def reserve_draft_doi(
 
     # TODO email admin to notify of failure to reserve DOI with datacite
 
-    response.status_code = datacite_response.get('status_code', 500)
+    response.status_code = datacite_response.get("status_code", 500)
     return datacite_response
 
 
 # TODO implement email sending
 # TODO finalize response returned
-@router.get(
-    "/request",
-    name="Request approval to publish/update"
-)
+@router.get("/request", name="Request approval to publish/update")
 async def request_publish_or_update(
-        package_id: Annotated[str, Query(alias="package-id",
-                                         description="CKAN package id "
-                                                     "or name")],
-        user=Depends(get_user),
-        auth_token=Depends(get_token)
+    package_id: Annotated[
+        str, Query(alias="package-id", description="CKAN package id or name")
+    ],
+    user=Depends(get_user),
+    auth_token=Depends(get_token),
 ):
-    """
-    Request approval from admin to publish or update dataset with DataCite.
+    """Request approval from admin to publish or update dataset with DataCite.
 
     Send email to admin and user.
     If initial 'publication_state' is 'reserved' or 'published'
     then update to 'pub_pending'.
     """
-
     # TODO review authorization implementation
     # Authorize user, if user invalid then HTTPException raised
 
@@ -160,22 +156,20 @@ async def request_publish_or_update(
     validate_doi(package)
 
     # Extract publication_state
-    publication_state = package.get('publication_state')
+    publication_state = package.get("publication_state")
     if not publication_state:
-        raise HTTPException(status_code=500,
-                            detail="Package does not have "
-                                   "a 'publication_state'")
+        raise HTTPException(
+            status_code=500, detail="Package does not have a 'publication_state'"
+        )
 
     # Send email to admin requesting publication/update
     match publication_state:
-
         # User requests publication,
         # if 'publication_state' fails to update then raises HTTPExcpetion
         case "reserved":
-
             # TODO send “Publication request” email to admin and user
 
-            data = {'publication_state': 'pub_pending'}
+            data = {"publication_state": "pub_pending"}
             ckan_package_patch(package_id, data, auth_token)
 
         # User requests metadata update
@@ -185,9 +179,10 @@ async def request_publish_or_update(
 
         # Default case, raise HTTP excpetion
         case _:
-            raise HTTPException(status_code=500,
-                                detail="Value for 'publication_state' cannot "
-                                       "be processed")
+            raise HTTPException(
+                status_code=500,
+                detail="Value for 'publication_state' cannot be processed",
+            )
 
     # TODO finalize return value
     return "Successfully requested approval to publish or update dataset"
@@ -199,31 +194,30 @@ async def request_publish_or_update(
     name="Publish/update dataset",
     status_code=200,
     responses={
-        200: {"model": DoiSuccess,
-              "description": "DOI successfully published/updated "
-                             "with DataCite"},
+        200: {
+            "model": DoiSuccess,
+            "description": "DOI successfully published/updated with DataCite",
+        },
         422: {"model": DoiErrors},
         500: {"model": DoiErrors},
-        502: {"model": DoiErrors}
-    }
+        502: {"model": DoiErrors},
+    },
 )
 async def publish_or_update_datacite(
-        package_id: Annotated[str, Query(alias="package-id",
-                                         description="CKAN package id "
-                                                     "or name")],
-        response: Response,
-        admin=Depends(get_admin),
-        auth_token=Depends(get_token)
+    package_id: Annotated[
+        str, Query(alias="package-id", description="CKAN package id or name")
+    ],
+    response: Response,
+    admin=Depends(get_admin),
+    auth_token=Depends(get_token),
 ):
-    """
-    Publish or update dataset with DataCite.
+    """Publish or update dataset with DataCite.
 
     Only authorized admin can use this endpoint.
     Sends email to admin and user.
     Updates 'publication_state' to 'published' in CKAN for datasets that were
     published the first time and had a value of ‘pub_pending’.
     """
-
     # TODO review authorization implementation
     # Authorize admin user, if authorization invalid then HTTPException raised
 
@@ -236,19 +230,20 @@ async def publish_or_update_datacite(
     package = ckan_package_show(package_id, auth_token)
 
     # Extract publication_state
-    publication_state = package.get('publication_state')
+    publication_state = package.get("publication_state")
     if not publication_state:
         response.status_code = 500
-        raise HTTPException(status_code=500,
-                            detail="Package does not have "
-                                   "a 'publication_state'")
+        raise HTTPException(
+            status_code=500, detail="Package does not have a 'publication_state'"
+        )
 
     # Check if publication_state can be processed
-    if publication_state not in ['pub_pending', 'published']:
+    if publication_state not in ["pub_pending", "published"]:
         response.status_code = 500
-        raise HTTPException(status_code=500,
-                            detail="Value for 'publication_state' cannot "
-                                   "be processed")
+        raise HTTPException(
+            status_code=500,
+            detail="Value for 'publication_state' cannot be processed",
+        )
 
     # Publish/update dataset in Datacite,
     # if response status_code not in successful_status_codes
@@ -259,15 +254,13 @@ async def publish_or_update_datacite(
     retry_count = 0
 
     while retry_count <= retries:
-
         # Send package to DataCite
         datacite_response = publish_datacite(package)
 
-        if datacite_response.get('status_code') in successful_status_codes:
-
-            if publication_state == 'pub_pending':
+        if datacite_response.get("status_code") in successful_status_codes:
+            if publication_state == "pub_pending":
                 # Update publication_state in CKAN package
-                data = {'publication_state': 'published'}
+                data = {"publication_state": "published"}
                 ckan_package_patch(package_id, data, auth_token)
 
                 # TODO send "Publication Finished"
@@ -278,7 +271,7 @@ async def publish_or_update_datacite(
                 pass
 
             # Return successful datacite_response
-            response.status_code = datacite_response.get('status_code')
+            response.status_code = datacite_response.get("status_code")
             return datacite_response
 
         # Else attempt to call DataCite API again
@@ -290,5 +283,5 @@ async def publish_or_update_datacite(
     # TODO email admin to notify of failure to publish/update DOI with datacite
 
     # Return error datacite_response
-    response.status_code = datacite_response.get('status_code', 500)
+    response.status_code = datacite_response.get("status_code", 500)
     return datacite_response

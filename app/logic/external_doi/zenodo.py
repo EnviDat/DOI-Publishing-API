@@ -1,18 +1,14 @@
-"""Retrieve and convert Zenodo DOI metadata to EnviDat CKAN package format"""
+"""Retrieve and convert Zenodo DOI metadata to EnviDat CKAN package format."""
 
+import datetime
 import json
 import re
 
 import requests
-import datetime
 
 
 # TODO review error messages
-def convert_zenodo_doi(
-        doi: str,
-        user: dict,
-        add_placeholders: bool = False
-) -> dict:
+def convert_zenodo_doi(doi: str, user: dict, add_placeholders: bool = False) -> dict:
     """
     Return metadata for input doi and convert metadata to EnviDat
     CKAN package format.
@@ -35,14 +31,13 @@ def convert_zenodo_doi(
         dict: Dictionary with metadata in EnviDat CKAN package
                 or error dictionary
     """
-
     # Extract record_id
     record_id = get_zenodo_record_id(doi)
     if not record_id:
         return {
             "status_code": 400,
             "message": f"The following DOI was not found: {doi}",
-            "error": "Cannot extract record ID from input Zenodo DOI"
+            "error": "Cannot extract record ID from input Zenodo DOI",
         }
 
     # TODO review and remove unused key-value pairs
@@ -58,7 +53,7 @@ def convert_zenodo_doi(
         return {
             "status_code": 500,
             "message": "Cannot process DOI. Please contact EnviDat team.",
-            "error": f"Cannot not find config file: {config_path}"
+            "error": f"Cannot not find config file: {config_path}",
         }
 
     # Assign records_url, return error if needed values not set in config
@@ -68,7 +63,7 @@ def convert_zenodo_doi(
         return {
             "status_code": 500,
             "message": "Cannot process DOI. Please contact EnviDat team.",
-            "error": "Cannot not get externalApi.zenodoRecords from config"
+            "error": "Cannot not get externalApi.zenodoRecords from config",
         }
 
     # Get record from Zenodo API
@@ -84,15 +79,12 @@ def convert_zenodo_doi(
         return {
             "status_code": response.status_code,
             "message": f"The following DOI was not found: {doi}",
-            "error": response.json()
+            "error": response.json(),
         }
 
     # Convert Zenodo record to EnviDat format
     envidat_record = convert_zenodo_to_envidat(
-        response.json(),
-        user,
-        config,
-        add_placeholders
+        response.json(), user, config, add_placeholders
     )
 
     return envidat_record
@@ -118,7 +110,7 @@ def get_zenodo_record_id(doi: str) -> str | None:
     if period_index == -1:
         return None
 
-    record_id = doi[period_index + 1:]
+    record_id = doi[period_index + 1 :]
 
     if not record_id:
         return None
@@ -131,25 +123,20 @@ def get_zenodo_record_id(doi: str) -> str | None:
 #  and dict returned if add_placeholders true
 # TODO add try/except handling
 def convert_zenodo_to_envidat(
-        data: dict,
-        user: dict,
-        config: dict,
-        add_placeholders: bool = False
+    data: dict, user: dict, config: dict, add_placeholders: bool = False
 ) -> dict:
-    """
-    Convert Zenodo record dictionary to EnviDat CKAN package format.
+    """Convert Zenodo record dictionary to EnviDat CKAN package format.
 
     If add_placeholders true then add default values from config.
     Values added are required by EnviDat CKAN to create a new package.
 
-     Args:
+    Args:
         data (dict): Response data object from Zenodo API call
         user (dict): CKAN user dictionary
         config (dict): config dictionary created from config/zenodo.json
         add_placeholders (bool): If true placeholder values are added for
                        required EnviDat package fields. Default value is False.
     """
-
     # Assign dictionary to contain values converted from Zenodo
     # to EnviDat CKAN package format
     pkg = {}
@@ -195,12 +182,14 @@ def convert_zenodo_to_envidat(
     license_id = metadata.get("license", {}).get("id", "")
     license_data = get_license(license_id, config, add_placeholders)
 
-    pkg.update({
-        "license_id": license_data.get("license_id", "other-undefined"),
-        "license_title": license_data.get("license_title", "Other (Specified "
-                                                           "in the "
-                                                           "description)")
-    })
+    pkg.update(
+        {
+            "license_id": license_data.get("license_id", "other-undefined"),
+            "license_title": license_data.get(
+                "license_title", "Other (Specified " "in the " "description)"
+            ),
+        }
+    )
 
     license_url = license_data.get("license_url")
     if license_url:
@@ -218,14 +207,13 @@ def convert_zenodo_to_envidat(
     if name:
         pkg.update({"name": name})
 
-    description = metadata.get("description", "")
+    metadata.get("description", "")
 
     return pkg
 
 
 def get_authors(creators: list, add_placeholders: bool = False) -> list:
-    """
-    Returns authors in EnviDat formattted list
+    """Returns authors in EnviDat formattted list.
 
     Args:
         creators (dict): creators list in Zenodo record
@@ -240,22 +228,15 @@ def get_authors(creators: list, add_placeholders: bool = False) -> list:
         creators = [{}]
 
     for creator in creators:
-
         author = {}
 
         creator_names = creator.get("name", "")
         if "," in creator_names:
             names = creator_names.partition(",")
-            author.update({
-                "given_name": names[2].strip(),
-                "name": names[0].strip()
-            })
+            author.update({"given_name": names[2].strip(), "name": names[0].strip()})
         elif " " in creator_names:
             names = creator_names.partition(" ")
-            author.update({
-                "given_name": names[0].strip(),
-                "name": names[2].strip()
-            })
+            author.update({"given_name": names[0].strip(), "name": names[2].strip()})
         # TODO finalize placeholder name
         elif add_placeholders:
             author.update({"name": "UNKNOWN"})
@@ -277,10 +258,9 @@ def get_authors(creators: list, add_placeholders: bool = False) -> list:
 
 
 def get_date(publication_date: str, add_placeholders: bool = False) -> list:
-    """
-    Returns dates in Envidat format
+    """Returns dates in Envidat format.
 
-     Args:
+    Args:
         publication_date (str): publication_date string in Zenodo record
         add_placeholders (bool): If true placeholder values are added for
                      required EnviDat package fields. Default value is False.
@@ -291,25 +271,18 @@ def get_date(publication_date: str, add_placeholders: bool = False) -> list:
     if add_placeholders and not publication_date:
         date_today = datetime.date.today()
         date_str = date_today.strftime("%Y-%m-%d")
-        date = {
-            "date": date_str,
-            "date_type": "created"
-        }
+        date = {"date": date_str, "date_type": "created"}
         dates.append(date)
 
     elif publication_date:
-        date = {
-            "date": publication_date,
-            "date_type": "created"
-        }
+        date = {"date": publication_date, "date_type": "created"}
         dates.append(date)
 
     return dates
 
 
 def get_funding(grants: list, add_placeholders: bool = False) -> list:
-    """
-    Returns funding in EnviDat formatted list
+    """Returns funding in EnviDat formatted list.
 
     Args:
         grants (list): grants list in Zenodo record
@@ -336,13 +309,8 @@ def get_funding(grants: list, add_placeholders: bool = False) -> list:
     return funding_no_duplicates
 
 
-def get_license(
-        license_id: str,
-        config: dict,
-        add_placeholders: bool = False
-) -> dict:
-    """
-    Returns license data in dictionary with EnviDat formatted keys
+def get_license(license_id: str, config: dict, add_placeholders: bool = False) -> dict:
+    """Returns license data in dictionary with EnviDat formatted keys.
 
     Args:
         license_id (str): license_id string in Zenodo record
@@ -350,16 +318,16 @@ def get_license(
         add_placeholders (bool): If true placeholder values are added for
                      required EnviDat package fields. Default value is False.
     """
-
     # Extract licenses from config
     envidat_licenses = config.get("envidatLicenses", {})
 
     # Assign other_undefined for placeholder values and unknown licenses
     other_undefined = envidat_licenses.get(
-        "other-undefined", {
+        "other-undefined",
+        {
             "license_id": "other-undefined",
-            "license_title": "Other (Specified in the description)"
-        }
+            "license_title": "Other (Specified in the description)",
+        },
     )
 
     # TODO finalize placeholder license
@@ -367,7 +335,6 @@ def get_license(
         return other_undefined
 
     match license_id:
-
         case "CC-BY-4.0":
             return envidat_licenses.get("cc-by", other_undefined)
 
@@ -382,8 +349,8 @@ def get_license(
 
 
 def get_name(title: str, add_placeholders: bool = False) -> str:
-    """
-    Returns name (of metadata entry) in lowercase with words joined by hyphens.
+    """Returns name (of metadata entry) in lowercase with words joined by hyphens.
+
     If name with hyphens longer than 80 characters truncates name to last whole
     word.
 
@@ -392,7 +359,6 @@ def get_name(title: str, add_placeholders: bool = False) -> str:
         add_placeholders (bool): If true placeholder values are added for
                      required EnviDat package fields. Default value is False.
     """
-
     # TODO finalize placeholder name (or return error)
     if add_placeholders and not title:
         pass
@@ -412,6 +378,30 @@ def get_name(title: str, add_placeholders: bool = False) -> str:
     return name_join
 
 
+# TODO confirm EnviDat CKAN can accept HTML strings for "notes" value
+# TODO START dev here
+def get_notes(description: str, config: dict, add_placeholders: bool = False) -> str:
+    """
+    Returns notes, if notes are less than 100 characters then inserts
+    message from config to beginning of notes.
+
+    Args:
+        description (str): description string in Zenodo record
+        config (dict): Zenodo config dictionary
+        add_placeholders (bool): If true placeholder values are added for
+                     required EnviDat package fields. Default value is False.
+    """
+    config.get("notes", {}).get(
+        "default",
+        "Automatic message from EnviDat Admin: the "
+        "description of this dataset is too short and "
+        "therefore, not informative enough. Please improve "
+        "and then delete this message.",
+    )
+
+    return description
+
+
 # TODO remove tests
 # TESTS
 # test = get_authors([{}], True)
@@ -423,5 +413,11 @@ def get_name(title: str, add_placeholders: bool = False) -> str:
 
 # test = get_date("")
 # test = get_funding([], True)
+
+# string = "function00al red()()(undancy of non-vo***lant small mammPPPals " \
+#          "increases in " \
+#          "human234576666"
+# test = get_name(string)
+
 
 # print(test)
