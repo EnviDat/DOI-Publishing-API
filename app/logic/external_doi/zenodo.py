@@ -1,6 +1,6 @@
 """Retrieve and convert Zenodo DOI metadata to EnviDat CKAN package format."""
 
-import datetime
+from datetime import datetime, date
 import json
 import re
 
@@ -165,9 +165,9 @@ def convert_zenodo_to_envidat(
 
     # date
     publication_date = metadata.get("publication_date", "")
-    date = get_date(publication_date, add_placeholders)
-    if date:
-        pkg.update({"date": json.dumps(date, ensure_ascii=False)})
+    dte = get_date(publication_date, add_placeholders)
+    if dte:
+        pkg.update({"date": json.dumps(dte, ensure_ascii=False)})
 
     # funding
     grants = metadata.get("grants", [])
@@ -212,6 +212,14 @@ def convert_zenodo_to_envidat(
     notes = get_notes(description, config, add_placeholders)
     if notes:
         pkg.update({"notes": notes})
+
+    # TODO determine how owner_org should be assigned (it is mandatory)
+    # owner_org
+
+    # publication
+    publication = get_publication(publication_date, add_placeholders)
+    if publication:
+        pkg.update({"publication": json.dumps(publication, ensure_ascii=False)})
 
     return pkg
 
@@ -273,16 +281,49 @@ def get_date(publication_date: str, add_placeholders: bool = False) -> list:
 
     # TODO finalize placeholder date and date_type
     if add_placeholders and not publication_date:
-        date_today = datetime.date.today()
+        date_today = date.today()
         date_str = date_today.strftime("%Y-%m-%d")
-        date = {"date": date_str, "date_type": "created"}
-        dates.append(date)
+        date_dict = {"date": date_str, "date_type": "created"}
+        dates.append(date_dict)
 
     elif publication_date:
-        date = {"date": publication_date, "date_type": "created"}
-        dates.append(date)
+        date_dict = {"date": publication_date, "date_type": "created"}
+        dates.append(date_dict)
 
     return dates
+
+
+def get_publication(publication_date: str, add_placeholders: bool = False) -> dict:
+    """
+    Returns publication in EnviDat format
+
+    Args:
+        publication_date (str): publication_date string in Zenodo record
+        add_placeholders (bool): If true placeholder values are added for
+                     required EnviDat package fields. Default value is False.
+    """
+    publication = {}
+
+    # TODO finalize placeholder publication_year and publisher
+    if add_placeholders and not publication_date:
+        date_today = date.today()
+        year = date_today.strftime("%Y")
+        publication.update({"publication_year": year, "publisher": "Zenodo"})
+
+    # TODO finalize placeholder publication_year and publisher
+    elif publication_date:
+        try:
+            dt = datetime.strptime(publication_date, "%Y-%m-%d")
+            year = dt.year
+            publication.update({"publication_year": year, "publisher": "Zenodo"})
+        # TODO should default values be assigned if ValueError?
+        except ValueError:
+            # date_today = date.today()
+            # year = date_today.strftime("%Y")
+            # publication.update({"publication_year": year, "publisher": "Zenodo"})
+            return publication
+
+    return publication
 
 
 def get_funding(grants: list, add_placeholders: bool = False) -> list:
@@ -428,4 +469,7 @@ def get_notes(description: str, config: dict, add_placeholders: bool = False) ->
 
 # test = get_notes("134gdd ", {}, True)
 
+# print(test)
+
+# test = get_publication("", True)
 # print(test)
