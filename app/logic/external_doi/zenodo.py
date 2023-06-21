@@ -122,6 +122,7 @@ def get_zenodo_record_id(doi: str) -> str | None:
 # TODO test creating CKAN package empty metadata
 #  and dict returned if add_placeholders true
 # TODO add try/except handling
+# TODO review that all data that can be extracted is converted
 def convert_zenodo_to_envidat(
     data: dict, user: dict, config: dict, add_placeholders: bool = False
 ) -> dict:
@@ -147,7 +148,7 @@ def convert_zenodo_to_envidat(
         pkg.update({"doi": doi})
 
     # Extract "metadata" dictionary from input "data"
-    # User metadata to extract and convert values to EnviDat package format
+    # metadata is used to extract and convert values to EnviDat package format
     metadata = data.get("metadata", {})
 
     # author
@@ -247,12 +248,17 @@ def convert_zenodo_to_envidat(
                  "{\"type\": \"Point\", \"coordinates\": [8.4545978, 47.3606372]}")
         pkg.update({"spatial": spatial})
 
-    # TODO start dev here
+    version = metadata.get("version")
+    if version:
+        pkg.update({"version": version})
+
     # tags
     keywords = metadata.get("keywords", [])
     tags = get_tags(keywords, title, add_placeholders)
     if tags:
         pkg.update({"tags": tags})
+
+    # TODO get resources
 
     return pkg
 
