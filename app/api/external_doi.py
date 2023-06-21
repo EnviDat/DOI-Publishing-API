@@ -1,5 +1,4 @@
-"""
-Router used to convert DOIs and associated metadata from external platforms
+"""Router used to convert DOIs and associated metadata from external platforms
 into EnviDat CKAN package format.
 """
 
@@ -55,8 +54,7 @@ def convert_external_doi(
         ),
     ] = False,
 ):
-    """
-    Convert DOI and associated metadata from external plaforms
+    """Convert DOI and associated metadata from external plaforms
     into EnviDat CKAN package formatted json.
     """
     # Authorize user, if user invalid then raises HTTPException

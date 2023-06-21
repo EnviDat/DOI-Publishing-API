@@ -8,7 +8,6 @@ from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.auth import get_admin
 from app.config import settings
-from app.logic.minter import get_next_doi_suffix_id
 from app.models.doi import (
     DoiRealisation,
     DoiRealisationEditPydantic,
@@ -88,54 +87,6 @@ async def delete_doi(id: str):
         log.error(f"Failed deleting doi ID {id}. Does not exist ")
         raise HTTPException(status_code=404, detail=f"doi {id} not found")
     return Status(message=f"Deleted doi {id}")
-
-
-@router.post("/draft", response_model=DoiRealisationPydantic)
-async def create_doi_draft(package_id: str):
-    """Create new DOI in DB and Datacite using CKAN Package ID.
-
-    POST is required to prevent conflict with GET /doi/{id}.
-    """
-    log.debug(f"Creating new draft doi for package id: {package_id}")
-
-    next_id = await get_next_doi_suffix_id()
-
-    new_doi = {
-        "prefix_id": settings.DOI_PREFIX,
-        "suffix_id": f"{settings.DOI_SUFFIX_TAG}{next_id}",
-        "ckan_id": package_id,
-        # "ckan_name": package.name,
-        "site_id": "doi-publishing-api",
-        "tag_id": "envidat.",
-        # "ckan_user": user.name,
-        # "metadata": datacite_draft_func(),
-        "metadata_format": "ckan",
-        "ckan_entity": "package",
-    }
-
-    database_doi = await DoiRealisation.get_or_none(
-        prefix_id=new_doi.prefix_id,
-        suffix_id=new_doi.suffix_id,
-    )
-
-    if database_doi:
-        log.debug("DOI database already exists, continuing to datacite logic")
-    else:
-        log.debug(f"Creating new DOI with params: {new_doi}")
-        await DoiRealisation.create(**new_doi)
-
-    # Continue logic
-    # # Call Datacite draft handler datacite.py
-    # TODO implement
-    # TODO email admin successful/fails
-    # response = some_function_to_submit_datacite_draft()
-    # if response.status_code != 201:
-    #     log.error(f"Datacite draft failed: {response.errors}")
-    #     return HTTPException(
-    #         status_code=response.status_code, message="Error in datacite draft"
-    #     )
-
-    return await DoiRealisationInPydantic.from_tortoise_orm(database_doi)
 
 
 @router.put(

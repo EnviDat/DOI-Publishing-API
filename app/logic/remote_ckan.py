@@ -2,26 +2,23 @@
 
 # Setup logging
 import logging
-from typing import Annotated
 
 import requests
 from ckanapi import NotAuthorized, NotFound, RemoteCKAN
-from fastapi import Header, HTTPException
+from fastapi import HTTPException
 
 from app.config import settings
 
 log = logging.getLogger(__name__)
 
 
-def ckan_package_show(
-    package_id: str, authorization: Annotated[str | None, Header()] = None
-):
+def ckan_package_show(package_id: str, authorization: str):
     """Return CKAN package.
 
     In case of some errors raises HTTPException.
     """
     try:
-        ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
+        ckan = RemoteCKAN(settings.CKAN_API_URL, apikey=authorization)
         package = ckan.call_action("package_show", {"id": package_id})
     except NotFound as e:
         log.exception(e)
@@ -37,20 +34,18 @@ def ckan_package_show(
 
 
 def ckan_package_patch(
-    package_id: str, data: dict, authorization: Annotated[str | None, Header()] = None
+    package_id: str,
+    data: dict,
+    authorization: str,
 ):
     """Patch a CKAN package.
 
     Authorization header required to update package.
     In case of some errors raises HTTPException.
     """
-    if not authorization:
-        log.error("No Authorization header present")
-        raise HTTPException(status_code=401, detail="No Authorization header present")
-
     try:
         data_dict = {"id": package_id, **data}
-        ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
+        ckan = RemoteCKAN(settings.CKAN_API_URL, apikey=authorization)
         package = ckan.call_action("package_patch", data_dict)
     except NotFound as e:
         log.exception(e)

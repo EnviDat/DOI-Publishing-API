@@ -29,7 +29,7 @@ def get_user(authorization: Annotated[str | None, Header()] = None):
         }
     else:
         try:
-            ckan = ckanapi.RemoteCKAN(settings.API_URL, apikey=authorization)
+            ckan = ckanapi.RemoteCKAN(settings.CKAN_API_URL, apikey=authorization)
             user_info = ckan.call_action("user_show")
         except ckanapi.errors.NotFound as e:
             raise HTTPException(status_code=404, detail="User not found") from e
@@ -48,8 +48,10 @@ def get_admin(user_info=Depends(get_user)):
     admin = user_info.get("sysadmin", False)
 
     if not admin:
-        log.error(f"User {user_info} is not an admin")
-        raise HTTPException(status_code=401, detail=f"User {user_info} is not an admin")
+        log.debug(f"Extracting username from user obj: {user_info}")
+        username = user_info.get("name", None)
+        log.error(f"Not an admin. User: {username}")
+        raise HTTPException(status_code=401, detail=f"Not an admin. User: {username}")
 
     return user_info
 

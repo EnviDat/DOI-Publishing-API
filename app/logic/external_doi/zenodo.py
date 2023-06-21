@@ -9,8 +9,7 @@ import requests
 
 # TODO review error messages
 def convert_zenodo_doi(doi: str, user: dict, add_placeholders: bool = False) -> dict:
-    """
-    Return metadata for input doi and convert metadata to EnviDat
+    """Return metadata for input doi and convert metadata to EnviDat
     CKAN package format.
 
     Note: Converts data that exists in Zenodo metadata record
@@ -91,8 +90,7 @@ def convert_zenodo_doi(doi: str, user: dict, add_placeholders: bool = False) -> 
 
 
 def get_zenodo_record_id(doi: str) -> str | None:
-    """
-    Return record ID extracted from Zenodo Doi.
+    """Return record ID extracted from Zenodo Doi.
     If extraction fails return None.
 
     Example DOI: "10.5281/zenodo.5230562"
@@ -381,8 +379,7 @@ def get_name(title: str, add_placeholders: bool = False) -> str:
 # TODO confirm EnviDat CKAN can accept HTML strings for "notes" value
 # TODO START dev here
 def get_notes(description: str, config: dict, add_placeholders: bool = False) -> str:
-    """
-    Returns notes, if notes are less than 100 characters then inserts
+    """Returns notes, if notes are less than 100 characters then inserts
     message from config to beginning of notes.
 
     Args:
