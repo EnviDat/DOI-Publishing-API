@@ -32,7 +32,7 @@ class Settings(BaseSettings):
             raise ValueError("DEBUG_USER_EMAIL is not present in the environment")
         return v
 
-    API_URL: AnyHttpUrl = "https://www.envidat.ch"
+    CKAN_API_URL: AnyHttpUrl = "https://www.envidat.ch"
 
     DATACITE_API_URL: AnyHttpUrl
     DATACITE_CLIENT_ID: str
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     DATACITE_TIMEOUT: int | float = 3
     DATACITE_RETRIES: int = 1
     DATACITE_SLEEP_TIME: int = 3
-    DATACITE_DATA_URL_PREFIX: Optional[str] = "https://www.envidat.ch/#/metadata"
+    DATACITE_DATA_URL_PREFIX: str = "https://www.envidat.ch/#/metadata"
     DOI_PREFIX: str
     DOI_SUFFIX_TAG: Optional[str] = ""
 
