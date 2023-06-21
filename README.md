@@ -1,8 +1,14 @@
 # DOI Publishing API
 
-Microservice API used by EnviDat to publish DOIs on Datacite.
+Microservice API to publish DOIs on Datacite.
 
 [View the API docs](https://envidat.gitlab-pages.wsl.ch/doi-publishing-api)
+
+## Usage
+
+This services works in tandem with the email relay server [Catapulte](https://github.com/jdrouet/catapulte).
+
+An example implementation can be found [here](https://gitlabext.wsl.ch/EnviDat/email-microservice).
 
 ## Dev
 
