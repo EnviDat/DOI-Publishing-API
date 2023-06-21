@@ -205,7 +205,7 @@ def convert_zenodo_to_envidat(
     # maintainer
 
     # name
-    title = metadata.get("title")
+    title = metadata.get("title", "")
     # TODO handle if title does not exist (name is required)
 
     name = get_name(title, add_placeholders)
@@ -233,7 +233,8 @@ def convert_zenodo_to_envidat(
     if related_publications:
         pkg.update({"related_publications": related_publications})
 
-    # TODO review if default value of resource_type_general should be "dataset"
+    # TODO review if default value of resource_type_general should be "dataset",
+    #  see "publication_type" in Zenodo docs
     pkg.update({"resource_type_general": "dataset"})
 
     # spatial
@@ -245,6 +246,13 @@ def convert_zenodo_to_envidat(
             .get("default",
                  "{\"type\": \"Point\", \"coordinates\": [8.4545978, 47.3606372]}")
         pkg.update({"spatial": spatial})
+
+    # TODO start dev here
+    # tags
+    keywords = metadata.get("keywords", [])
+    tags = get_tags(keywords, title, add_placeholders)
+    if tags:
+        pkg.update({"tags": tags})
 
     return pkg
 
@@ -494,8 +502,88 @@ def get_related_publications(references: list) -> str:
     return related_publications
 
 
+def get_tags(keywords: list, title: str, add_placeholders: bool = False) -> list:
+    """
+    Return tags in EnviDat format
+
+    Args:
+        keywords (list): keywords in Zenodo record
+        title (str): title string in Zenodo record
+        add_placeholders (bool): If true placeholder values are added for
+                   required EnviDat package fields. Default value is False.
+    """
+    tags = []
+
+    # Handle all keywords in one element and separated by commas
+    if len(keywords) == 1:
+        keywords = keywords[0].split(",")
+
+    # Format keywords
+    regex_replacement = "[^0-9A-Z-_. ]"
+    for keyword in keywords:
+        word = re.sub(regex_replacement, "", keyword.upper().strip())
+        tags.append({"name": word})
+
+    # TODO review if ZENODO keyword should be added by default to tags
+    tags.append({"name": "ZENODO"})
+
+    if add_placeholders:
+        extra_tags = get_extra_tags(title, tags)
+        tags += extra_tags
+
+    return tags
+
+
+# TODO test if it is possible to create datset with duplicate tag names
+def get_extra_tags(title: str, tags: list) -> list:
+    """
+    Returns extra tags extracted from title in EnviDat format
+
+    Example Zenodo DOI without any keywords: 10.5281/zenodo.7370384
+
+    Args:
+       title (str): title string in Zenodo record
+       tags (list): tags list in EnviDat format
+    """
+    extra_tags = []
+
+    if len(tags) < 5:
+
+        num_new_tags = 5 - len(tags)
+        counter = 0
+
+        words = title.split(" ")
+        index = 0
+
+        while counter < num_new_tags:
+
+            # Handle short titles
+            if index + 1 > len(words):
+                extra_tags.append({"name": "ZENODO"})
+                counter += 1
+                index += 1
+                continue
+
+            # Format word
+            regex_replacement = "[^0-9A-Z-_. ]"
+            word = re.sub(regex_replacement, "", words[index].upper().strip())
+
+            # Append formatted word to extra_tags if it is at least 4 characters
+            if len(word) >= 4:
+                extra_tags.append({"name": word})
+                counter += 1
+
+            index += 1
+
+    return extra_tags
+
+
 # TODO remove tests
 # TESTS
+# test = get_extra_tags("", [])
+# test = get_tags([], "Yes I three k*werlk", True)
+# print(test)
+
 # test = get_authors([{}], True)
 # # test = get_authors([{}], True)
 # # test = get_authors([{}])
