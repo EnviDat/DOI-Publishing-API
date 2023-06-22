@@ -3,8 +3,6 @@ Router used to convert DOIs and associated metadata from external platforms
 into EnviDat CKAN package format.
 """
 
-# Setup logging
-import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Query, Response, Security
@@ -15,6 +13,8 @@ from app.logic.external_doi.constants import ExternalPlatform
 from app.logic.external_doi.utils import get_doi_external_platform
 from app.logic.external_doi.zenodo import convert_zenodo_doi
 
+# Setup logging
+import logging
 log = logging.getLogger(__name__)
 
 # TODO test with production

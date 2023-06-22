@@ -3,8 +3,11 @@
 from datetime import datetime, date
 import json
 import re
-
 import requests
+
+# Setup logging
+import logging
+log = logging.getLogger(__name__)
 
 
 # TODO review error messages
@@ -148,6 +151,27 @@ def convert_zenodo_to_envidat(
     # metadata is used to extract and convert values to EnviDat package format
     metadata = data.get("metadata", {})
 
+    # title
+    title = metadata.get("title")
+
+    # Return error if title not found
+    if not title:
+        doi = metadata.get("doi")
+        err = f"'title' not found in DOI: {doi}"
+        log.error(err)
+        return {
+            "status_code": 500,
+            "message": f"Could not process DOI: {doi}",
+            "error": err,
+        }
+    # Else add title to pkg
+    pkg.update({"title": title})
+
+    # name
+    name = get_name(title, add_placeholders)
+    if name:
+        pkg.update({"name": name})
+
     # author
     creators = metadata.get("creators", [])
     authors = get_authors(creators, user, add_placeholders)
@@ -203,15 +227,6 @@ def convert_zenodo_to_envidat(
     license_url = license_data.get("license_url")
     if license_url:
         pkg.update({"license_url": license_url})
-
-    # title
-    title = metadata.get("title", "")
-    pkg.update({"title": title})
-    # TODO if no title then break and log error
-
-    name = get_name(title, add_placeholders)
-    if name:
-        pkg.update({"name": name})
 
     # notes
     description = metadata.get("description", "")
@@ -447,7 +462,6 @@ def get_license(license_id: str, config: dict, add_placeholders: bool = False) -
     if add_placeholders and not license_id:
         return other_undefined
 
-    # TODo add cc 0
     match license_id:
         case "CC-BY-4.0":
             return envidat_licenses.get("cc-by", other_undefined)
@@ -635,7 +649,8 @@ def get_extra_tags(title: str, tags: list) -> list:
 # # test = get_authors([{}])
 #
 # test = convert_zenodo_to_envidat({}, '123', True)
-# # test = convert_zenodo_to_envidat({}, '123')
+# test = convert_zenodo_to_envidat({"metadata": {"doi": "wow"}}, {}, {})
+# print(test)
 
 # test = get_date("")
 # test = get_funding([], True)
@@ -646,8 +661,6 @@ def get_extra_tags(title: str, tags: list) -> list:
 # test = get_name(string)
 
 # test = get_notes("134gdd ", {}, True)
-
-# print(test)
 
 # test = get_publication("2011-05-23", True)
 # print(test)
