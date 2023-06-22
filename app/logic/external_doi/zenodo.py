@@ -13,7 +13,8 @@ log = logging.getLogger(__name__)
 
 
 # TODO review error messages
-def convert_zenodo_doi(doi: str, user: dict, add_placeholders: bool = False) -> dict:
+def convert_zenodo_doi(
+        doi: str, owner_org: str, user: dict, add_placeholders: bool = False) -> dict:
     """
     Return metadata for input doi and convert metadata to EnviDat
     CKAN package format.
@@ -28,6 +29,7 @@ def convert_zenodo_doi(doi: str, user: dict, add_placeholders: bool = False) -> 
 
     Args:
         doi (str): Input doi string
+        owner_org (str): 'owner_org' assigned to user in EnviDat CKAN
         user (dict): CKAN user dictionary
         add_placeholders (bool): If true placeholder values are added for
                        required EnviDat package fields. Default value is False.
@@ -89,7 +91,7 @@ def convert_zenodo_doi(doi: str, user: dict, add_placeholders: bool = False) -> 
 
     # Convert Zenodo record to EnviDat format
     envidat_record = convert_zenodo_to_envidat(
-        response.json(), user, config, add_placeholders
+        response.json(), owner_org, user, config, add_placeholders
     )
 
     return envidat_record
@@ -131,7 +133,7 @@ def get_zenodo_record_id(doi: str) -> str | None:
 # TODO put placeholder values should be in config
 # TODO run code formatters pre-commit hook
 def convert_zenodo_to_envidat(
-    data: dict, user: dict, config: dict, add_placeholders: bool = False
+    data: dict, owner_org: str, user: dict, config: dict, add_placeholders: bool = False
 ) -> dict:
     """Convert Zenodo record dictionary to EnviDat CKAN package format.
 
@@ -140,6 +142,7 @@ def convert_zenodo_to_envidat(
 
     Args:
         data (dict): Response data object from Zenodo API call
+        owner_org (str): 'owner_org' assigned to user in EnviDat CKAN
         user (dict): CKAN user dictionary
         config (dict): config dictionary created from config/zenodo.json
         add_placeholders (bool): If true placeholder values are added for
@@ -184,11 +187,8 @@ def convert_zenodo_to_envidat(
     maintainer = get_maintainer(user)
     pkg.update({"maintainer": json.dumps(maintainer, ensure_ascii=False)})
 
-    # TODO check this is auto assigned
-    # creator_user_id
-    # creator_user_id = user.get("id")
-    # if creator_user_id:
-    #     pkg.update({"creator_user_id": creator_user_id})
+    # owner_org
+    pkg.update({"owner_org": owner_org})
 
     # date
     publication_date = metadata.get("publication_date", "")

@@ -44,6 +44,13 @@ def convert_external_doi(
             },
         ),
     ],
+    owner_org: Annotated[
+        str,
+        Query(
+            description="'owner_org' assigned to user in EnviDat CKAN",
+            example="bd536a0f-d6ac-400e-923c-9dd351cb05fa"
+        ),
+    ],
     response: Response,
     authorization: str = Security(authorization_header),
     add_placeholders: Annotated[
@@ -72,7 +79,8 @@ def convert_external_doi(
     match external_platform:
         # TODO call ZenodoAPI
         case ExternalPlatform.ZENODO:
-            result = convert_zenodo_doi(doi, user, add_placeholders)
+            result = convert_zenodo_doi(doi, owner_org, user, add_placeholders)
+            # TODO assign status_code to successful conversion result
 
         # TODO loop through different converters for default case
         case _:
