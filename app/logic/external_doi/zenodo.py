@@ -156,12 +156,15 @@ def convert_zenodo_to_envidat(
     # metadata is used to extract and convert values to EnviDat package format
     metadata = data.get("metadata", {})
 
+    # doi
+    doi = data.get("doi")
+    pkg.update({"doi": doi})
+
     # title
     title = metadata.get("title")
 
     # Return error if title not found
     if not title:
-        doi = metadata.get("doi")
         err = f"'title' not found in DOI: {doi}"
         log.error(err)
         return {
@@ -173,7 +176,7 @@ def convert_zenodo_to_envidat(
     pkg.update({"title": title})
 
     # name
-    name = get_name(title, add_placeholders)
+    name = get_name(title)
     if name:
         pkg.update({"name": name})
 
@@ -207,12 +210,6 @@ def convert_zenodo_to_envidat(
     if funding:
         pkg.update({"funding": json.dumps(funding, ensure_ascii=False)})
 
-    # TODO determine if language should be assigned as "en"
-    # TODO if language is not "eng" log error and return error
-    # TODO if add_placeholders validate for english
-    # TODO check as this is not mandatory Zenodo property
-    # language
-
     # license
     license_id = metadata.get("license", {}).get("id", "")
     license_data = get_license(license_id, config, add_placeholders)
@@ -236,11 +233,6 @@ def convert_zenodo_to_envidat(
     if notes:
         pkg.update({"notes": notes})
 
-    # TODO determine how owner_org should be assigned (it is mandatory)
-    # TODO add owner_org as ID
-    # TODO start dev here
-    # owner_org
-
     # related_publications
     references = metadata.get("references", [])
     related_publications = get_related_publications(references)
@@ -249,6 +241,7 @@ def convert_zenodo_to_envidat(
 
     # TODO review if default value of resource_type_general should be "dataset",
     #  see "publication_type" in Zenodo docs
+    # resource_type_general
     pkg.update({"resource_type_general": "dataset"})
 
     # spatial
@@ -334,7 +327,6 @@ def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> l
     return authors
 
 
-# TODO check if affiliation mandatory
 def get_maintainer(user: dict) -> dict:
     """
     Returns maintainer in EnviDat format
@@ -358,8 +350,9 @@ def get_maintainer(user: dict) -> dict:
     else:
         maintainer.update({"email": "envidat@wsl.ch"})
 
-    if maintainer["email"] == "envidat@wsl.ch":
-        maintainer.update({"affiliation": "Swiss Federal Research Institute WSL"})
+    # TODO check if affiliation mandatory
+    # if maintainer["email"] == "envidat@wsl.ch":
+    #     maintainer.update({"affiliation": "Swiss Federal Research Institute WSL"})
 
     return maintainer
 
@@ -485,7 +478,7 @@ def get_license(license_id: str, config: dict, add_placeholders: bool = False) -
             return other_undefined
 
 
-def get_name(title: str, add_placeholders: bool = False) -> str:
+def get_name(title: str) -> str:
     """Returns name (of metadata entry) in lowercase with words joined by hyphens.
 
     If name with hyphens longer than 80 characters truncates name to last whole
@@ -493,13 +486,7 @@ def get_name(title: str, add_placeholders: bool = False) -> str:
 
     Args:
         title (str): title string in Zenodo record
-        add_placeholders (bool): If true placeholder values are added for
-                     required EnviDat package fields. Default value is False.
     """
-    # TODO finalize placeholder name (or return error)
-    if add_placeholders and not title:
-        pass
-
     regex_replacement = "[^0-9a-z- ]"
     name = re.sub(regex_replacement, "", title.lower())
 
