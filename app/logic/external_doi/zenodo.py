@@ -154,12 +154,15 @@ def convert_zenodo_to_envidat(
     if authors:
         pkg.update({"author": json.dumps(authors, ensure_ascii=False)})
 
-    # TODO review if function should throw error if id does not exist
-    #  (should it be mandatory?)
+    # maintainer
+    maintainer = get_maintainer(user)
+    pkg.update({"maintainer": json.dumps(maintainer, ensure_ascii=False)})
+
+    # TODO check this is auto assigned
     # creator_user_id
-    creator_user_id = user.get("id")
-    if creator_user_id:
-        pkg.update({"creator_user_id": creator_user_id})
+    # creator_user_id = user.get("id")
+    # if creator_user_id:
+    #     pkg.update({"creator_user_id": creator_user_id})
 
     # date
     publication_date = metadata.get("publication_date", "")
@@ -311,6 +314,36 @@ def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> l
         authors.append(author)
 
     return authors
+
+
+# TODO check if affiliation mandatory
+def get_maintainer(user: dict) -> dict:
+    """
+    Returns maintainer in EnviDat format
+
+     Args:
+        user (dict): CKAN user dictionary
+    """
+    maintainer = {}
+
+    fullname = user.get("fullname", "")
+    if fullname:
+        names = fullname.partition(" ")
+        maintainer.update(
+            {"given_name": names[0].strip(), "name": names[2].strip()})
+    else:
+        maintainer.update({"name": "UNKNOWN"})
+
+    email = user.get("email", "")
+    if email:
+        maintainer.update({"email": email})
+    else:
+        maintainer.update({"email": "envidat@wsl.ch"})
+
+    if maintainer["email"] == "envidat@wsl.ch":
+        maintainer.update({"affiliation": "Swiss Federal Research Institute WSL"})
+
+    return maintainer
 
 
 def get_date(publication_date: str, add_placeholders: bool = False) -> list:
