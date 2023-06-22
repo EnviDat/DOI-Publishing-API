@@ -458,6 +458,9 @@ def get_license(license_id: str, config: dict, add_placeholders: bool = False) -
         case "CC-BY-NC-4.0":
             return envidat_licenses.get("cc-by-nc", other_undefined)
 
+        case "CC0-1.0":
+            return envidat_licenses.get("CC0-1.0", other_undefined)
+
         case _:
             return other_undefined
 
