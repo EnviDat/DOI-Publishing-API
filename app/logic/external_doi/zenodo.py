@@ -123,8 +123,8 @@ def get_zenodo_record_id(doi: str) -> str | None:
 #  and dict returned if add_placeholders true
 # TODO add try/except handling
 # TODO review that all data that can be extracted is converted
-# TODO review if placeholder values should be in config
-# TODO run code formatters pre-commit hood
+# TODO put placeholder values should be in config
+# TODO run code formatters pre-commit hook
 def convert_zenodo_to_envidat(
     data: dict, user: dict, config: dict, add_placeholders: bool = False
 ) -> dict:
@@ -181,7 +181,10 @@ def convert_zenodo_to_envidat(
     if funding:
         pkg.update({"funding": json.dumps(funding, ensure_ascii=False)})
 
-    # TODO determine if language should be assigned
+    # TODO determine if language should be assigned as "en"
+    # TODO if language is not "eng" log error and return error
+    # TODO if add_placeholders validate for english
+    # TODO check as this is not mandatory Zenodo property
     # language
 
     # license
@@ -192,7 +195,7 @@ def convert_zenodo_to_envidat(
         {
             "license_id": license_data.get("license_id", "other-undefined"),
             "license_title": license_data.get(
-                "license_title", "Other (Specified " "in the " "description)"
+                "license_title", "Other (Specified in the description)"
             ),
         }
     )
@@ -201,23 +204,14 @@ def convert_zenodo_to_envidat(
     if license_url:
         pkg.update({"license_url": license_url})
 
-    # TODO determine if maintainer should be user
-    # TODO add placeholder values for maintainer because it is required
-    # maintainer
-
-    # name
+    # title
     title = metadata.get("title", "")
-    # TODO handle if title does not exist (name is required)
+    pkg.update({"title": title})
+    # TODO if no title then break and log error
 
     name = get_name(title, add_placeholders)
     if name:
         pkg.update({"name": name})
-
-    # title
-    # TODO handle if title does not exist (title is required)
-    # TODO possibly implement add_placeholders
-    if title:
-        pkg.update({"title": title})
 
     # notes
     description = metadata.get("description", "")
@@ -226,6 +220,7 @@ def convert_zenodo_to_envidat(
         pkg.update({"notes": notes})
 
     # TODO determine how owner_org should be assigned (it is mandatory)
+    # TODO add owner_org as ID
     # owner_org
 
     # related_publications
@@ -261,10 +256,11 @@ def convert_zenodo_to_envidat(
     # TODO get resources
     resources = data.get("files", [])
 
+    # return resources
     return pkg
 
 
-# TODO review if author email is mandatory
+# TODO check if author email is mandatory
 def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> list:
     """Returns authors in EnviDat formattted list.
 
@@ -301,9 +297,10 @@ def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> l
                 author.update({"name": "UNKNOWN"})
 
         affiliation = creator.get("affiliation", "")
-        # TODO finalize placeholder affiliation
+        # TODO finalize placeholder affiliation, check if affiliation is mandatory
         if add_placeholders and not affiliation:
-            author.update({"affiliation": "Swiss Federal Research Institute WSL"})
+            # author.update({"affiliation": "Swiss Federal Research Institute WSL"})
+            pass
         else:
             author.update({"affiliation": affiliation.strip()})
 
@@ -356,7 +353,6 @@ def get_date(publication_date: str, add_placeholders: bool = False) -> list:
     """
     dates = []
 
-    # TODO finalize placeholder date and date_type
     if add_placeholders and not publication_date:
         date_today = date.today()
         date_str = date_today.strftime("%Y-%m-%d")
@@ -381,23 +377,20 @@ def get_publication(publication_date: str, add_placeholders: bool = False) -> di
     """
     publication = {}
 
-    # TODO finalize placeholder publication_year and publisher
     if add_placeholders and not publication_date:
         date_today = date.today()
         year = date_today.strftime("%Y")
         publication.update({"publication_year": year, "publisher": "Zenodo"})
 
-    # TODO finalize placeholder publication_year and publisher
     elif publication_date:
         try:
             dt = datetime.strptime(publication_date, "%Y-%m-%d")
             year = dt.year
             publication.update({"publication_year": year, "publisher": "Zenodo"})
-        # TODO should default values be assigned if ValueError?
         except ValueError:
-            # date_today = date.today()
-            # year = date_today.strftime("%Y")
-            # publication.update({"publication_year": year, "publisher": "Zenodo"})
+            date_today = date.today()
+            year = date_today.strftime("%Y")
+            publication.update({"publication_year": year, "publisher": "Zenodo"})
             return publication
 
     return publication
@@ -413,7 +406,6 @@ def get_funding(grants: list, add_placeholders: bool = False) -> list:
     """
     funding = []
 
-    # TODO finalize placeholder funder
     if add_placeholders and not grants:
         funder = {"institution": "UNKNOWN"}
         funding.append(funder)
@@ -452,10 +444,10 @@ def get_license(license_id: str, config: dict, add_placeholders: bool = False) -
         },
     )
 
-    # TODO finalize placeholder license
     if add_placeholders and not license_id:
         return other_undefined
 
+    # TODo add cc 0
     match license_id:
         case "CC-BY-4.0":
             return envidat_licenses.get("cc-by", other_undefined)
@@ -500,8 +492,8 @@ def get_name(title: str, add_placeholders: bool = False) -> str:
     return name_join
 
 
-# TODO confirm EnviDat CKAN can accept HTML strings for "notes" value
-# TODO determine if notes should still be returned if len(description) < 100
+# TODO confirm convert HTML to markdown
+# TODO notes should still be returned if len(description) < 100 then add default notes
 def get_notes(description: str, config: dict, add_placeholders: bool = False) -> str:
     """
     Returns notes, if notes are less than 100 characters then inserts
@@ -625,6 +617,9 @@ def get_extra_tags(title: str, tags: list) -> list:
 # TODO remove tests
 # TESTS
 
+# test = get_maintainer({})
+# print(test)
+
 # test = get_authors([], {"fullname": "Rebecca Buchholz"}, True)
 # print(test)
 
@@ -651,5 +646,5 @@ def get_extra_tags(title: str, tags: list) -> list:
 
 # print(test)
 
-# test = get_publication("", True)
+# test = get_publication("2011-05-23", True)
 # print(test)
