@@ -123,6 +123,8 @@ def get_zenodo_record_id(doi: str) -> str | None:
 #  and dict returned if add_placeholders true
 # TODO add try/except handling
 # TODO review that all data that can be extracted is converted
+# TODO review if placeholder values should be in config
+# TODO run code formatters pre-commit hood
 def convert_zenodo_to_envidat(
     data: dict, user: dict, config: dict, add_placeholders: bool = False
 ) -> dict:
@@ -142,18 +144,13 @@ def convert_zenodo_to_envidat(
     # to EnviDat CKAN package format
     pkg = {}
 
-    # TODO determine if DOI should be validated (should it be mandatory?)
-    doi = data.get("doi")
-    if doi:
-        pkg.update({"doi": doi})
-
     # Extract "metadata" dictionary from input "data"
     # metadata is used to extract and convert values to EnviDat package format
     metadata = data.get("metadata", {})
 
     # author
     creators = metadata.get("creators", [])
-    authors = get_authors(creators, add_placeholders)
+    authors = get_authors(creators, user, add_placeholders)
     if authors:
         pkg.update({"author": json.dumps(authors, ensure_ascii=False)})
 
@@ -259,15 +256,18 @@ def convert_zenodo_to_envidat(
         pkg.update({"tags": tags})
 
     # TODO get resources
+    resources = data.get("files", [])
 
     return pkg
 
 
-def get_authors(creators: list, add_placeholders: bool = False) -> list:
+# TODO review if author email is mandatory
+def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> list:
     """Returns authors in EnviDat formattted list.
 
     Args:
         creators (dict): creators list in Zenodo record
+        user (dict): CKAN user dictionary
         add_placeholders (bool): If true placeholder values are added for
                      required EnviDat package fields. Default value is False.
     """
@@ -282,20 +282,25 @@ def get_authors(creators: list, add_placeholders: bool = False) -> list:
         author = {}
 
         creator_names = creator.get("name", "")
-        if "," in creator_names:
+        if creator_names and "," in creator_names:
             names = creator_names.partition(",")
             author.update({"given_name": names[2].strip(), "name": names[0].strip()})
-        elif " " in creator_names:
+        elif creator_names and " " in creator_names:
             names = creator_names.partition(" ")
             author.update({"given_name": names[0].strip(), "name": names[2].strip()})
-        # TODO finalize placeholder name
         elif add_placeholders:
-            author.update({"name": "UNKNOWN"})
+            fullname = user.get("fullname", "")
+            if fullname:
+                names = fullname.partition(" ")
+                author.update(
+                    {"given_name": names[0].strip(), "name": names[2].strip()})
+            else:
+                author.update({"name": "UNKNOWN"})
 
         affiliation = creator.get("affiliation", "")
         # TODO finalize placeholder affiliation
         if add_placeholders and not affiliation:
-            author.update({"affiliation": "UNKNOWN"})
+            author.update({"affiliation": "Swiss Federal Research Institute WSL"})
         else:
             author.update({"affiliation": affiliation.strip()})
 
@@ -586,6 +591,10 @@ def get_extra_tags(title: str, tags: list) -> list:
 
 # TODO remove tests
 # TESTS
+
+# test = get_authors([], {"fullname": "Rebecca Buchholz"}, True)
+# print(test)
+
 # test = get_extra_tags("", [])
 # test = get_tags([], "Yes I three k*werlk", True)
 # print(test)
