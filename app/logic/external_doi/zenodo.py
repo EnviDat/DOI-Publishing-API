@@ -261,9 +261,16 @@ def convert_zenodo_to_envidat(
                  "{\"type\": \"Point\", \"coordinates\": [8.4545978, 47.3606372]}")
         pkg.update({"spatial": spatial})
 
+    # version
     version = metadata.get("version")
     if version:
         pkg.update({"version": version})
+
+    # files
+    files = data.get("files", [])
+    resources = get_resources(files)
+    if resources:
+        pkg.update({"resources": resources})
 
     # tags
     keywords = metadata.get("keywords", [])
@@ -271,10 +278,6 @@ def convert_zenodo_to_envidat(
     if tags:
         pkg.update({"tags": tags})
 
-    # TODO get resources
-    resources = data.get("files", [])
-
-    # return resources
     return pkg
 
 
@@ -633,6 +636,42 @@ def get_extra_tags(title: str, tags: list) -> list:
             index += 1
 
     return extra_tags
+
+
+def get_resources(files: list) -> list:
+    """
+    Return resource in EnviDat format
+
+    Args:
+        files (list): files in Zenodo record
+    """
+    resources = []
+
+    for file in files:
+
+        resource = {}
+
+        name = file.get("key")
+        if name:
+            resource.update({"name": name})
+
+        url = file.get("links", {}).get("self")
+        if url:
+            resource.update({"url": url})
+
+        size = file.get("size")
+        if size:
+            resource.update({"size": size})
+
+        type_resource = file.get("type")
+        if type_resource:
+            resource.update({"format": type_resource})
+
+        # TODO test if restricted.level required
+
+        resources.append(resource)
+
+    return resources
 
 
 # TODO remove tests
