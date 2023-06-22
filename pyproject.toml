@@ -12,6 +12,7 @@ dependencies = [
     "tortoise-orm[asyncpg]>=0.19.3",
     "ckanapi>=4.7",
     "requests>=2.31.0",
+    "markdownify>=0.11.6",
 ]
 requires-python = ">=3.9,<3.11"
 license = {text = "MIT"}
