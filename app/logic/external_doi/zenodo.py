@@ -9,6 +9,7 @@ import markdownify
 
 # Setup logging
 import logging
+
 log = logging.getLogger(__name__)
 
 
@@ -38,6 +39,7 @@ def convert_zenodo_doi(
         dict: Dictionary with metadata in EnviDat CKAN package
                 or error dictionary
     """
+    # TODO test doi == ""
     # Extract record_id
     record_id = get_zenodo_record_id(doi)
     if not record_id:
@@ -79,8 +81,6 @@ def convert_zenodo_doi(
 
     response = requests.get(api_url, timeout=timeout)
 
-    # TODO convert Zenodo response to EnviDat format
-
     # Handle unsuccessful response
     if response.status_code != 200:
         return {
@@ -117,7 +117,7 @@ def get_zenodo_record_id(doi: str) -> str | None:
     if period_index == -1:
         return None
 
-    record_id = doi[period_index + 1 :]
+    record_id = doi[period_index + 1:]
 
     if not record_id:
         return None
@@ -125,15 +125,13 @@ def get_zenodo_record_id(doi: str) -> str | None:
     return record_id.strip()
 
 
-# TODO add placeholder values for required fields if add_placeholders true
-# TODO test creating CKAN package empty metadata
-#  and dict returned if add_placeholders true
 # TODO add try/except handling
-# TODO review that all data that can be extracted is converted
 # TODO put placeholder values should be in config
 # TODO run code formatters pre-commit hook
+# TODO test running with placeholder values and then adding extra properties one by one
 def convert_zenodo_to_envidat(
-    data: dict, owner_org: str, user: dict, config: dict, add_placeholders: bool = False
+        data: dict, owner_org: str, user: dict, config: dict,
+        add_placeholders: bool = False
 ) -> dict:
     """Convert Zenodo record dictionary to EnviDat CKAN package format.
 
@@ -204,11 +202,17 @@ def convert_zenodo_to_envidat(
     if publication:
         pkg.update({"publication": json.dumps(publication, ensure_ascii=False)})
 
+    # TODO test
+    pkg.update({"publication_state": ""})
+
     # funding
     grants = metadata.get("grants", [])
     funding = get_funding(grants, add_placeholders)
     if funding:
         pkg.update({"funding": json.dumps(funding, ensure_ascii=False)})
+
+    # language ("en" English is default language)
+    pkg.update({"language": "en"})
 
     # license
     license_id = metadata.get("license", {}).get("id", "")
@@ -236,8 +240,10 @@ def convert_zenodo_to_envidat(
     # related_publications
     references = metadata.get("references", [])
     related_publications = get_related_publications(references)
+    # TODO test and revert
     if related_publications:
-        pkg.update({"related_publications": related_publications})
+        # pkg.update({"related_publications": related_publications})
+        pass
 
     # TODO review if default value of resource_type_general should be "dataset",
     #  see "publication_type" in Zenodo docs
@@ -248,8 +254,8 @@ def convert_zenodo_to_envidat(
     # default spatial value is point set to WSl Birmsensdorf, Switzerland
     # office coordinates
     if add_placeholders:
-        spatial = config\
-            .get("spatial", {})\
+        spatial = config \
+            .get("spatial", {}) \
             .get("default",
                  "{\"type\": \"Point\", \"coordinates\": [8.4545978, 47.3606372]}")
         pkg.update({"spatial": spatial})
@@ -262,8 +268,10 @@ def convert_zenodo_to_envidat(
     # files
     files = data.get("files", [])
     resources = get_resources(files)
+    # TODO test and revert
     if resources:
-        pkg.update({"resources": resources})
+        # pkg.update({"resources": resources})
+        pass
 
     # tags
     keywords = metadata.get("keywords", [])
@@ -274,7 +282,6 @@ def convert_zenodo_to_envidat(
     return pkg
 
 
-# TODO check if author email is mandatory
 def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> list:
     """Returns authors in EnviDat formattted list.
 
@@ -311,12 +318,11 @@ def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> l
                 author.update({"name": "UNKNOWN"})
 
         affiliation = creator.get("affiliation", "")
-        # TODO finalize placeholder affiliation, check if affiliation is mandatory
-        if add_placeholders and not affiliation:
-            # author.update({"affiliation": "Swiss Federal Research Institute WSL"})
-            pass
-        else:
+        if affiliation:
             author.update({"affiliation": affiliation.strip()})
+        # TODO test
+        elif add_placeholders:
+            author.update({"affiliation": "UNKNOWN"})
 
         identifier = creator.get("orcid", "")
         if identifier:
@@ -349,10 +355,6 @@ def get_maintainer(user: dict) -> dict:
         maintainer.update({"email": email})
     else:
         maintainer.update({"email": "envidat@wsl.ch"})
-
-    # TODO check if affiliation mandatory
-    # if maintainer["email"] == "envidat@wsl.ch":
-    #     maintainer.update({"affiliation": "Swiss Federal Research Institute WSL"})
 
     return maintainer
 
@@ -602,7 +604,7 @@ def get_extra_tags(title: str, tags: list) -> list:
         words = title.split(" ")
         index = 0
 
-        while counter < num_new_tags:
+        while counter <= num_new_tags:
 
             # Handle short titles
             if index + 1 > len(words):
@@ -654,43 +656,9 @@ def get_resources(files: list) -> list:
         if type_resource:
             resource.update({"format": type_resource})
 
-        # TODO test if restricted.level required
+        restricted = {"level": "public", "allowed_users": "", "shared_secret": ""}
+        resource.update({"restricted": json.dumps(restricted, ensure_ascii=False)})
 
         resources.append(resource)
 
     return resources
-
-
-# TODO remove tests
-# TESTS
-
-# test = get_maintainer({})
-# print(test)
-
-# test = get_authors([], {"fullname": "Rebecca Buchholz"}, True)
-# print(test)
-
-# test = get_extra_tags("", [])
-# test = get_tags([], "Yes I three k*werlk", True)
-# print(test)
-
-# test = get_authors([{}], True)
-# # test = get_authors([{}], True)
-# # test = get_authors([{}])
-#
-# test = convert_zenodo_to_envidat({}, '123', True)
-# test = convert_zenodo_to_envidat({"metadata": {"doi": "wow"}}, {}, {})
-# print(test)
-
-# test = get_date("")
-# test = get_funding([], True)
-
-# string = "function00al red()()(undancy of non-vo***lant small mammPPPals " \
-#          "increases in " \
-#          "human234576666"
-# test = get_name(string)
-
-# test = get_notes("", {})
-#
-# # test = get_publication("2011-05-23", True)
-# print(test)
