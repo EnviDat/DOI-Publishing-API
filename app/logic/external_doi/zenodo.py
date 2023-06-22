@@ -5,6 +5,8 @@ import json
 import re
 import requests
 
+import markdownify
+
 # Setup logging
 import logging
 log = logging.getLogger(__name__)
@@ -230,12 +232,13 @@ def convert_zenodo_to_envidat(
 
     # notes
     description = metadata.get("description", "")
-    notes = get_notes(description, config, add_placeholders)
+    notes = get_notes(description, config)
     if notes:
         pkg.update({"notes": notes})
 
     # TODO determine how owner_org should be assigned (it is mandatory)
     # TODO add owner_org as ID
+    # TODO start dev here
     # owner_org
 
     # related_publications
@@ -509,19 +512,20 @@ def get_name(title: str, add_placeholders: bool = False) -> str:
     return name_join
 
 
-# TODO confirm convert HTML to markdown
-# TODO notes should still be returned if len(description) < 100 then add default notes
-def get_notes(description: str, config: dict, add_placeholders: bool = False) -> str:
+# TODO test that HTML converts property to markdown in UI
+def get_notes(description: str, config: dict) -> str:
     """
-    Returns notes, if notes are less than 100 characters then inserts
+    Returns notes, converts HTML to mardown,
+    if notes are less than 100 characters then inserts
     message from config to beginning of notes.
 
     Args:
         description (str): description string in Zenodo record
         config (dict): Zenodo config dictionary
-        add_placeholders (bool): If true placeholder values are added for
-                     required EnviDat package fields. Default value is False.
     """
+
+    description_md = markdownify.markdownify(description.strip())
+
     notes_message = config.get("notes", {}).get(
         "default",
         "Automatic message from EnviDat Admin: the "
@@ -530,10 +534,10 @@ def get_notes(description: str, config: dict, add_placeholders: bool = False) ->
         "and then delete this message. ",
     )
 
-    if add_placeholders and len(description) < 100:
-        description = f"{notes_message}{description}"
+    if len(description_md) < 100:
+        description_md = f"{notes_message}{description_md}"
 
-    return description.strip()
+    return description_md
 
 
 def get_related_publications(references: list) -> str:
@@ -660,7 +664,7 @@ def get_extra_tags(title: str, tags: list) -> list:
 #          "human234576666"
 # test = get_name(string)
 
-# test = get_notes("134gdd ", {}, True)
-
-# test = get_publication("2011-05-23", True)
+# test = get_notes("", {})
+#
+# # test = get_publication("2011-05-23", True)
 # print(test)
