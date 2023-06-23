@@ -39,7 +39,7 @@ def convert_zenodo_doi(
         dict: Dictionary with metadata in EnviDat CKAN package
                 or error dictionary
     """
-    # TODO test doi == ""
+
     # Extract record_id
     record_id = get_zenodo_record_id(doi)
     if not record_id:
@@ -128,7 +128,6 @@ def get_zenodo_record_id(doi: str) -> str | None:
 # TODO add try/except handling
 # TODO put placeholder values should be in config
 # TODO run code formatters pre-commit hook
-# TODO test running with placeholder values and then adding extra properties one by one
 def convert_zenodo_to_envidat(
         data: dict, owner_org: str, user: dict, config: dict,
         add_placeholders: bool = False
@@ -202,9 +201,6 @@ def convert_zenodo_to_envidat(
     if publication:
         pkg.update({"publication": json.dumps(publication, ensure_ascii=False)})
 
-    # TODO test
-    pkg.update({"publication_state": ""})
-
     # funding
     grants = metadata.get("grants", [])
     funding = get_funding(grants, add_placeholders)
@@ -240,10 +236,8 @@ def convert_zenodo_to_envidat(
     # related_publications
     references = metadata.get("references", [])
     related_publications = get_related_publications(references)
-    # TODO test and revert
     if related_publications:
-        # pkg.update({"related_publications": related_publications})
-        pass
+        pkg.update({"related_publications": related_publications})
 
     # TODO review if default value of resource_type_general should be "dataset",
     #  see "publication_type" in Zenodo docs
@@ -268,10 +262,8 @@ def convert_zenodo_to_envidat(
     # files
     files = data.get("files", [])
     resources = get_resources(files)
-    # TODO test and revert
     if resources:
-        # pkg.update({"resources": resources})
-        pass
+        pkg.update({"resources": resources})
 
     # tags
     keywords = metadata.get("keywords", [])
@@ -320,7 +312,6 @@ def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> l
         affiliation = creator.get("affiliation", "")
         if affiliation:
             author.update({"affiliation": affiliation.strip()})
-        # TODO test
         elif add_placeholders:
             author.update({"affiliation": "UNKNOWN"})
 
@@ -504,7 +495,6 @@ def get_name(title: str) -> str:
     return name_join
 
 
-# TODO test that HTML converts property to markdown in UI
 def get_notes(description: str, config: dict) -> str:
     """
     Returns notes, converts HTML to mardown,
@@ -583,10 +573,13 @@ def get_tags(keywords: list, title: str, add_placeholders: bool = False) -> list
     return tags
 
 
-# TODO test if it is possible to create datset with duplicate tag names
 def get_extra_tags(title: str, tags: list) -> list:
     """
     Returns extra tags extracted from title in EnviDat format
+
+    Function used to generate extra tags because at least 5 tags are required to create
+    an EnvDat CKAN package. Duplicate tags are allowed to be sent to CKAN but will not
+    appear more than once in CKAN package.
 
     Example Zenodo DOI without any keywords: 10.5281/zenodo.7370384
 
