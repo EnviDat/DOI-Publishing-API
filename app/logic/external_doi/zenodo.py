@@ -49,16 +49,13 @@ def convert_zenodo_doi(
             "error": f"Cannot extract record ID from input Zenodo DOI: {doi}",
         }
 
-    # TODO review and remove unused key-value pairs
-    # TODO write validator that makes sure
-    #  all needed config keys and values exist
     # Get config
     config_path = "app/config/zenodo.json"
     try:
         with open(config_path, "r") as zenodo_config:
             config = json.load(zenodo_config)
-    except FileNotFoundError:
-        # TODO email admin config error
+    except FileNotFoundError as e:
+        log.error(f"ERROR: {e}")
         return {
             "status_code": 500,
             "message": "Cannot process DOI. Please contact EnviDat team.",
@@ -66,27 +63,37 @@ def convert_zenodo_doi(
         }
 
     # Assign records_url
-    records_url = config.get("externalApi", {})\
+    records_url = config.get("zenodoAPI", {})\
         .get("zenodoRecords", "https://zenodo.org/api/records")
 
     # Get record from Zenodo API
     api_url = f"{records_url}/{record_id}"
     timeout = config.get("timeout", 3)
 
-    response_zenodo = requests.get(api_url, timeout=timeout)
+    try:
+        # Get record from Zenodo API
+        response_zenodo = requests.get(api_url, timeout=timeout)
 
-    # Handle unsuccessful response
-    if response_zenodo.status_code != 200:
+        # Handle unsuccessful response
+        if response_zenodo.status_code != 200:
+            return {
+                "status_code": response_zenodo.status_code,
+                "message": f"The following DOI was not found: {doi}",
+                "error": response_zenodo.json(),
+            }
+
+        # Convert Zenodo record to EnviDat format
+        envidat_record = convert_zenodo_to_envidat(
+            response_zenodo.json(), owner_org, user, config, add_placeholders
+        )
+
+    except Exception as e:
+        log.error(f"ERROR: {e}")
         return {
-            "status_code": response_zenodo.status_code,
-            "message": f"The following DOI was not found: {doi}",
-            "error": response_zenodo.json(),
+            "status_code": 500,
+            "message": f"Could not process DOI {doi}. Please contact EnviDat team.",
+            "error": f"Failed to process DOI {doi}. Check logs for errors."
         }
-
-    # Convert Zenodo record to EnviDat format
-    envidat_record = convert_zenodo_to_envidat(
-        response_zenodo.json(), owner_org, user, config, add_placeholders
-    )
 
     return envidat_record
 
