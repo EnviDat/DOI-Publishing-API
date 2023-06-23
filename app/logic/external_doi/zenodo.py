@@ -4,17 +4,18 @@ from datetime import datetime, date
 import json
 import re
 import requests
-
 import markdownify
+
+from app.logic.external_doi.constants import ConvertSuccess, ConvertError
 
 # Setup logging
 import logging
 log = logging.getLogger(__name__)
 
 
-# TODO review error messages
 def convert_zenodo_doi(
-        doi: str, owner_org: str, user: dict, add_placeholders: bool = False) -> dict:
+        doi: str, owner_org: str, user: dict, add_placeholders: bool = False
+) -> ConvertSuccess | ConvertError:
     """
     Return metadata for input doi and convert metadata to EnviDat
     CKAN package format.
@@ -118,13 +119,11 @@ def get_zenodo_record_id(doi: str) -> str | None:
     return record_id.strip()
 
 
-# TODO add try/except handling
-# TODO put placeholder values should be in config
 # TODO run code formatters pre-commit hook
 def convert_zenodo_to_envidat(
         data: dict, owner_org: str, user: dict, config: dict,
         add_placeholders: bool = False
-) -> dict:
+) -> ConvertSuccess | ConvertError:
     """Convert Zenodo record dictionary to EnviDat CKAN package format.
 
     If add_placeholders true then add default values from config.
