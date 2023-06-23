@@ -401,7 +401,7 @@ def get_publication(publication_date: str, add_placeholders: bool = False) -> di
     elif publication_date:
         try:
             dt = datetime.strptime(publication_date, "%Y-%m-%d")
-            year = dt.year
+            year = str(dt.year)
             publication.update({"publication_year": year, "publisher": "Zenodo"})
         except ValueError:
             date_today = date.today()
