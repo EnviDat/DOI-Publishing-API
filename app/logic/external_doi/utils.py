@@ -5,15 +5,16 @@ from app.logic.external_doi.constants import (
     EXTERNAL_PLATFORM_PREFIXES,
     ExternalPlatform,
 )
+from app.logic.external_doi.zenodo import convert_zenodo_doi
 
 
 def get_doi_external_platform(doi: str) -> ExternalPlatform | None:
-    """Return ExternalPlatform that most likely corresponds to input doi string.
+    """Return ExternalPlatform that most likely corresponds to input DOI string.
 
     If external platform not found then returns None.
 
     Args:
-        doi (str): Input doi string
+        doi (str): Input DOI string
 
     Returns:
         ExternalPlatform | None
@@ -30,3 +31,37 @@ def get_doi_external_platform(doi: str) -> ExternalPlatform | None:
             return value
 
     return None
+
+
+def convert_doi(
+        doi: str, owner_org: str, user: dict, add_placeholders: bool = False) -> dict:
+    """
+    Tries to return metadata for input DOI and convert metadata to EnviDat
+    CKAN package format.
+
+    Calls supported external platforms. If DOI cannot be matched to external platform
+    then returns error dictionary.
+
+    Args:
+        doi (str): Input DOI string
+        owner_org (str): 'owner_org' assigned to user in EnviDat CKAN
+        user (dict): CKAN user dictionary
+        add_placeholders (bool): If true placeholder values are added for
+                       required EnviDat package fields. Default value is False.
+    """
+
+    converters = [convert_zenodo_doi]
+
+    for converter in converters:
+
+        if converter is convert_zenodo_doi:
+            record = convert_zenodo_doi(doi, owner_org, user, add_placeholders)
+            if record.get("status_code") == 200:
+                return record
+
+    return {
+        "status_code": 404,
+        "message":  f"The following DOI is not currently "
+                    f"supported for conversion: {doi}",
+        "error": f"Cannot convert the DOI: {doi}"
+    }

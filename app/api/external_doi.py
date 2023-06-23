@@ -10,7 +10,7 @@ from fastapi.security import APIKeyHeader
 
 from app.auth import get_user
 from app.logic.external_doi.constants import ExternalPlatform
-from app.logic.external_doi.utils import get_doi_external_platform
+from app.logic.external_doi.utils import get_doi_external_platform, convert_doi
 from app.logic.external_doi.zenodo import convert_zenodo_doi
 
 # Setup logging
@@ -73,18 +73,13 @@ def convert_external_doi(
     # then convert the DOI's metadata to EnviDat CKAN package format
     external_platform = get_doi_external_platform(doi)
 
-    # TODO handle default in case external_platform is None (not matched),
-    #  try calling all supported APIs
-    # TODO set response status codes, use returned dicts from converters
     match external_platform:
-        # TODO call ZenodoAPI
+
         case ExternalPlatform.ZENODO:
             result = convert_zenodo_doi(doi, owner_org, user, add_placeholders)
-            # TODO assign status_code to successful conversion result
 
-        # TODO loop through different converters for default case
         case _:
-            result = ""
+            result = convert_doi(doi, owner_org, user, add_placeholders)
 
-    # response.status_code = result.get('status_code')
+    response.status_code = result.get('status_code')
     return result
