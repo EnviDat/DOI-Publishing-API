@@ -194,8 +194,7 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
 
 
 def format_response(response: requests.models.Response) -> DoiSuccess | DoiErrors:
-    """
-    Checks if response has successful HTTP status code (200-299) and returns
+    """Checks if response has successful HTTP status code (200-299) and returns
     DataCite response object formatted in DoiSuccess or DoiErrors format.
 
     Args:

@@ -1,5 +1,6 @@
 """Utils that use RemoteCKAN to call actions from CKAN API."""
 
+import logging
 from typing import Annotated
 
 import requests
@@ -8,8 +9,6 @@ from fastapi import Header, HTTPException
 
 from app.config import settings
 
-# Setup logging
-import logging
 log = logging.getLogger(__name__)
 
 

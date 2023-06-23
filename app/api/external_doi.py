@@ -1,21 +1,22 @@
-"""
-Router used to convert DOIs and associated metadata from external platforms
+"""Router used to convert DOIs and associated metadata from external platforms
 into EnviDat CKAN package format.
 """
 
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Query, Response, Security
 from fastapi.security import APIKeyHeader
 
 from app.auth import get_user
-from app.logic.external_doi.constants import ExternalPlatform, ConvertSuccess, \
-    ConvertError
-from app.logic.external_doi.utils import get_doi_external_platform, convert_doi
+from app.logic.external_doi.constants import (
+    ConvertError,
+    ConvertSuccess,
+    ExternalPlatform,
+)
+from app.logic.external_doi.utils import convert_doi, get_doi_external_platform
 from app.logic.external_doi.zenodo import convert_zenodo_doi
 
-# Setup logging
-import logging
 log = logging.getLogger(__name__)
 
 # TODO test with production
@@ -38,12 +39,12 @@ authorization_header = APIKeyHeader(
         200: {
             "model": ConvertSuccess,
             "description": "External DOI successfully converted to "
-                           "EnviDat package format"
+            "EnviDat package format",
         },
         400: {"model": ConvertError},
         404: {"model": ConvertError},
-        500: {"model": ConvertError}
-    }
+        500: {"model": ConvertError},
+    },
 )
 def convert_external_doi(
     doi: Annotated[
@@ -60,7 +61,7 @@ def convert_external_doi(
         str,
         Query(
             description="'owner_org' assigned to user in EnviDat CKAN",
-            example="bd536a0f-d6ac-400e-923c-9dd351cb05fa"
+            example="bd536a0f-d6ac-400e-923c-9dd351cb05fa",
         ),
     ],
     response: Response,
@@ -74,8 +75,7 @@ def convert_external_doi(
         ),
     ] = False,
 ):
-    """
-    Convert DOI and associated metadata from external plaforms
+    """Convert DOI and associated metadata from external plaforms
     into EnviDat CKAN package formatted json.
     """
     # Authorize user, if user invalid then raises HTTPException
@@ -86,12 +86,11 @@ def convert_external_doi(
     external_platform = get_doi_external_platform(doi)
 
     match external_platform:
-
         case ExternalPlatform.ZENODO:
             result = convert_zenodo_doi(doi, owner_org, user, add_placeholders)
 
         case _:
             result = convert_doi(doi, owner_org, user, add_placeholders)
 
-    response.status_code = result.get('status_code', 500)
+    response.status_code = result.get("status_code", 500)
     return result

@@ -63,7 +63,6 @@ async def reserve_draft_doi(
     """
     Authenticate user, extract DOI from package, and reserve draft DOI in DataCite.
     """
-
     # TODO review authorization implementation
     # Authorize user, if user invalid then raises HTTPException
 

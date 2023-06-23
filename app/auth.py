@@ -15,9 +15,7 @@ def get_user(authorization: Annotated[str | None, Header()] = None):
     """Standard CKAN user."""
     if not settings.DEBUG and not authorization:
         log.error("No Authorization header present")
-        raise HTTPException(
-            status_code=401, detail="No Authorization header present"
-        )
+        raise HTTPException(status_code=401, detail="No Authorization header present")
 
     log.warning(settings.DEBUG)
     log.warning(type(settings.DEBUG))

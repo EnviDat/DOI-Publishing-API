@@ -1,23 +1,23 @@
 """Retrieve and convert Zenodo DOI metadata to EnviDat CKAN package format."""
 
-from datetime import datetime, date
 import json
-import re
-import requests
-import markdownify
 
-from app.logic.external_doi.constants import ConvertSuccess, ConvertError
-
-# Setup logging
 import logging
+import re
+from datetime import date, datetime
+
+import markdownify
+import requests
+
+from app.logic.external_doi.constants import ConvertError, ConvertSuccess
+
 log = logging.getLogger(__name__)
 
 
 def convert_zenodo_doi(
-        doi: str, owner_org: str, user: dict, add_placeholders: bool = False
+    doi: str, owner_org: str, user: dict, add_placeholders: bool = False
 ) -> ConvertSuccess | ConvertError:
-    """
-    Return metadata for input doi and convert metadata to EnviDat
+    """Return metadata for input doi and convert metadata to EnviDat
     CKAN package format.
 
     Note: Converts data that exists in Zenodo metadata record
@@ -39,7 +39,6 @@ def convert_zenodo_doi(
         dict: Dictionary with metadata in EnviDat CKAN package
                 or error dictionary
     """
-
     # Extract record_id
     record_id = get_zenodo_record_id(doi)
     if not record_id:
@@ -63,8 +62,9 @@ def convert_zenodo_doi(
         }
 
     # Assign records_url
-    records_url = config.get("zenodoAPI", {})\
-        .get("zenodoRecords", "https://zenodo.org/api/records")
+    records_url = config.get("zenodoAPI", {}).get(
+        "zenodoRecords", "https://zenodo.org/api/records"
+    )
 
     # Get record from Zenodo API
     api_url = f"{records_url}/{record_id}"
@@ -92,15 +92,14 @@ def convert_zenodo_doi(
         return {
             "status_code": 500,
             "message": f"Could not process DOI {doi}. Please contact EnviDat team.",
-            "error": f"Failed to process DOI {doi}. Check logs for errors."
+            "error": f"Failed to process DOI {doi}. Check logs for errors.",
         }
 
     return envidat_record
 
 
 def get_zenodo_record_id(doi: str) -> str | None:
-    """
-    Return record ID extracted from Zenodo Doi.
+    """Return record ID extracted from Zenodo Doi.
     If extraction fails return None.
 
     Example DOI: "10.5281/zenodo.5230562"
@@ -118,7 +117,7 @@ def get_zenodo_record_id(doi: str) -> str | None:
     if period_index == -1:
         return None
 
-    record_id = doi[period_index + 1:]
+    record_id = doi[period_index + 1 :]
 
     if not record_id:
         return None
@@ -128,8 +127,7 @@ def get_zenodo_record_id(doi: str) -> str | None:
 
 # TODO run code formatters pre-commit hook
 def convert_zenodo_to_envidat(
-        data: dict, owner_org: str, user: dict, config: dict,
-        add_placeholders: bool = False
+    data: dict, owner_org: str, user: dict, config: dict, add_placeholders: bool = False
 ) -> ConvertSuccess | ConvertError:
     """Convert Zenodo record dictionary to EnviDat CKAN package format.
 
@@ -247,9 +245,9 @@ def convert_zenodo_to_envidat(
     # default spatial value is point set to WSl Birmsensdorf, Switzerland
     # office coordinates
     if add_placeholders:
-        spatial = config.get("spatial", {}) \
-            .get("default",
-                 "{\"type\": \"Point\", \"coordinates\": [8.4545978, 47.3606372]}")
+        spatial = config.get("spatial", {}).get(
+            "default", '{"type": "Point", "coordinates": [8.4545978, 47.3606372]}'
+        )
         pkg.update({"spatial": spatial})
 
     # version
@@ -269,14 +267,11 @@ def convert_zenodo_to_envidat(
     if tags:
         pkg.update({"tags": tags})
 
-    return {
-        "status_code": 200,
-        "result": pkg
-    }
+    return {"status_code": 200, "result": pkg}
 
 
 def get_authors(
-        creators: list, user: dict, config: dict, add_placeholders: bool = False
+    creators: list, user: dict, config: dict, add_placeholders: bool = False
 ) -> list:
     """Returns authors in EnviDat formattted list.
 
@@ -309,18 +304,23 @@ def get_authors(
             if fullname:
                 names = fullname.partition(" ")
                 author.update(
-                    {"given_name": names[0].strip(), "name": names[2].strip()})
+                    {"given_name": names[0].strip(), "name": names[2].strip()}
+                )
             else:
-                name_default = config.get("author", {}).get("default", {})\
-                    .get("name", "UNKNOWN")
+                name_default = (
+                    config.get("author", {}).get("default", {}).get("name", "UNKNOWN")
+                )
                 author.update({"name": name_default})
 
         affiliation = creator.get("affiliation", "")
         if affiliation:
             author.update({"affiliation": affiliation.strip()})
         elif add_placeholders:
-            affiliation_default = config.get("author", {}).get("default", {})\
+            affiliation_default = (
+                config.get("author", {})
+                .get("default", {})
                 .get("affiliation", "UNKNOWN")
+            )
             author.update({"affiliation": affiliation_default})
 
         identifier = creator.get("orcid", "")
@@ -333,10 +333,9 @@ def get_authors(
 
 
 def get_maintainer(user: dict, config: dict) -> dict:
-    """
-    Returns maintainer in EnviDat format
+    """Returns maintainer in EnviDat format.
 
-     Args:
+    Args:
         user (dict): CKAN user dictionary
         config (dict): Zenodo config dictionary
     """
@@ -345,19 +344,22 @@ def get_maintainer(user: dict, config: dict) -> dict:
     fullname = user.get("fullname", "")
     if fullname:
         names = fullname.partition(" ")
-        maintainer.update(
-            {"given_name": names[0].strip(), "name": names[2].strip()})
+        maintainer.update({"given_name": names[0].strip(), "name": names[2].strip()})
     else:
-        name_default = config.get("maintainer", {}).get("default", {})\
-                    .get("name", "UNKNOWN")
+        name_default = (
+            config.get("maintainer", {}).get("default", {}).get("name", "UNKNOWN")
+        )
         maintainer.update({"name": name_default})
 
     email = user.get("email", "")
     if email:
         maintainer.update({"email": email})
     else:
-        email_default = config.get("maintainer", {}).get("default", {})\
-                    .get("email", "envidat@wsl.ch")
+        email_default = (
+            config.get("maintainer", {})
+            .get("default", {})
+            .get("email", "envidat@wsl.ch")
+        )
         maintainer.update({"email": email_default})
 
     return maintainer
@@ -387,9 +389,9 @@ def get_date(publication_date: str, add_placeholders: bool = False) -> list:
 
 
 def get_publication(
-        publication_date: str, config: dict, add_placeholders: bool = False) -> dict:
-    """
-    Returns publication in EnviDat format
+    publication_date: str, config: dict, add_placeholders: bool = False
+) -> dict:
+    """Returns publication in EnviDat format.
 
     Args:
         publication_date (str): publication_date string in Zenodo record
@@ -399,8 +401,9 @@ def get_publication(
     """
     publication = {}
 
-    publisher_default = config.get("publication", {}).get("default", {})\
-        .get("publisher", "Zenodo")
+    publisher_default = (
+        config.get("publication", {}).get("default", {}).get("publisher", "Zenodo")
+    )
 
     if add_placeholders and not publication_date:
         date_today = date.today()
@@ -412,12 +415,14 @@ def get_publication(
             dt = datetime.strptime(publication_date, "%Y-%m-%d")
             year = str(dt.year)
             publication.update(
-                {"publication_year": year, "publisher": publisher_default})
+                {"publication_year": year, "publisher": publisher_default}
+            )
         except ValueError:
             date_today = date.today()
             year = date_today.strftime("%Y")
             publication.update(
-                {"publication_year": year, "publisher": publisher_default})
+                {"publication_year": year, "publisher": publisher_default}
+            )
             return publication
 
     return publication
@@ -435,8 +440,9 @@ def get_funding(grants: list, config: dict, add_placeholders: bool = False) -> l
     funding = []
 
     if add_placeholders and not grants:
-        funder_default = config.get("funding", {}).get("default", {})\
-            .get("institution", "UNKNOWN")
+        funder_default = (
+            config.get("funding", {}).get("default", {}).get("institution", "UNKNOWN")
+        )
         funder = {"institution": funder_default}
         funding.append(funder)
 
@@ -519,8 +525,7 @@ def get_name(title: str) -> str:
 
 
 def get_notes(description: str, config: dict) -> str:
-    """
-    Returns notes, converts HTML to mardown,
+    """Returns notes, converts HTML to markdown,
     if notes are less than 100 characters then inserts
     message from config to beginning of notes.
 
@@ -528,7 +533,6 @@ def get_notes(description: str, config: dict) -> str:
         description (str): description string in Zenodo record
         config (dict): Zenodo config dictionary
     """
-
     description_md = markdownify.markdownify(description.strip())
 
     notes_message = config.get("notes", {}).get(
@@ -546,8 +550,7 @@ def get_notes(description: str, config: dict) -> str:
 
 
 def get_related_publications(references: list) -> str:
-    """
-    Returns related_publications in markdown string (as an unordered list)
+    """Returns related_publications in markdown string (as an unordered list).
 
     If references empty then returns empty string ""
 
@@ -566,8 +569,7 @@ def get_related_publications(references: list) -> str:
 
 # TODO potentially add "ZENODO" to config, add config as arg
 def get_tags(keywords: list, title: str, add_placeholders: bool = False) -> list:
-    """
-    Return tags in EnviDat format
+    """Return tags in EnviDat format.
 
     Args:
         keywords (list): keywords in Zenodo record
@@ -598,8 +600,7 @@ def get_tags(keywords: list, title: str, add_placeholders: bool = False) -> list
 
 
 def get_extra_tags(title: str, tags: list) -> list:
-    """
-    Returns extra tags extracted from title in EnviDat format
+    """Returns extra tags extracted from title in EnviDat format.
 
     Function used to generate extra tags because at least 5 tags are required to create
     an EnvDat CKAN package. Duplicate tags are allowed to be sent to CKAN but will not
@@ -614,7 +615,6 @@ def get_extra_tags(title: str, tags: list) -> list:
     extra_tags = []
 
     if len(tags) < 5:
-
         num_new_tags = 5 - len(tags)
         counter = 0
 
@@ -622,7 +622,6 @@ def get_extra_tags(title: str, tags: list) -> list:
         index = 0
 
         while counter <= num_new_tags:
-
             # Handle short titles
             if index + 1 > len(words):
                 extra_tags.append({"name": "ZENODO"})
@@ -645,8 +644,7 @@ def get_extra_tags(title: str, tags: list) -> list:
 
 
 def get_resources(files: list) -> list:
-    """
-    Return resource in EnviDat format
+    """Return resource in EnviDat format.
 
     Args:
         files (list): files in Zenodo record
@@ -654,7 +652,6 @@ def get_resources(files: list) -> list:
     resources = []
 
     for file in files:
-
         resource = {}
 
         name = file.get("key")

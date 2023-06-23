@@ -5,13 +5,15 @@ from typing import TypedDict
 
 
 class ConvertSuccess(TypedDict):
-    """External platform conversion success class"""
+    """External platform conversion success class."""
+
     status_code: int
     result: dict
 
 
 class ConvertError(TypedDict):
-    """External platform conversion error class"""
+    """External platform conversion error class."""
+
     status_code: int
     message: str
     error: str
