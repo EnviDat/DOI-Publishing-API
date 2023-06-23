@@ -1,11 +1,24 @@
 {
   "externalApi": {
-    "zenodoRecords": "https://zenodo.org/api/records",
-    "zenodoLicenses": "https://zenodo.org/api/licenses"
+    "zenodoRecords": "https://zenodo.org/api/records"
   },
   "timeout": 3,
-  "ckanApi": {
-    "package_create": "/api/action/package_create"
+  "author": {
+    "default": {
+      "name": "UNKNOWN",
+      "affiliation": "UNKNOWN"
+    }
+  },
+  "maintainer": {
+    "default": {
+      "name": "UNKNOWN",
+      "email": "envidat@wsl.ch"
+    }
+  },
+  "publication": {
+    "default": {
+      "publisher": "Zenodo"
+    }
   },
   "envidatLicenses": {
     "cc-by": {
@@ -35,12 +48,6 @@
   },
   "language": {
     "default": "en"
-  },
-  "maintainer": {
-    "default": {
-      "email": "envidat@wsl.ch",
-      "name": "EnviDat"
-    }
   },
   "notes": {
     "default": "Automatic message from EnviDat Admin: the description of this dataset is too short and therefore, not informative enough. Please improve and then delete this message. "

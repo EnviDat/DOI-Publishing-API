@@ -29,7 +29,6 @@ authorization_header = APIKeyHeader(
 )
 
 
-# Test DOI 2635937
 # TODO reivew responses, response arg
 #  and response.status_code block
 @router.get("/convert", name="Convert external DOI")

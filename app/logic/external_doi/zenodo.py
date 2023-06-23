@@ -9,7 +9,6 @@ import markdownify
 
 # Setup logging
 import logging
-
 log = logging.getLogger(__name__)
 
 
@@ -62,18 +61,12 @@ def convert_zenodo_doi(
         return {
             "status_code": 500,
             "message": "Cannot process DOI. Please contact EnviDat team.",
-            "error": f"Cannot not find config file: {config_path}",
+            "error": f"Cannot find config file: {config_path}",
         }
 
-    # Assign records_url, return error if needed values not set in config
-    records_url = config.get("externalApi", {}).get("zenodoRecords")
-    if not records_url:
-        # TODO email admin config error
-        return {
-            "status_code": 500,
-            "message": "Cannot process DOI. Please contact EnviDat team.",
-            "error": "Cannot not get externalApi.zenodoRecords from config",
-        }
+    # Assign records_url
+    records_url = config.get("externalApi", {})\
+        .get("zenodoRecords", "https://zenodo.org/api/records")
 
     # Get record from Zenodo API
     api_url = f"{records_url}/{record_id}"
@@ -179,12 +172,12 @@ def convert_zenodo_to_envidat(
 
     # author
     creators = metadata.get("creators", [])
-    authors = get_authors(creators, user, add_placeholders)
+    authors = get_authors(creators, user, config, add_placeholders)
     if authors:
         pkg.update({"author": json.dumps(authors, ensure_ascii=False)})
 
     # maintainer
-    maintainer = get_maintainer(user)
+    maintainer = get_maintainer(user, config)
     pkg.update({"maintainer": json.dumps(maintainer, ensure_ascii=False)})
 
     # owner_org
@@ -197,7 +190,7 @@ def convert_zenodo_to_envidat(
         pkg.update({"date": json.dumps(dte, ensure_ascii=False)})
 
     # publication
-    publication = get_publication(publication_date, add_placeholders)
+    publication = get_publication(publication_date, config, add_placeholders)
     if publication:
         pkg.update({"publication": json.dumps(publication, ensure_ascii=False)})
 
@@ -277,12 +270,15 @@ def convert_zenodo_to_envidat(
     }
 
 
-def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> list:
+def get_authors(
+        creators: list, user: dict, config: dict, add_placeholders: bool = False
+) -> list:
     """Returns authors in EnviDat formattted list.
 
     Args:
         creators (dict): creators list in Zenodo record
         user (dict): CKAN user dictionary
+        config (dict): Zenodo config dictionary
         add_placeholders (bool): If true placeholder values are added for
                      required EnviDat package fields. Default value is False.
     """
@@ -310,13 +306,17 @@ def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> l
                 author.update(
                     {"given_name": names[0].strip(), "name": names[2].strip()})
             else:
-                author.update({"name": "UNKNOWN"})
+                name_default = config.get("author", {}).get("default", {})\
+                    .get("name", "UNKNOWN")
+                author.update({"name": name_default})
 
         affiliation = creator.get("affiliation", "")
         if affiliation:
             author.update({"affiliation": affiliation.strip()})
         elif add_placeholders:
-            author.update({"affiliation": "UNKNOWN"})
+            affiliation_default = config.get("author", {}).get("default", {})\
+                .get("affiliation", "UNKNOWN")
+            author.update({"affiliation": affiliation_default})
 
         identifier = creator.get("orcid", "")
         if identifier:
@@ -327,12 +327,13 @@ def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> l
     return authors
 
 
-def get_maintainer(user: dict) -> dict:
+def get_maintainer(user: dict, config: dict) -> dict:
     """
     Returns maintainer in EnviDat format
 
      Args:
         user (dict): CKAN user dictionary
+        config (dict): Zenodo config dictionary
     """
     maintainer = {}
 
@@ -342,13 +343,17 @@ def get_maintainer(user: dict) -> dict:
         maintainer.update(
             {"given_name": names[0].strip(), "name": names[2].strip()})
     else:
-        maintainer.update({"name": "UNKNOWN"})
+        name_default = config.get("maintainer", {}).get("default", {})\
+                    .get("name", "UNKNOWN")
+        maintainer.update({"name": name_default})
 
     email = user.get("email", "")
     if email:
         maintainer.update({"email": email})
     else:
-        maintainer.update({"email": "envidat@wsl.ch"})
+        email_default = config.get("maintainer", {}).get("default", {})\
+                    .get("email", "envidat@wsl.ch")
+        maintainer.update({"email": email_default})
 
     return maintainer
 
@@ -376,36 +381,45 @@ def get_date(publication_date: str, add_placeholders: bool = False) -> list:
     return dates
 
 
-def get_publication(publication_date: str, add_placeholders: bool = False) -> dict:
+def get_publication(
+        publication_date: str, config: dict, add_placeholders: bool = False) -> dict:
     """
     Returns publication in EnviDat format
 
     Args:
         publication_date (str): publication_date string in Zenodo record
+        config (dict): Zenodo config dictionary
         add_placeholders (bool): If true placeholder values are added for
                      required EnviDat package fields. Default value is False.
     """
     publication = {}
 
+    publisher_default = config.get("publication", {}).get("default", {})\
+        .get("publisher", "Zenodo")
+
     if add_placeholders and not publication_date:
         date_today = date.today()
         year = date_today.strftime("%Y")
-        publication.update({"publication_year": year, "publisher": "Zenodo"})
+        publication.update({"publication_year": year, "publisher": publisher_default})
 
     elif publication_date:
         try:
             dt = datetime.strptime(publication_date, "%Y-%m-%d")
             year = str(dt.year)
-            publication.update({"publication_year": year, "publisher": "Zenodo"})
+            publication.update(
+                {"publication_year": year, "publisher": publisher_default})
         except ValueError:
             date_today = date.today()
             year = date_today.strftime("%Y")
-            publication.update({"publication_year": year, "publisher": "Zenodo"})
+            publication.update(
+                {"publication_year": year, "publisher": publisher_default})
             return publication
 
     return publication
 
 
+# TODO add default funding
+# TODO start dev here
 def get_funding(grants: list, add_placeholders: bool = False) -> list:
     """Returns funding in EnviDat formatted list.
 
