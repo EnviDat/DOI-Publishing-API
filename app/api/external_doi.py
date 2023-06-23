@@ -9,7 +9,8 @@ from fastapi import APIRouter, Query, Response, Security
 from fastapi.security import APIKeyHeader
 
 from app.auth import get_user
-from app.logic.external_doi.constants import ExternalPlatform
+from app.logic.external_doi.constants import ExternalPlatform, ConvertSuccess, \
+    ConvertError
 from app.logic.external_doi.utils import get_doi_external_platform, convert_doi
 from app.logic.external_doi.zenodo import convert_zenodo_doi
 
@@ -29,9 +30,21 @@ authorization_header = APIKeyHeader(
 )
 
 
-# TODO reivew responses, response arg
-#  and response.status_code block
-@router.get("/convert", name="Convert external DOI")
+@router.get(
+    "/convert",
+    name="Convert external DOI",
+    status_code=200,
+    responses={
+        200: {
+            "model": ConvertSuccess,
+            "description": "External DOI successfully converted to "
+                           "EnviDat package format"
+        },
+        400: {"model": ConvertError},
+        404: {"model": ConvertError},
+        500: {"model": ConvertError}
+    }
+)
 def convert_external_doi(
     doi: Annotated[
         str,
@@ -80,5 +93,5 @@ def convert_external_doi(
         case _:
             result = convert_doi(doi, owner_org, user, add_placeholders)
 
-    response.status_code = result.get('status_code')
+    response.status_code = result.get('status_code', 500)
     return result
