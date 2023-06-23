@@ -46,7 +46,7 @@ def convert_zenodo_doi(
         return {
             "status_code": 400,
             "message": f"The following DOI was not found: {doi}",
-            "error": "Cannot extract record ID from input Zenodo DOI",
+            "error": f"Cannot extract record ID from input Zenodo DOI: {doi}",
         }
 
     # TODO review and remove unused key-value pairs
@@ -79,19 +79,19 @@ def convert_zenodo_doi(
     api_url = f"{records_url}/{record_id}"
     timeout = config.get("timeout", 3)
 
-    response = requests.get(api_url, timeout=timeout)
+    response_zenodo = requests.get(api_url, timeout=timeout)
 
     # Handle unsuccessful response
-    if response.status_code != 200:
+    if response_zenodo.status_code != 200:
         return {
-            "status_code": response.status_code,
+            "status_code": response_zenodo.status_code,
             "message": f"The following DOI was not found: {doi}",
-            "error": response.json(),
+            "error": response_zenodo.json(),
         }
 
     # Convert Zenodo record to EnviDat format
     envidat_record = convert_zenodo_to_envidat(
-        response.json(), owner_org, user, config, add_placeholders
+        response_zenodo.json(), owner_org, user, config, add_placeholders
     )
 
     return envidat_record
@@ -271,7 +271,10 @@ def convert_zenodo_to_envidat(
     if tags:
         pkg.update({"tags": tags})
 
-    return pkg
+    return {
+        "status_code": 200,
+        "result": pkg
+    }
 
 
 def get_authors(creators: list, user: dict, add_placeholders: bool = False) -> list:
