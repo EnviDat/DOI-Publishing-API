@@ -202,7 +202,7 @@ def convert_zenodo_to_envidat(
 
     # funding
     grants = metadata.get("grants", [])
-    funding = get_funding(grants, add_placeholders)
+    funding = get_funding(grants, config, add_placeholders)
     if funding:
         pkg.update({"funding": json.dumps(funding, ensure_ascii=False)})
 
@@ -247,8 +247,7 @@ def convert_zenodo_to_envidat(
     # default spatial value is point set to WSl Birmsensdorf, Switzerland
     # office coordinates
     if add_placeholders:
-        spatial = config \
-            .get("spatial", {}) \
+        spatial = config.get("spatial", {}) \
             .get("default",
                  "{\"type\": \"Point\", \"coordinates\": [8.4545978, 47.3606372]}")
         pkg.update({"spatial": spatial})
@@ -424,20 +423,21 @@ def get_publication(
     return publication
 
 
-# TODO add default funding
-# TODO start dev here
-def get_funding(grants: list, add_placeholders: bool = False) -> list:
+def get_funding(grants: list, config: dict, add_placeholders: bool = False) -> list:
     """Returns funding in EnviDat formatted list.
 
     Args:
         grants (list): grants list in Zenodo record
+        config (dict): Zenodo config dictionary
         add_placeholders (bool): If true placeholder values are added for
                      required EnviDat package fields. Default value is False.
     """
     funding = []
 
     if add_placeholders and not grants:
-        funder = {"institution": "UNKNOWN"}
+        funder_default = config.get("funding", {}).get("default", {})\
+            .get("institution", "UNKNOWN")
+        funder = {"institution": funder_default}
         funding.append(funder)
 
     for grant in grants:
@@ -463,7 +463,7 @@ def get_license(license_id: str, config: dict, add_placeholders: bool = False) -
                      required EnviDat package fields. Default value is False.
     """
     # Extract licenses from config
-    envidat_licenses = config.get("envidatLicenses", {})
+    envidat_licenses = config.get("licenses", {})
 
     # Assign other_undefined for placeholder values and unknown licenses
     other_undefined = envidat_licenses.get(
@@ -542,7 +542,7 @@ def get_notes(description: str, config: dict) -> str:
     if len(description_md) < 100:
         description_md = f"{notes_message}{description_md}"
 
-    return description_md
+    return description_md.strip()
 
 
 def get_related_publications(references: list) -> str:
@@ -564,6 +564,7 @@ def get_related_publications(references: list) -> str:
     return related_publications
 
 
+# TODO potentially add "ZENODO" to config, add config as arg
 def get_tags(keywords: list, title: str, add_placeholders: bool = False) -> list:
     """
     Return tags in EnviDat format
