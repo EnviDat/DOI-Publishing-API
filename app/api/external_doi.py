@@ -19,7 +19,7 @@ from app.logic.external_doi.zenodo import convert_zenodo_doi
 
 log = logging.getLogger(__name__)
 
-# TODO test with production
+# TODO test with production instance
 
 # Setup external-doi router
 router = APIRouter(prefix="/external-doi", tags=["external-doi"])
@@ -88,7 +88,6 @@ def convert_external_doi(
     match external_platform:
         case ExternalPlatform.ZENODO:
             result = convert_zenodo_doi(doi, owner_org, user, add_placeholders)
-
         case _:
             result = convert_doi(doi, owner_org, user, add_placeholders)
 

@@ -14,6 +14,8 @@ from app.logic.external_doi.constants import ConvertError, ConvertSuccess
 log = logging.getLogger(__name__)
 
 
+# TODO run code formatters pre-commit hook
+
 def convert_zenodo_doi(
     doi: str, owner_org: str, user: dict, add_placeholders: bool = False
 ) -> ConvertSuccess | ConvertError:
@@ -125,7 +127,6 @@ def get_zenodo_record_id(doi: str) -> str | None:
     return record_id.strip()
 
 
-# TODO run code formatters pre-commit hook
 def convert_zenodo_to_envidat(
     data: dict, owner_org: str, user: dict, config: dict, add_placeholders: bool = False
 ) -> ConvertSuccess | ConvertError:
@@ -236,8 +237,6 @@ def convert_zenodo_to_envidat(
     if related_publications:
         pkg.update({"related_publications": related_publications})
 
-    # TODO review if default value of resource_type_general should be "dataset",
-    #  see "publication_type" in Zenodo docs
     # resource_type_general
     pkg.update({"resource_type_general": "dataset"})
 
@@ -567,7 +566,6 @@ def get_related_publications(references: list) -> str:
     return related_publications
 
 
-# TODO potentially add "ZENODO" to config, add config as arg
 def get_tags(keywords: list, title: str, add_placeholders: bool = False) -> list:
     """Return tags in EnviDat format.
 
@@ -589,7 +587,6 @@ def get_tags(keywords: list, title: str, add_placeholders: bool = False) -> list
         word = re.sub(regex_replacement, "", keyword.upper().strip())
         tags.append({"name": word})
 
-    # TODO review if ZENODO keyword should be added by default to tags
     tags.append({"name": "ZENODO"})
 
     if add_placeholders:
