@@ -90,3 +90,32 @@ def ckan_package_create(
         raise HTTPException(status_code=502, detail="Connection error") from e
 
     return package
+
+
+def ckan_current_package_list_with_resources(
+        authorization: Annotated[str | None, Header()] = None):
+    """
+    Return all current CKAN packages with resources.
+
+    Authorization header needed to see all unpublished packages acessible to
+    corresponding header.
+    Admin authorization header will show all packages.
+
+    In case of some errors raises HTTPException.
+    """
+
+    try:
+        ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
+        package_list = ckan.call_action(
+            "current_package_list_with_resources", {"limit": "100000"})
+    except NotFound as e:
+        log.exception(e)
+        raise HTTPException(status_code=404, detail="Package not found") from e
+    except NotAuthorized as e:
+        log.exception(e)
+        raise HTTPException(status_code=403, detail="User not authorized") from e
+    except requests.exceptions.ConnectionError as e:
+        log.exception(e)
+        raise HTTPException(status_code=502, detail="Connection error") from e
+
+    return package_list
