@@ -147,7 +147,6 @@ async def request_publish_or_update(
 
     # Get package,
     # if package_id invalid or user not authorized then raises HTTPException
-    # package = ckan_package_show(package_id, authorization)
     package = ckan_package_show(package_id, auth_token)
 
     # Validate doi,

@@ -596,6 +596,8 @@ def get_tags(keywords: list, title: str, add_placeholders: bool = False) -> list
     return tags
 
 
+# TODO do not allow duplicate tag names because it causes validation errors later
+#  when using package_patch to update tags
 def get_extra_tags(title: str, tags: list) -> list:
     """Returns extra tags extracted from title in EnviDat format.
 
