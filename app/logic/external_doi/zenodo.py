@@ -10,6 +10,7 @@ import markdownify
 import requests
 
 from app.logic.external_doi.constants import ConvertError, ConvertSuccess
+from app.logic.remote_ckan import ckan_current_package_list_with_resources
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ log = logging.getLogger(__name__)
 # TODO run code formatters pre-commit hook
 
 def convert_zenodo_doi(
-    doi: str, owner_org: str, user: dict, add_placeholders: bool = False
+        doi: str, owner_org: str, user: dict, add_placeholders: bool = False
 ) -> ConvertSuccess | ConvertError:
     """Return metadata for input doi and convert metadata to EnviDat
     CKAN package format.
@@ -119,7 +120,7 @@ def get_zenodo_record_id(doi: str) -> str | None:
     if period_index == -1:
         return None
 
-    record_id = doi[period_index + 1 :]
+    record_id = doi[period_index + 1:]
 
     if not record_id:
         return None
@@ -128,7 +129,8 @@ def get_zenodo_record_id(doi: str) -> str | None:
 
 
 def convert_zenodo_to_envidat(
-    data: dict, owner_org: str, user: dict, config: dict, add_placeholders: bool = False
+        data: dict, owner_org: str, user: dict, config: dict,
+        add_placeholders: bool = False
 ) -> ConvertSuccess | ConvertError:
     """Convert Zenodo record dictionary to EnviDat CKAN package format.
 
@@ -270,7 +272,7 @@ def convert_zenodo_to_envidat(
 
 
 def get_authors(
-    creators: list, user: dict, config: dict, add_placeholders: bool = False
+        creators: list, user: dict, config: dict, add_placeholders: bool = False
 ) -> list:
     """Returns authors in EnviDat formattted list.
 
@@ -388,7 +390,7 @@ def get_date(publication_date: str, add_placeholders: bool = False) -> list:
 
 
 def get_publication(
-    publication_date: str, config: dict, add_placeholders: bool = False
+        publication_date: str, config: dict, add_placeholders: bool = False
 ) -> dict:
     """Returns publication in EnviDat format.
 
@@ -675,3 +677,116 @@ def get_resources(files: list) -> list:
         resources.append(resource)
 
     return resources
+
+
+def get_envidat_dois(authorization: str) -> list[str]:
+    """
+    Returns a list of all DOIs in packages in an EnviDat CKAN instance.
+    NOTE: if authorization invalid will still return packages available in public API!
+
+    Args:
+        authorization (str): authorization token
+    """
+    dois = []
+
+    # Get all packages in EnviDat CKAN instance
+    package_list = ckan_current_package_list_with_resources(authorization)
+
+    # Extract doi from each package
+    for package in package_list:
+        doi = package.get("doi")
+        if doi:
+            dois.append(doi)
+
+    return dois
+
+
+def get_zenodo_dois(authorization: str, q: str, size: str = "1000"):
+    """Return Zenodo DOIs extracted from records produced by search query.
+
+    For Zenodo API documentation see: https://developers.zenodo.org/#records
+
+    Args:
+        authorization (str): authorization token
+        q (str): search query (using Elasticsearch query string syntax)
+        size (str): number of results to return
+    """
+
+    # Get config
+    config_path = "app/config/zenodo.json"
+    try:
+        with open(config_path, "r") as zenodo_config:
+            config = json.load(zenodo_config)
+    except FileNotFoundError as e:
+        log.error(f"ERROR: {e}")
+        return {
+            "status_code": 500,
+            "message": "Cannot process DOI. Please contact EnviDat team.",
+            "error": f"Cannot find config file: {config_path}",
+        }
+
+    # Assign records_url
+    records_url = config.get("zenodoAPI", {}).get(
+        "zenodoRecords", "https://zenodo.org/api/records"
+    )
+
+    # Get URL used to call Zenodo API
+    if q:
+        api_url = f"{records_url}/?q={q}&size={size}"
+    else:
+        api_url = f"{records_url}/?size={size}"
+
+    print(api_url)
+
+    try:
+        # Get response from Zenodo API
+        response = requests.get(api_url, timeout=10)
+
+        # Handle unsuccessful response
+        if response.status_code != 200:
+            return {
+                "status_code": response.status_code,
+                "message": f"Could not return Zenodo records "
+                           f"for the following URL: {api_url}",
+                "error": response.json(),
+            }
+
+        # Get EnviDat dois
+        envidat_dois = get_envidat_dois(authorization)
+        print(len(envidat_dois))  # TODO remove
+
+        response_json = response.json()
+        records = response_json.get("hits", {}).get("hits", [])
+
+        counter = 1
+
+        for record in records:
+
+            doi = record.get("doi")
+            if doi:
+                print(doi)  # TODO remove
+
+                if doi in envidat_dois:
+                    # TODO possibly add to output
+                    print(f"{counter} DOI already in EnviDat: {doi}")
+                    counter += 1
+
+                else:
+                    # TODO START dev here
+                    # TODO make dois list and add to dois
+                    # TODO return list of dois with in a valid doi.org URL format
+                    pass
+
+        return records
+
+    except Exception as e:
+        log.error(f"ERROR: {e}")
+        return {
+            "status_code": 500,
+            "message": f"Could not return Zenodo records "
+                       f"for the following URL: {api_url}",
+            "error": f"Failed to process URL: {api_url}. Check logs for errors.",
+        }
+
+
+
