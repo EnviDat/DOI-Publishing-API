@@ -49,6 +49,36 @@ def ckan_call_action(authorization: str, action: str, data: dict | None = None):
     return response
 
 
+def ckan_call_action(action: str, data: dict | None = None):
+    """
+    Returns response from (unauthorized) calls to public CKAN API actions
+    on EnviDat CKAN instance.
+
+    If CKAN API call fails then logs error and raises HTTPException.
+
+    Args:
+        action (str): the CKAN action name, for example 'package_show'
+        data (dict): the dict to pass to the action, default is None
+    """
+    try:
+        ckan = RemoteCKAN(settings.API_URL)
+        if data:
+            response = ckan.call_action(action, data)
+        else:
+            response = ckan.call_action(action)
+    except NotFound as e:
+        log.exception(e)
+        raise HTTPException(status_code=404, detail="Not found") from e
+    except requests.exceptions.ConnectionError as e:
+        log.exception(e)
+        raise HTTPException(status_code=502, detail="Connection error") from e
+    except Exception as e:
+        log.exception(e)
+        raise HTTPException(status_code=500, detail="Error, check logs")
+
+    return response
+
+
 def ckan_package_show(package_id: str, authorization: str):
     """Return CKAN package.
 
