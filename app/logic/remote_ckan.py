@@ -12,11 +12,14 @@ from app.config import settings
 log = logging.getLogger(__name__)
 
 
-def ckan_call_action(authorization: str, action: str, data: dict | None = None):
+def ckan_call_action_authorized(
+        authorization: str, action: str, data: dict | None = None):
     """
-    Returns response from calls to CKAN API actions on EnviDat CKAN instance.
+    Returns response from authorized calls to CKAN API actions on EnviDat CKAN instance.
 
     Authorization is required.
+    NOTE: some CKAN API actions do not require authorization and will still return a
+    response even if authorization invalid!
     If CKAN API call fails then logs error and raises HTTPException.
 
     Args:
@@ -88,7 +91,7 @@ def ckan_package_show(package_id: str, authorization: str):
         package_id (str): CKAN package id or name
         authorization (str): authorization token
     """
-    return ckan_call_action(authorization, "package_show", {"id": package_id})
+    return ckan_call_action_authorized(authorization, "package_show", {"id": package_id})
 
 
 def ckan_package_patch(package_id: str, data: dict, authorization: str):
@@ -102,7 +105,7 @@ def ckan_package_patch(package_id: str, data: dict, authorization: str):
         authorization (str): authorization token
     """
     update_data = {"id": package_id, **data}
-    return ckan_call_action(authorization, "package_patch", update_data)
+    return ckan_call_action_authorized(authorization, "package_patch", update_data)
 
 
 def ckan_package_create(data: dict, authorization: str):
@@ -114,7 +117,7 @@ def ckan_package_create(data: dict, authorization: str):
         data (dict): the dict with data used to create the CKAN package
         authorization (str): authorization token
     """
-    return ckan_call_action(authorization, "package_create", data)
+    return ckan_call_action_authorized(authorization, "package_create", data)
 
 
 def ckan_current_package_list_with_resources(authorization: str):
@@ -122,7 +125,10 @@ def ckan_current_package_list_with_resources(authorization: str):
     Return all current CKAN packages with resources.
 
     If CKAN API call fails then logs error and raises HTTPException.
+
+     Args:
+        authorization (str): authorization token
     """
 
-    return ckan_call_action(
+    return ckan_call_action_authorized(
         authorization, "current_package_list_with_resources", {"limit": "100000"})
