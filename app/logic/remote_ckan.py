@@ -4,118 +4,95 @@ import logging
 from typing import Annotated
 
 import requests
-from ckanapi import NotAuthorized, NotFound, RemoteCKAN
-from fastapi import Header, HTTPException
+from ckanapi import NotAuthorized, NotFound, RemoteCKAN, ValidationError
+from fastapi import HTTPException
 
 from app.config import settings
 
 log = logging.getLogger(__name__)
 
 
-def ckan_package_show(
-    package_id: str, authorization: Annotated[str | None, Header()] = None
-):
+def ckan_call_action(authorization: str, action: str, data: dict | None = None):
+    """
+    Returns response from calls to CKAN API actions on EnviDat CKAN instance.
+
+    Authorization is required.
+    If CKAN API call fails then logs error and raises HTTPException.
+
+    Args:
+        authorization (str): authorization token
+        action (str): the CKAN action name, for example 'package_create'
+        data (dict): the dict to pass to the action, default is None
+    """
+    try:
+        ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
+        if data:
+            response = ckan.call_action(action, data)
+        else:
+            response = ckan.call_action(action)
+    except NotFound as e:
+        log.exception(e)
+        raise HTTPException(status_code=404, detail="Not found") from e
+    except NotAuthorized as e:
+        log.exception(e)
+        raise HTTPException(status_code=403, detail="Not authorized") from e
+    except ValidationError as e:
+        log.exception(e)
+        raise HTTPException(status_code=500, detail=f"ValidationError: {e}") from e
+    except requests.exceptions.ConnectionError as e:
+        log.exception(e)
+        raise HTTPException(status_code=502, detail="Connection error") from e
+    except Exception as e:
+        log.exception(e)
+        raise HTTPException(status_code=500, detail="Error, check logs")
+
+    return response
+
+
+def ckan_package_show(package_id: str, authorization: str):
     """Return CKAN package.
 
-    In case of some errors raises HTTPException.
+    If CKAN API call fails then logs error and raises HTTPException.
+
+    Args:
+        package_id (str): CKAN package id or name
+        authorization (str): authorization token
     """
-    try:
-        ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
-        package = ckan.call_action("package_show", {"id": package_id})
-    except NotFound as e:
-        log.exception(e)
-        raise HTTPException(status_code=404, detail="Package not found") from e
-    except NotAuthorized as e:
-        log.exception(e)
-        raise HTTPException(status_code=403, detail="User not authorized") from e
-    except requests.exceptions.ConnectionError as e:
-        log.exception(e)
-        raise HTTPException(status_code=502, detail="Connection error") from e
-
-    return package
+    return ckan_call_action(authorization, "package_show", {"id": package_id})
 
 
-def ckan_package_patch(
-    package_id: str, data: dict, authorization: Annotated[str | None, Header()] = None
-):
+def ckan_package_patch(package_id: str, data: dict, authorization: str):
     """Patch a CKAN package.
 
-    Authorization header required to update package.
-    In case of some errors raises HTTPException.
+    If CKAN API call fails then logs error and raises HTTPException.
+
+     Args:
+        package_id (str): CKAN package id or name
+        data (dict): the dict with data used to update the CKAN package
+        authorization (str): authorization token
     """
-    if not authorization:
-        log.error("No Authorization header present")
-        raise HTTPException(status_code=401, detail="No Authorization header present")
-
-    try:
-        data_dict = {"id": package_id, **data}
-        ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
-        package = ckan.call_action("package_patch", data_dict)
-    except NotFound as e:
-        log.exception(e)
-        raise HTTPException(status_code=404, detail="Package not found") from e
-    except NotAuthorized as e:
-        log.exception(e)
-        raise HTTPException(status_code=403, detail="User not authorized") from e
-    except requests.exceptions.ConnectionError as e:
-        log.exception(e)
-        raise HTTPException(status_code=502, detail="Connection error") from e
-
-    return package
+    update_data = {"id": package_id, **data}
+    return ckan_call_action(authorization, "package_patch", update_data)
 
 
-def ckan_package_create(
-    data: dict, authorization: Annotated[str | None, Header()] = None
-):
+def ckan_package_create(data: dict, authorization: str):
     """Create a CKAN package.
 
-    Authorization header required to update package.
-    In case of some errors raises HTTPException.
+    If CKAN API call fails then logs error and raises HTTPException.
+
+     Args:
+        data (dict): the dict with data used to create the CKAN package
+        authorization (str): authorization token
     """
-    if not authorization:
-        log.error("No Authorization header present")
-        raise HTTPException(status_code=401, detail="No Authorization header present")
-
-    try:
-        ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
-        package = ckan.call_action("package_create", data)
-    except NotFound as e:
-        log.exception(e)
-        raise HTTPException(status_code=404, detail="Package not found") from e
-    except NotAuthorized as e:
-        log.exception(e)
-        raise HTTPException(status_code=403, detail="User not authorized") from e
-    except requests.exceptions.ConnectionError as e:
-        log.exception(e)
-        raise HTTPException(status_code=502, detail="Connection error") from e
-
-    return package
+    return ckan_call_action(authorization, "package_create", data)
 
 
-def ckan_current_package_list_with_resources(
-        authorization: Annotated[str | None, Header()] = None):
+def ckan_current_package_list_with_resources(authorization: str):
     """
     Return all current CKAN packages with resources.
 
-    Authorization header needed to see all unpublished packages acessible to
-    corresponding header.
-    Admin authorization header will show all packages.
-
-    In case of some errors raises HTTPException.
+    If CKAN API call fails then logs error and raises HTTPException.
     """
 
-    try:
-        ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
-        package_list = ckan.call_action(
-            "current_package_list_with_resources", {"limit": "100000"})
-    except NotFound as e:
-        log.exception(e)
-        raise HTTPException(status_code=404, detail="Package not found") from e
-    except NotAuthorized as e:
-        log.exception(e)
-        raise HTTPException(status_code=403, detail="User not authorized") from e
-    except requests.exceptions.ConnectionError as e:
-        log.exception(e)
-        raise HTTPException(status_code=502, detail="Connection error") from e
-
-    return package_list
+    return ckan_call_action(
+        authorization, "current_package_list_with_resources", {"limit": "100000"})
