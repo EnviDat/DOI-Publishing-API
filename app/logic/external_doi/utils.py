@@ -8,6 +8,7 @@ from app.logic.external_doi.constants import (
     ExternalPlatform,
 )
 from app.logic.external_doi.zenodo import convert_zenodo_doi
+from app.logic.remote_ckan import ckan_current_package_list_with_resources
 
 
 def get_doi_external_platform(doi: str) -> ExternalPlatform | None:
@@ -65,3 +66,26 @@ def convert_doi(
         f"supported for conversion: {doi}",
         "error": f"Cannot convert the DOI: {doi}",
     }
+
+
+def get_envidat_dois(authorization: str) -> list[str]:
+    """
+    Returns a list of all DOIs in packages in an EnviDat CKAN instance.
+    NOTE: if authorization invalid will still return packages available in public API!
+
+    Args:
+        authorization (str): authorization token
+    """
+    dois = []
+
+    # Get all packages in EnviDat CKAN instance
+    package_list = ckan_current_package_list_with_resources(authorization)
+
+    # Extract doi from each package
+    for package in package_list:
+        doi = package.get("doi")
+        if doi:
+            dois.append(doi)
+
+    return dois
+
