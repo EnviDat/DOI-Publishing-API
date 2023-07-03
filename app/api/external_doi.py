@@ -27,7 +27,7 @@ router = APIRouter(prefix="/external-doi", tags=["external-doi"])
 # Setup authorization header
 authorization_header = APIKeyHeader(
     name="Authorization",
-    description="ckan cookie for logged in user passed in authorization header",
+    description="CKAN cookie for logged in user passed in authorization header",
 )
 
 

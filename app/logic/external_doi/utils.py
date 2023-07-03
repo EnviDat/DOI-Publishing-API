@@ -1,5 +1,6 @@
 """Utils for external_doi module."""
 
+import csv
 import json
 import requests
 import xlsxwriter
@@ -24,7 +25,8 @@ log.setLevel(level=logging.INFO)
 logFileFormatter = logging.Formatter(
     fmt=f"%(levelname)s %(asctime)s - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S")
-fileHandler = logging.FileHandler(filename='logs/zenodo_import.log')
+# fileHandler = logging.FileHandler(filename='logs/zenodo_import.log')
+fileHandler = logging.FileHandler(filename='scripts/logs/zenodo_import.log')
 fileHandler.setFormatter(logFileFormatter)
 fileHandler.setLevel(level=logging.INFO)
 log.addHandler(fileHandler)
@@ -140,7 +142,7 @@ def get_zenodo_dois(
         # Get EnviDat dois
         envidat_dois = get_envidat_dois(authorization)
 
-        # Get list of Zenodo DOIs not already in EnviDat
+        # Get list of Zenodo DOIs not already in EnviDat and that contain 'zenodo'
         dois = []
         for record in records:
 
@@ -149,7 +151,7 @@ def get_zenodo_dois(
 
                 if doi in envidat_dois:
                     log.info(f"DOI already in EnviDat: {doi}")
-                else:
+                elif 'zenodo' in doi:
                     dois.append(doi)
 
         return dois
@@ -188,3 +190,26 @@ def write_dois_urls(
 
     return
 
+
+def read_dois_urls(input_path: str) -> list[str] | None:
+    """
+    Returns list of DOIs strings read from csv file.
+    In case of errors returns None.
+
+    Args:
+        input_path (str): path and name of input file
+    """
+    try:
+        with open(input_path, encoding="utf-8-sig") as file:
+
+            reader = csv.reader(file)
+            dois = []
+
+            for row in reader:
+                dois.append(row[0])
+
+        return dois
+
+    except Exception as e:
+        log.error(f"{e}")
+        return None
