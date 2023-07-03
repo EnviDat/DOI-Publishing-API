@@ -40,7 +40,7 @@ def ckan_call_action_authorized(
         log.exception(e)
         raise HTTPException(status_code=403, detail="Not authorized") from e
     except ValidationError as e:
-        log.exception(e)
+        # log.exception(e)
         raise HTTPException(status_code=500, detail=f"ValidationError: {e}") from e
     except requests.exceptions.ConnectionError as e:
         log.exception(e)
@@ -50,6 +50,41 @@ def ckan_call_action_authorized(
         raise HTTPException(status_code=500, detail="Error, check logs")
 
     return response
+
+
+def ckan_call_action_return_exception(
+        authorization: str, action: str, data: dict | None = None):
+    """
+    Simplified function that returns dictionary with success Boolean and result response
+     from authorized calls to CKAN API actionson EnviDat CKAN instance.
+
+    NOTE: Errors are returned in dictionary rather than raising HTTPException!
+
+    Authorization is required.
+    NOTE: Some CKAN API actions do not require authorization and will still return a
+    response even if authorization invalid!
+
+    Args:
+        authorization (str): authorization token
+        action (str): the CKAN action name, for example 'package_create'
+        data (dict): the dict to pass to the action, default is None
+    """
+    try:
+        ckan = RemoteCKAN(settings.API_URL, apikey=authorization)
+        if data:
+            response = ckan.call_action(action, data)
+        else:
+            response = ckan.call_action(action)
+    except Exception as e:
+        return {
+            "success": False,
+            "result": e
+        }
+
+    return {
+        "success": True,
+        "result": response
+    }
 
 
 def ckan_call_action(action: str, data: dict | None = None):
@@ -91,7 +126,8 @@ def ckan_package_show(package_id: str, authorization: str):
         package_id (str): CKAN package id or name
         authorization (str): authorization token
     """
-    return ckan_call_action_authorized(authorization, "package_show", {"id": package_id})
+    return ckan_call_action_authorized(
+        authorization, "package_show", {"id": package_id})
 
 
 def ckan_package_patch(package_id: str, data: dict, authorization: str):
