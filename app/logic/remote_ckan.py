@@ -56,7 +56,7 @@ def ckan_call_action_return_exception(
         authorization: str, action: str, data: dict | None = None):
     """
     Simplified function that returns dictionary with success Boolean and result response
-     from authorized calls to CKAN API actionson EnviDat CKAN instance.
+     from authorized calls to CKAN API actions on EnviDat CKAN instance.
 
     NOTE: Errors are returned in dictionary rather than raising HTTPException!
 
