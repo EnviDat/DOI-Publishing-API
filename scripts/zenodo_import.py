@@ -73,7 +73,14 @@ def import_zenodo_records():
             doi=doi, owner_org=args.owner_org, user=user, add_placeholders=True)
 
         # Extract name from record
-        name = record.get("result").get("name")
+        name = record.get("result", {}).get("name")
+
+        # Handle failed conversion of Zenodo record to EnviDat format
+        if not name:
+            error = record.get("error")
+            log.error(f"{counter}  Failed to convert DOI {doi} to EnviDat format, "
+                      f"error: {error}")
+            continue
 
         # Create CKAN package with converted DOI record
         ckan_pkg = ckan_call_action_return_exception(
