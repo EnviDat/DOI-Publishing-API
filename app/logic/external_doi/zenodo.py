@@ -582,9 +582,9 @@ def get_tags(keywords: list, title: str, add_placeholders: bool = False) -> list
     """
     tags = []
 
-    # Handle all keywords in one element and separated by commas
+    # Handle all keywords in one element and separated by commas or semicolons
     if len(keywords) == 1:
-        keywords = keywords[0].split(",")
+        keywords = keywords[0].replace(";", ',').split(",")
 
     # Format keywords
     regex_replacement = "[^0-9A-Z-_. ]"
