@@ -196,6 +196,9 @@ def convert_zenodo_to_envidat(
     if dte:
         pkg.update({"date": json.dumps(dte, ensure_ascii=False)})
 
+    # private (True is default setting, this causes datasets to be "Unpublished")
+    pkg.update({"private": True})
+
     # publication
     publication = get_publication(publication_date, config, add_placeholders)
     if publication:
