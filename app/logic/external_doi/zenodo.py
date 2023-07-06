@@ -1,7 +1,6 @@
 """Retrieve and convert Zenodo DOI metadata to EnviDat CKAN package format."""
 
 import json
-
 import logging
 import re
 from datetime import date, datetime
@@ -17,8 +16,9 @@ log = logging.getLogger(__name__)
 
 # TODO run code formatters pre-commit hook
 
+
 def convert_zenodo_doi(
-        doi: str, owner_org: str, user: dict, add_placeholders: bool = False
+    doi: str, owner_org: str, user: dict, add_placeholders: bool = False
 ) -> ConvertSuccess | ConvertError:
     """Return metadata for input doi and convert metadata to EnviDat
     CKAN package format.
@@ -120,7 +120,7 @@ def get_zenodo_record_id(doi: str) -> str | None:
     if period_index == -1:
         return None
 
-    record_id = doi[period_index + 1:]
+    record_id = doi[period_index + 1 :]
 
     if not record_id:
         return None
@@ -129,8 +129,7 @@ def get_zenodo_record_id(doi: str) -> str | None:
 
 
 def convert_zenodo_to_envidat(
-        data: dict, owner_org: str, user: dict, config: dict,
-        add_placeholders: bool = False
+    data: dict, owner_org: str, user: dict, config: dict, add_placeholders: bool = False
 ) -> ConvertSuccess | ConvertError:
     """Convert Zenodo record dictionary to EnviDat CKAN package format.
 
@@ -275,7 +274,7 @@ def convert_zenodo_to_envidat(
 
 
 def get_authors(
-        creators: list, user: dict, config: dict, add_placeholders: bool = False
+    creators: list, user: dict, config: dict, add_placeholders: bool = False
 ) -> list:
     """Returns authors in EnviDat formattted list.
 
@@ -393,7 +392,7 @@ def get_date(publication_date: str, add_placeholders: bool = False) -> list:
 
 
 def get_publication(
-        publication_date: str, config: dict, add_placeholders: bool = False
+    publication_date: str, config: dict, add_placeholders: bool = False
 ) -> dict:
     """Returns publication in EnviDat format.
 
@@ -584,7 +583,7 @@ def get_tags(keywords: list, title: str, add_placeholders: bool = False) -> list
 
     # Handle all keywords in one element and separated by commas or semicolons
     if len(keywords) == 1:
-        keywords = keywords[0].replace(";", ',').split(",")
+        keywords = keywords[0].replace(";", ",").split(",")
 
     # Format keywords
     regex_replacement = "[^0-9A-Z-_. ]"
@@ -683,8 +682,7 @@ def get_resources(files: list) -> list:
 
 
 def get_envidat_dois(authorization: str) -> list[str]:
-    """
-    Returns a list of all DOIs in packages in an EnviDat CKAN instance.
+    """Returns a list of all DOIs in packages in an EnviDat CKAN instance.
     NOTE: if authorization invalid will still return packages available in public API!
 
     Args:

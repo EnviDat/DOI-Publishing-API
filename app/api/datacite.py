@@ -60,8 +60,8 @@ async def reserve_draft_doi(
     user=Depends(get_user),
     auth_token=Depends(get_token),
 ):
-    """
-    Authenticate user, extract DOI from package, and reserve draft DOI in DataCite.
+    """Authenticate user, extract DOI from package,
+    and reserve draft DOI in DataCite.
     """
     # TODO review authorization implementation
     # Authorize user, if user invalid then raises HTTPException

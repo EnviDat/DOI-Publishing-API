@@ -2,6 +2,11 @@
 
 import csv
 import json
+
+# Setup logging
+import logging
+from logging import getLogger
+
 import requests
 import xlsxwriter
 
@@ -14,22 +19,18 @@ from app.logic.external_doi.constants import (
 )
 from app.logic.external_doi.zenodo import convert_zenodo_doi, get_envidat_dois
 
-# Setup logging
-import logging
-from logging import getLogger
-
 log = getLogger(__name__)
 log.setLevel(level=logging.INFO)
 
 # Setup up file log handler
-logFileFormatter = logging.Formatter(
-    fmt=f"%(levelname)s %(asctime)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S")
-# fileHandler = logging.FileHandler(filename='logs/zenodo_import.log')
-fileHandler = logging.FileHandler(filename='scripts/logs/zenodo_import.log')
-fileHandler.setFormatter(logFileFormatter)
-fileHandler.setLevel(level=logging.INFO)
-log.addHandler(fileHandler)
+log_file_formatter = logging.Formatter(
+    fmt="%(levelname)s %(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+)
+# file_handler = logging.FileHandler(filename='logs/zenodo_import_TEST.log')
+file_handler = logging.FileHandler(filename="scripts/logs/zenodo_import_TEST.log")
+file_handler.setFormatter(log_file_formatter)
+file_handler.setLevel(level=logging.INFO)
+log.addHandler(file_handler)
 
 
 def get_doi_external_platform(doi: str) -> ExternalPlatform | None:
@@ -90,7 +91,8 @@ def convert_doi(
 
 
 def get_zenodo_dois(
-        authorization: str, q: str, size: str = "10000") -> list[str] | None:
+    authorization: str, q: str, size: str = "10000"
+) -> list[str] | None:
     """Return Zenodo DOIs extracted from records produced by search query.
 
     In case of errors returns None.
@@ -102,7 +104,6 @@ def get_zenodo_dois(
         q (str): search query (using Elasticsearch query string syntax)
         size (str): number of results to return, default value is "10000"
     """
-
     # Get config
     config_path = "app/config/zenodo.json"
     try:
@@ -131,8 +132,9 @@ def get_zenodo_dois(
 
         # Handle unsuccessful response
         if response.status_code != 200:
-            log.error(f"Could not return Zenodo records "
-                      f"for the following URL: {api_url}")
+            log.error(
+                f"Could not return Zenodo records " f"for the following URL: {api_url}"
+            )
             return None
 
         # Extract records from Zenodo response
@@ -145,13 +147,11 @@ def get_zenodo_dois(
         # Get list of Zenodo DOIs not already in EnviDat and that contain 'zenodo'
         dois = []
         for record in records:
-
             doi = record.get("doi")
             if doi:
-
                 if doi in envidat_dois:
                     log.info(f"DOI already in EnviDat: {doi}")
-                elif 'zenodo' in doi:
+                elif "zenodo" in doi:
                     dois.append(doi)
 
         return dois
@@ -162,9 +162,9 @@ def get_zenodo_dois(
 
 
 def write_dois_urls(
-        dois: list[str], doi_prefix: str = None, output_path: str = "zenodo_dois.xls"):
-    """
-    Writes list of DOIs to Excel file.
+    dois: list[str], doi_prefix: str = None, output_path: str = "zenodo_dois.xls"
+):
+    """Writes list of DOIs to Excel file.
     Each DOI will be a clickable URL in the output Excel file.
 
     Args:
@@ -192,8 +192,7 @@ def write_dois_urls(
 
 
 def read_dois_urls(input_path: str) -> list[str] | None:
-    """
-    Returns list of DOIs strings read from csv file.
+    """Returns list of DOIs strings read from csv file.
     In case of errors returns None.
 
     Args:
@@ -201,7 +200,6 @@ def read_dois_urls(input_path: str) -> list[str] | None:
     """
     try:
         with open(input_path, encoding="utf-8-sig") as file:
-
             reader = csv.reader(file)
             dois = []
 
