@@ -41,7 +41,7 @@ class DoiRealisation(models.Model):
     prefix_id = fields.CharField(max_length=64, validators=[EmptyStringValidator()])
     suffix_id = fields.CharField(max_length=64, validators=[EmptyStringValidator()])
     ckan_id = fields.UUIDField()
-    # ckan_name = fields.CharField(max_length=256, validators=[EmptyStringValidator()])
+    ckan_name = fields.CharField(max_length=256, validators=[EmptyStringValidator()])
     site_id = fields.CharField(max_length=64, validators=[EmptyStringValidator()])
     tag_id = fields.CharField(
         max_length=64, default="envidat.", validators=[EmptyStringValidator()]
