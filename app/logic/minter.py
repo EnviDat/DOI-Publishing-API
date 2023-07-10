@@ -1,9 +1,10 @@
 """Mint new DOIs."""
 
+import json
 import logging
 
 from app.config import settings
-from app.models.doi import DoiRealisation
+from app.models.doi import DoiRealisation, DoiRealisationInPydantic
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +19,10 @@ async def get_next_doi_suffix_id():
         .order_by("-suffix_id")
         .values_list("suffix_id", flat=True)
     )
-    log.debug(f"Filtered suffix IDs: {suffix_ids}")
+    ids_only = ", ".join(
+        [suffix.lstrip(settings.DOI_SUFFIX_TAG) for suffix in suffix_ids]
+    )
+    log.debug(f"Filtered suffix IDs: {ids_only}")
 
     numeric_ids = [int(suffix_id.split(".")[-1]) for suffix_id in suffix_ids]
     next_suffix_id = max(numeric_ids, default=0) + 1
@@ -29,12 +33,19 @@ async def get_next_doi_suffix_id():
 
 async def create_db_doi(user_name: str, package_metadata: dict):
     """Create a new DOI in the DB."""
-    log.debug("Creating new DB DOI entry start")
+    # Return DOI if exists already
+    if existing_doi := package_metadata.get("doi", None):
+        log.warning(f"DOI already exists for package: {existing_doi}")
+        return existing_doi
 
     next_id = await get_next_doi_suffix_id()
+    log.info(f"Creating new DOI in database: {next_id}")
+
     if not (package_id := package_metadata.get("id", None)):
+        log.error("No id present in package metadata")
         return None
     if not (package_name := package_metadata.get("name", None)):
+        log.error("No name present in package metadata")
         return None
 
     log.debug(f"Creating new DOI for package id: {package_id}")
@@ -47,20 +58,28 @@ async def create_db_doi(user_name: str, package_metadata: dict):
         "site_id": "doi-publishing-api",
         "tag_id": settings.DOI_SUFFIX_TAG,
         "ckan_user": user_name,
-        "metadata": package_metadata,
+        "metadata": json.dumps(package_metadata),
         "metadata_format": "ckan",
         "ckan_entity": "package",
     }
 
     database_doi = await DoiRealisation.get_or_none(
-        prefix_id=new_doi.prefix_id,
-        suffix_id=new_doi.suffix_id,
+        prefix_id=new_doi.get("prefix_id"),
+        suffix_id=new_doi.get("suffix_id"),
     )
 
     if database_doi:
         log.debug("DOI already exists in DB, continuing to datacite logic")
     else:
-        log.debug(f"Creating new DOI with params: {new_doi}")
-        await DoiRealisation.create(**new_doi)
+        try:
+            validated_doi = DoiRealisationInPydantic(**new_doi)
+            new_doi_dict = validated_doi.dict(exclude_unset=True)
+            log.debug(f"Creating new DOI with params: {new_doi_dict}")
+            await DoiRealisation.create(**new_doi_dict)
+        except ValueError as e:
+            log.error(f"DOI data failed validation: {e}")
+            return None
 
-    return f"{new_doi.get('prefix_id', None)}/{new_doi.get('suffix_id', None)}"
+    return (
+        f"{new_doi_dict.get('prefix_id', None)}/{new_doi_dict.get('suffix_id', None)}"
+    )
