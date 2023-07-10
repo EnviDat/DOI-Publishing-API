@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 def convert_zenodo_doi(
-    doi: str, owner_org: str, user: dict, add_placeholders: bool = False
+        doi: str, owner_org: str, user: dict, add_placeholders: bool = False
 ) -> ConvertSuccess | ConvertError:
     """Return metadata for input doi and convert metadata to EnviDat
     CKAN package format.
@@ -43,8 +43,7 @@ def convert_zenodo_doi(
                 or error dictionary
     """
     # Extract record_id
-    record_id = get_zenodo_record_id(doi)
-    if not record_id:
+    if not (record_id := get_zenodo_record_id(doi)):
         return {
             "status_code": 400,
             "message": f"The following DOI was not found: {doi}",
@@ -115,21 +114,19 @@ def get_zenodo_record_id(doi: str) -> str | None:
         str | None: String with record ID or None
 
     """
-    period_index = doi.rfind(".")
 
-    if period_index == -1:
+    if (period_index := doi.rfind(".")) == -1:
         return None
 
-    record_id = doi[period_index + 1 :]
-
-    if not record_id:
+    if not (record_id := doi[period_index + 1:]):
         return None
 
     return record_id.strip()
 
 
 def convert_zenodo_to_envidat(
-    data: dict, owner_org: str, user: dict, config: dict, add_placeholders: bool = False
+        data: dict, owner_org: str, user: dict, config: dict,
+        add_placeholders: bool = False
 ) -> ConvertSuccess | ConvertError:
     """Convert Zenodo record dictionary to EnviDat CKAN package format.
 
@@ -153,14 +150,11 @@ def convert_zenodo_to_envidat(
     metadata = data.get("metadata", {})
 
     # doi
-    doi = data.get("doi")
-    pkg.update({"doi": doi})
+    pkg.update({"doi": (doi := data.get("doi"))})
 
     # title
-    title = metadata.get("title")
-
     # Return error if title not found
-    if not title:
+    if not (title := metadata.get("title")):
         err = f"'title' not found in DOI: {doi}"
         log.error(err)
         return {
@@ -172,14 +166,12 @@ def convert_zenodo_to_envidat(
     pkg.update({"title": title})
 
     # name
-    name = get_name(title)
-    if name:
+    if name := get_name(title):
         pkg.update({"name": name})
 
     # author
     creators = metadata.get("creators", [])
-    authors = get_authors(creators, user, config, add_placeholders)
-    if authors:
+    if authors := get_authors(creators, user, config, add_placeholders):
         pkg.update({"author": json.dumps(authors, ensure_ascii=False)})
 
     # maintainer
@@ -191,22 +183,19 @@ def convert_zenodo_to_envidat(
 
     # date
     publication_date = metadata.get("publication_date", "")
-    dte = get_date(publication_date, add_placeholders)
-    if dte:
+    if dte := get_date(publication_date, add_placeholders):
         pkg.update({"date": json.dumps(dte, ensure_ascii=False)})
 
     # private (True is default setting, this causes datasets to be "Unpublished")
     pkg.update({"private": True})
 
     # publication
-    publication = get_publication(publication_date, config, add_placeholders)
-    if publication:
+    if publication := get_publication(publication_date, config, add_placeholders):
         pkg.update({"publication": json.dumps(publication, ensure_ascii=False)})
 
     # funding
     grants = metadata.get("grants", [])
-    funding = get_funding(grants, config, add_placeholders)
-    if funding:
+    if funding := get_funding(grants, config, add_placeholders):
         pkg.update({"funding": json.dumps(funding, ensure_ascii=False)})
 
     # language ("en" English is default language)
@@ -225,20 +214,17 @@ def convert_zenodo_to_envidat(
         }
     )
 
-    license_url = license_data.get("license_url")
-    if license_url:
+    if license_url := license_data.get("license_url"):
         pkg.update({"license_url": license_url})
 
     # notes
     description = metadata.get("description", "")
-    notes = get_notes(description, config)
-    if notes:
+    if notes := get_notes(description, config):
         pkg.update({"notes": notes})
 
     # related_publications
     references = metadata.get("references", [])
-    related_publications = get_related_publications(references)
-    if related_publications:
+    if related_publications := get_related_publications(references):
         pkg.update({"related_publications": related_publications})
 
     # resource_type_general
@@ -254,27 +240,24 @@ def convert_zenodo_to_envidat(
         pkg.update({"spatial": spatial})
 
     # version
-    version = metadata.get("version")
-    if version:
+    if version := metadata.get("version"):
         pkg.update({"version": version})
 
     # files
     files = data.get("files", [])
-    resources = get_resources(files)
-    if resources:
+    if resources := get_resources(files):
         pkg.update({"resources": resources})
 
     # tags
     keywords = metadata.get("keywords", [])
-    tags = get_tags(keywords, title, add_placeholders)
-    if tags:
+    if tags := get_tags(keywords, title, add_placeholders):
         pkg.update({"tags": tags})
 
     return {"status_code": 200, "result": pkg}
 
 
 def get_authors(
-    creators: list, user: dict, config: dict, add_placeholders: bool = False
+        creators: list, user: dict, config: dict, add_placeholders: bool = False
 ) -> list:
     """Returns authors in EnviDat formattted list.
 
@@ -326,8 +309,7 @@ def get_authors(
             )
             author.update({"affiliation": affiliation_default})
 
-        identifier = creator.get("orcid", "")
-        if identifier:
+        if identifier := creator.get("orcid", ""):
             author.update({"identifier": identifier.strip()})
 
         authors.append(author)
@@ -392,7 +374,7 @@ def get_date(publication_date: str, add_placeholders: bool = False) -> list:
 
 
 def get_publication(
-    publication_date: str, config: dict, add_placeholders: bool = False
+        publication_date: str, config: dict, add_placeholders: bool = False
 ) -> dict:
     """Returns publication in EnviDat format.
 
@@ -657,20 +639,16 @@ def get_resources(files: list) -> list:
     for file in files:
         resource = {}
 
-        name = file.get("key")
-        if name:
+        if name := file.get("key"):
             resource.update({"name": name})
 
-        url = file.get("links", {}).get("self")
-        if url:
+        if url := file.get("links", {}).get("self"):
             resource.update({"url": url})
 
-        size = file.get("size")
-        if size:
+        if size := file.get("size"):
             resource.update({"size": size})
 
-        type_resource = file.get("type")
-        if type_resource:
+        if type_resource := file.get("type"):
             resource.update({"format": type_resource})
 
         restricted = {"level": "public", "allowed_users": "", "shared_secret": ""}
