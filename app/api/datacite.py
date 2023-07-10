@@ -17,6 +17,7 @@ from app.logic.datacite import (
     publish_datacite,
     reserve_draft_doi_datacite,
     validate_doi,
+    get_error_message
 )
 from app.logic.mail import (
     approval_granted_email,
@@ -44,7 +45,6 @@ router = APIRouter(
 )
 
 
-# TODO possibly remove similar endpoint in doi/create_doi_draft
 @router.get(
     "/draft",
     name="Reserve draft DOI",
@@ -67,7 +67,10 @@ async def reserve_draft_doi(
     user=Depends(get_user),
     auth_token=Depends(get_token),
 ):
-    """Authenticate user, extract DOI from package, and reserve draft DOI in DataCite."""
+    """
+    Authenticate user, extract DOI from package, and reserve draft DOI in DataCite.
+    """
+
     package = ckan_package_show(package_id, auth_token)
     if not (user_name := user.get("name", None)):
         raise HTTPException(status_code=500, detail="Username not extracted")
@@ -83,7 +86,7 @@ async def reserve_draft_doi(
     retry_count = 0
 
     while retry_count <= settings.DATACITE_RETRIES:
-        # TODO revert to calling DataCite API with doi
+
         datacite_response = reserve_draft_doi_datacite(doi)
 
         if datacite_response.get("status_code") in successful_status_codes:
@@ -102,9 +105,14 @@ async def reserve_draft_doi(
         # Wait sleep_time seconds before trying to call DataCite again
         time.sleep(settings.DATACITE_SLEEP_TIME)
 
-    # TODO test this works / sends
-    await draft_failed_email(package_id, user_name, user_email, datacite_response)
+    # Get error message
+    error_msg = get_error_message(datacite_response)
 
+    # TODO test this works / sends
+    # Send draft failed email
+    await draft_failed_email(package_id, user_name, user_email, error_msg)
+
+    # Return DataCite response
     response.status_code = datacite_response.get("status_code", 500)
     return datacite_response
 
@@ -147,7 +155,6 @@ async def request_publish_or_update(
         # User requests publication,
         # if 'publication_state' fails to update then raises HTTPExcpetion
         case "reserved":
-            # TODO send “Publication request” email to admin and user
             publication_state = "pub_pending"
 
         # User requests metadata update
@@ -163,6 +170,7 @@ async def request_publish_or_update(
                 detail="Value for 'publication_state' cannot be processed",
             )
 
+    # TODO test this works / sends
     await request_approval_email(
         package_id=package_id,
         user_name=user_name,
@@ -265,9 +273,12 @@ async def publish_or_update_datacite(
         # Wait sleep_time seconds before trying to call DataCite again
         time.sleep(settings.DATACITE_SLEEP_TIME)
 
+    # Get error message
+    error_msg = get_error_message(datacite_response)
+
     # TODO test this works / sends
     # TODO update endpoint to be more generic: datacite update failed
-    await draft_failed_email(package_id, user_name, user_email, datacite_response)
+    await draft_failed_email(package_id, user_name, user_email, error_msg)
 
     # Return error datacite_response
     response.status_code = datacite_response.get("status_code", 500)

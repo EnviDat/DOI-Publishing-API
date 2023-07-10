@@ -271,3 +271,20 @@ def xml_to_base64(xml: str) -> str:
         xml_encoded = base64.b64encode(xml_bytes)
         xml_str = xml_encoded.decode()
         return xml_str
+
+
+def get_error_message(datacite_response: DoiSuccess | DoiErrors) -> str:
+    """
+    Returns error message string extracted from formatted DataCite response.
+
+    In case of errors returns default error string.
+
+    Args:
+         datacite_response (DoiSuccess | DoiErrors): see TypedDict class definitions
+    """
+    try:
+        errors = datacite_response.get("errors", {})
+        return errors[0]["error"]
+    except Exception as e:
+        log.exception(f"ERROR getting error message from DataCite response:  {e}")
+        return 'Unknown error'
