@@ -9,15 +9,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse
 
 # from app.api.doi import create_doi_draft
-from app.auth import get_admin, get_token, get_user
+from app.auth import get_admin, get_user
 from app.config import settings
 from app.logic.datacite import (
     DoiErrors,
     DoiSuccess,
+    get_error_message,
     publish_datacite,
     reserve_draft_doi_datacite,
     validate_doi,
-    get_error_message
 )
 from app.logic.mail import (
     approval_granted_email,
@@ -65,20 +65,23 @@ async def reserve_draft_doi(
     ],
     response: Response,
     user=Depends(get_user),
-    auth_token=Depends(get_token),
 ):
-    """
-    Authenticate user, extract DOI from package, and reserve draft DOI in DataCite.
-    """
+    """Generate new DOI from DB and reserve draft DOI in DataCite."""
+    user_info = user.get("info")
+    ckan = user.get("ckan")
 
-    package = ckan_package_show(package_id, auth_token)
-    if not (user_name := user.get("name", None)):
+    package = ckan_package_show(package_id, ckan)
+
+    if not (user_name := user_info.get("name", None)):
+        log.error("Failure extracting username using Authorization header")
         raise HTTPException(status_code=500, detail="Username not extracted")
-    if not (user_email := user.get("email", None)):
+    if not (user_email := user_info.get("email", None)):
+        log.error("Failure extracting email using Authorization header")
         raise HTTPException(status_code=500, detail="User email not extracted")
 
     # Create new DOI
-    if (doi := create_db_doi(user_name, package)) is None:
+    if (doi := await create_db_doi(user_name, package)) is None:
+        log.error("Failed creating new DOI in database")
         return HTTPException(status_code=500, detail="New DOI creation failed")
 
     successful_status_codes = range(200, 300)
@@ -88,12 +91,17 @@ async def reserve_draft_doi(
     while retry_count <= settings.DATACITE_RETRIES:
 
         datacite_response = reserve_draft_doi_datacite(doi)
+        log.debug(f"DataCite response: {datacite_response}")
 
         if datacite_response.get("status_code") in successful_status_codes:
+            log.debug(
+                "DataCite publish successful, "
+                f"patching CKAN package ID: {package_id} with DOI: {doi}"
+            )
             ckan_package_patch(
                 package_id,
                 {"publication_state": "reserved", "doi": doi},
-                auth_token,
+                ckan,
             )
 
             response.status_code = datacite_response.get("status_code")
@@ -101,14 +109,17 @@ async def reserve_draft_doi(
 
         # Else attempt to call DataCite API again
         retry_count += 1
+        log.debug(
+            "Failure publishing draft DOI, attempting again. " f"Retry: {retry_count}"
+        )
 
         # Wait sleep_time seconds before trying to call DataCite again
+        log.debug(f"Waiting {settings.DATACITE_SLEEP_TIME} seconds...")
         time.sleep(settings.DATACITE_SLEEP_TIME)
 
     # Get error message
     error_msg = get_error_message(datacite_response)
 
-    # TODO test this works / sends
     # Send draft failed email
     await draft_failed_email(package_id, user_name, user_email, error_msg)
 
@@ -124,7 +135,6 @@ async def request_publish_or_update(
     ],
     request: Request,
     user=Depends(get_user),
-    auth_token=Depends(get_token),
 ):
     """Request approval from admin to publish or update dataset with DataCite.
 
@@ -132,7 +142,10 @@ async def request_publish_or_update(
     If initial 'publication_state' is 'reserved' or 'published'
     then update to 'pub_pending'.
     """
-    package = ckan_package_show(package_id, auth_token)
+    user_info = user.get("info")
+    ckan = user.get("ckan")
+
+    package = ckan_package_show(package_id, ckan)
 
     # Validate doi,
     # if doi not truthy or has invalid prefix then raises HTTPException
@@ -145,9 +158,9 @@ async def request_publish_or_update(
             status_code=500, detail="Package does not have a 'publication_state'"
         )
 
-    if not (user_name := user.get("display_name", None)):
+    if not (user_name := user_info.get("display_name", None)):
         raise HTTPException(status_code=500, detail="Username not extracted")
-    if not (user_email := user.get("email", None)):
+    if not (user_email := user_info.get("email", None)):
         raise HTTPException(status_code=500, detail="User email not extracted")
 
     is_update = False
@@ -181,7 +194,7 @@ async def request_publish_or_update(
 
     log.debug(f"Updating package {package_id} to publication_state={publication_state}")
     response = ckan_package_patch(
-        package_id, {"publication_state": publication_state}, auth_token
+        package_id, {"publication_state": publication_state}, ckan
     )
     log.debug(f"CKAN response: {response}")
     return JSONResponse(status_code=200, content={"success": True})
@@ -208,7 +221,6 @@ async def publish_or_update_datacite(
     ],
     response: Response,
     admin=Depends(get_admin),
-    auth_token=Depends(get_token),
 ):
     """Publish or update dataset with DataCite.
 
@@ -217,9 +229,12 @@ async def publish_or_update_datacite(
     Updates 'publication_state' to 'published' in CKAN for datasets that were
     published the first time and had a value of ‘pub_pending’.
     """
+    admin_info = admin.get("info")
+    ckan = admin.get("ckan")
+
     # Get package,
     # if package_id invalid or user not authorized then raises HTTPException
-    package = ckan_package_show(package_id, auth_token)
+    package = ckan_package_show(package_id, ckan)
 
     # Extract publication_state
     publication_state = package.get("publication_state")
@@ -229,9 +244,9 @@ async def publish_or_update_datacite(
             status_code=500, detail="Package does not have a 'publication_state'"
         )
 
-    if not (user_name := admin.get("display_name", None)):
+    if not (user_name := admin_info.get("display_name", None)):
         raise HTTPException(status_code=500, detail="Username not extracted")
-    if not (user_email := admin.get("email", None)):
+    if not (user_email := admin_info.get("email", None)):
         raise HTTPException(status_code=500, detail="User email not extracted")
 
     # Check if publication_state can be processed
@@ -257,7 +272,7 @@ async def publish_or_update_datacite(
         if datacite_response.get("status_code") in successful_status_codes:
             log.debug(f"Updating package {package_id} to publication_state=published")
             response = ckan_package_patch(
-                package_id, {"publication_state": "published"}, auth_token
+                package_id, {"publication_state": "published"}, ckan
             )
 
             # Email user that publication complete

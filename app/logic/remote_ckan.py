@@ -12,13 +12,17 @@ from app.config import settings
 log = logging.getLogger(__name__)
 
 
-def ckan_package_show(package_id: str, authorization: str):
+def get_ckan(api_token: str):
+    """Get CKAN session once, to re-use the connection."""
+    return RemoteCKAN(settings.CKAN_API_URL, apikey=api_token)
+
+
+def ckan_package_show(package_id: str, ckan: RemoteCKAN):
     """Return CKAN package.
 
     In case of some errors raises HTTPException.
     """
     try:
-        ckan = RemoteCKAN(settings.CKAN_API_URL, apikey=authorization)
         package = ckan.call_action("package_show", {"id": package_id})
     except NotFound as e:
         log.exception(e)
@@ -33,19 +37,13 @@ def ckan_package_show(package_id: str, authorization: str):
     return package
 
 
-def ckan_package_patch(
-    package_id: str,
-    data: dict,
-    authorization: str,
-):
+def ckan_package_patch(package_id: str, data: dict, ckan: RemoteCKAN):
     """Patch a CKAN package.
 
-    Authorization header required to update package.
     In case of some errors raises HTTPException.
     """
     try:
         data_dict = {"id": package_id, **data}
-        ckan = RemoteCKAN(settings.CKAN_API_URL, apikey=authorization)
         package = ckan.call_action("package_patch", data_dict)
     except NotFound as e:
         log.exception(e)

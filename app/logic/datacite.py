@@ -56,6 +56,8 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
     Returns:
         DoiSuccess | DoiErrors: See TypedDict class definitions
     """
+    log.info("Reserving draft DOI in datacite")
+
     # Extract variables from config needed to call DataCite API
     api_url = settings.DATACITE_API_URL
     client_id = settings.DATACITE_CLIENT_ID
@@ -70,6 +72,7 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
     headers = {"Content-Type": "application/vnd.api+json"}
 
     try:
+        log.debug(f"Attempting POST to {api_url} with params: {payload_json}")
         response = requests.post(
             api_url,
             headers=headers,
@@ -274,8 +277,7 @@ def xml_to_base64(xml: str) -> str:
 
 
 def get_error_message(datacite_response: DoiSuccess | DoiErrors) -> str:
-    """
-    Returns error message string extracted from formatted DataCite response.
+    """Returns error message string extracted from formatted DataCite response.
 
     In case of errors returns default error string.
 
@@ -284,7 +286,7 @@ def get_error_message(datacite_response: DoiSuccess | DoiErrors) -> str:
     """
     try:
         errors = datacite_response.get("errors", {})
-        return errors[0]["error"]
+        return json.dumps(errors)
     except Exception as e:
         log.exception(f"ERROR getting error message from DataCite response:  {e}")
-        return 'Unknown error'
+        return "Unknown error"
