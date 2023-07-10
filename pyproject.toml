@@ -7,7 +7,7 @@ authors = [
     {name = "Sam Woodcock", email = "samuel.woodocck@wsl.ch"},
 ]
 dependencies = [
-    "envidat-utils>=1.4.1",
+    "envidat-utils>=1.4.2",
     "fastapi[all]>=0.95.1",
     "tortoise-orm[asyncpg]>=0.19.3",
     "ckanapi>=4.7",

@@ -125,7 +125,7 @@ dependencies = [
 
 [[package]]
 name = "envidat-utils"
-version = "1.4.1"
+version = "1.4.2"
 requires_python = ">=3.9,<3.11"
 summary = "Utilities in Python for the WSL EnviDat project."
 dependencies = [
@@ -531,7 +531,7 @@ summary = "Makes working with XML feel like you are working with JSON"
 
 [metadata]
 lock_version = "4.0"
-content_hash = "sha256:a1b418174c5fc7b9bdb9cf0b97cd697cfa2a99875087b515c3e7ebe438028e08"
+content_hash = "sha256:e8f5ac2f6b12beb2538b21344edf97e4d954c516d41b0da7da78126e5bf0b265"
 
 [metadata.files]
 "aiosqlite 0.17.0" = [
@@ -719,9 +719,9 @@ content_hash = "sha256:a1b418174c5fc7b9bdb9cf0b97cd697cfa2a99875087b515c3e7ebe43
     {url = "https://files.pythonhosted.org/packages/8e/db/5849bad11c5e03b41c7331370a2020bc98822dd8253b1861ec70351b8e75/email_validator-1.3.1.tar.gz", hash = "sha256:d178c5c6fa6c6824e9b04f199cf23e79ac15756786573c190d2ad13089411ad2"},
     {url = "https://files.pythonhosted.org/packages/ba/ec/adc595d04e795b04bb0028fc6b067713fdb4a7e8cec44b428f7144fc432e/email_validator-1.3.1-py2.py3-none-any.whl", hash = "sha256:49a72f5fa6ed26be1c964f0567d931d10bf3fdeeacdf97bc26ef1cd2a44e0bda"},
 ]
-"envidat-utils 1.4.1" = [
-    {url = "https://files.pythonhosted.org/packages/1f/2f/1572d0379d5e4bdb814ac31940673335c01b3dc6a4dc1ecf2b75932eb687/envidat-utils-1.4.1.tar.gz", hash = "sha256:48952dbbb7b5a7476d7dee33e81d1ca25fd421795645c1f1b12be12aee645b62"},
-    {url = "https://files.pythonhosted.org/packages/7c/a2/ddd66b014074f1797f28059e0275a04b38c390bea30b1011bb49cd1714d0/envidat_utils-1.4.1-py3-none-any.whl", hash = "sha256:88f2fc886615e49c4e80dc0681cdf1daa0e8f92bb5e68acc402a1ff6af0e6aac"},
+"envidat-utils 1.4.2" = [
+    {url = "https://files.pythonhosted.org/packages/1a/9a/1ca36872e538443d4591d498ea46705a258c4ae9b0f78097f7935d1ab6df/envidat_utils-1.4.2-py3-none-any.whl", hash = "sha256:f0a9aa27d3334b745a064058bf733af158b5280abdc496bafe33d4a512742718"},
+    {url = "https://files.pythonhosted.org/packages/f0/67/32e325bca061c554eee92fdebc66eccd3b8d96eb3118eb89490123df8bfb/envidat-utils-1.4.2.tar.gz", hash = "sha256:85963a4e42e2f76100e3cb822fa84f18916db373ea851bd319f8d6b498ca634b"},
 ]
 "exceptiongroup 1.1.1" = [
     {url = "https://files.pythonhosted.org/packages/61/97/17ed81b7a8d24d8f69b62c0db37abbd8c0042d4b3fc429c73dab986e7483/exceptiongroup-1.1.1-py3-none-any.whl", hash = "sha256:232c37c63e4f682982c8b6459f33a8981039e5fb8756b2074364e5055c498c9e"},
