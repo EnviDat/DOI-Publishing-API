@@ -23,6 +23,7 @@ def ckan_package_show(package_id: str, ckan: RemoteCKAN):
     In case of some errors raises HTTPException.
     """
     try:
+        log.debug(f"Getting package details for {package_id}")
         package = ckan.call_action("package_show", {"id": package_id})
     except NotFound as e:
         log.exception(e)
@@ -44,6 +45,7 @@ def ckan_package_patch(package_id: str, data: dict, ckan: RemoteCKAN):
     """
     try:
         data_dict = {"id": package_id, **data}
+        log.debug(f"Patching package {package_id} with dict: {data_dict}")
         package = ckan.call_action("package_patch", data_dict)
     except NotFound as e:
         log.exception(e)
