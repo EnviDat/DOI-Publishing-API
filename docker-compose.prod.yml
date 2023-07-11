@@ -22,6 +22,8 @@ services:
       - secret/db.env
       - secret/fastapi.env
       - secret/smtp.env
+    environment:
+      IS_DOCKER: "True"
     networks:
       - net
     restart: unless-stopped
