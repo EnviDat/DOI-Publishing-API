@@ -21,6 +21,7 @@ def get_user(authorization: Annotated[str | None, Header()] = None) -> dict:
     log.debug("Authorization header extracted from request headers")
 
     if settings.DEBUG:
+        ckan = None
         user_info = {
             "id": settings.DEBUG_USER_ID,
             "name": "admin",
