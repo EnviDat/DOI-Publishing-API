@@ -1,13 +1,31 @@
 {
-  "externalApi": {
-    "zenodoRecords": "https://zenodo.org/api/records",
-    "zenodoLicenses": "https://zenodo.org/api/licenses"
+  "zenodoAPI": {
+    "zenodoRecords": "https://zenodo.org/api/records"
   },
   "timeout": 3,
-  "ckanApi": {
-    "package_create": "/api/action/package_create"
+  "author": {
+    "default": {
+      "name": "UNKNOWN",
+      "affiliation": "UNKNOWN"
+    }
   },
-  "envidatLicenses": {
+  "maintainer": {
+    "default": {
+      "name": "UNKNOWN",
+      "email": "envidat@wsl.ch"
+    }
+  },
+  "publication": {
+    "default": {
+      "publisher": "Zenodo"
+    }
+  },
+  "funding": {
+    "default": {
+      "institution": "UNKNOWN"
+    }
+  },
+  "licenses": {
     "cc-by": {
       "license_id": "cc-by",
       "license_title": "Creative Commons Attribution",
@@ -23,25 +41,18 @@
       "license_title": "Creative Commons Attribution-NonCommercial (CC-BY-NC)",
       "license_url": "https://creativecommons.org/licenses/by-nc/4.0/"
     },
+    "CC0-1.0": {
+      "license_id": "CC0-1.0",
+      "license_title": "Creative Commons Zero - No Rights Reserved (CC0 1.0)",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
     "other-undefined": {
       "license_id": "other-undefined",
       "license_title": "Other (Specified in the description)"
     }
   },
-  "language": {
-    "default": "en"
-  },
-  "maintainer": {
-    "default": {
-      "email": "envidat@wsl.ch",
-      "name": "EnviDat"
-    }
-  },
   "notes": {
-    "default": "Automatic message from EnviDat Admin: the description of this dataset is too short and therefore, not informative enough. Please improve and then delete this message."
-  },
-  "owner_org": {
-    "default": "bd536a0f-d6ac-400e-923c-9dd351cb05fa"
+    "default": "Automatic message from EnviDat Admin: the description of this dataset is too short and therefore, not informative enough. Please improve and then delete this message. "
   },
   "spatial": {
     "default": "{\"type\": \"Point\", \"coordinates\": [8.4545978, 47.3606372]}"

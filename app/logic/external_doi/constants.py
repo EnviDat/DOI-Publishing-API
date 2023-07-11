@@ -1,6 +1,22 @@
 """Constants used by envidat_doi module."""
 
 from enum import Enum
+from typing import TypedDict
+
+
+class ConvertSuccess(TypedDict):
+    """External platform conversion success class."""
+
+    status_code: int
+    result: dict
+
+
+class ConvertError(TypedDict):
+    """External platform conversion error class."""
+
+    status_code: int
+    message: str
+    error: str
 
 
 class ExternalPlatform(str, Enum):

@@ -1,10 +1,9 @@
 """Utils that use RemoteCKAN to call actions from CKAN API."""
 
-# Setup logging
 import logging
 
 import requests
-from ckanapi import NotAuthorized, NotFound, RemoteCKAN
+from ckanapi import NotAuthorized, NotFound, RemoteCKAN, ValidationError
 from fastapi import HTTPException
 
 from app.config import settings
@@ -17,44 +16,121 @@ def get_ckan(api_token: str):
     return RemoteCKAN(settings.CKAN_API_URL, apikey=api_token)
 
 
-def ckan_package_show(package_id: str, ckan: RemoteCKAN):
+def ckan_call_action_handle_errors(
+    ckan: RemoteCKAN, action: str, data: dict | None = None
+):
+    """Wrapper for CKAN actions, handling errors.
+
+    An authorised RemoteCKAN instance is required.
+    NOTE: some CKAN API actions do not require authorization and will still return a
+    response even if authorization invalid!
+    If CKAN API call fails then logs error and raises HTTPException.
+
+    Args:
+        ckan (RemoteCKAN): authorised RemoteCKAN session.
+        action (str): the CKAN action name, for example 'package_create'
+        data (dict): the dict to pass to the action, default is None
+    """
+    try:
+        if data:
+            response = ckan.call_action(action, data)
+        else:
+            response = ckan.call_action(action)
+    except NotFound as e:
+        log.exception(e)
+        raise HTTPException(status_code=404, detail="Not found") from e
+    except NotAuthorized as e:
+        log.exception(e)
+        raise HTTPException(status_code=403, detail="Not authorized") from e
+    except ValidationError as e:
+        log.exception(e)
+        raise HTTPException(status_code=500, detail=f"ValidationError: {e}") from e
+    except requests.exceptions.ConnectionError as e:
+        log.exception(e)
+        raise HTTPException(status_code=502, detail="Connection error") from e
+    except Exception as e:
+        log.exception(e)
+        raise HTTPException(status_code=500, detail="Error, check logs") from e
+
+    return response
+
+
+def ckan_call_action_return_exception(
+    ckan: RemoteCKAN, action: str, data: dict | None = None
+):
+    """Handle exceptions from ckanapi while calling ckan action.
+
+    Simplified function that returns dictionary with success Boolean and result
+     response from authorized calls to CKAN API actions on EnviDat CKAN instance.
+
+    NOTE: Errors are returned in dictionary rather than raising HTTPException!
+
+    Authorization is required.
+    NOTE: Some CKAN API actions do not require authorization and will still return a
+    response even if authorization invalid!
+
+    Args:
+        ckan (RemoteCKAN): authorised RemoteCKAN session.
+        action (str): the CKAN action name, for example 'package_create'
+        data (dict): the dict to pass to the action, default is None
+    """
+    try:
+        if data:
+            response = ckan.call_action(action, data)
+        else:
+            response = ckan.call_action(action)
+    except Exception as e:
+        return {"success": False, "result": e}
+
+    return {"success": True, "result": response}
+
+
+def ckan_package_show(ckan: RemoteCKAN, package_id: str):
     """Return CKAN package.
 
-    In case of some errors raises HTTPException.
+    If CKAN API call fails then logs error and raises HTTPException.
+
+    Args:
+        ckan (RemoteCKAN): authorised RemoteCKAN session.
+        package_id (str): CKAN package id or name
     """
-    try:
-        log.debug(f"Getting package details for {package_id}")
-        package = ckan.call_action("package_show", {"id": package_id})
-    except NotFound as e:
-        log.exception(e)
-        raise HTTPException(status_code=404, detail="Package not found") from e
-    except NotAuthorized as e:
-        log.exception(e)
-        raise HTTPException(status_code=403, detail="User not authorized") from e
-    except requests.exceptions.ConnectionError as e:
-        log.exception(e)
-        raise HTTPException(status_code=502, detail="Connection error") from e
-
-    return package
+    return ckan_call_action_handle_errors(ckan, "package_show", {"id": package_id})
 
 
-def ckan_package_patch(package_id: str, data: dict, ckan: RemoteCKAN):
+def ckan_package_patch(ckan: RemoteCKAN, package_id: str, data: dict):
     """Patch a CKAN package.
 
-    In case of some errors raises HTTPException.
-    """
-    try:
-        data_dict = {"id": package_id, **data}
-        log.debug(f"Patching package {package_id} with dict: {data_dict}")
-        package = ckan.call_action("package_patch", data_dict)
-    except NotFound as e:
-        log.exception(e)
-        raise HTTPException(status_code=404, detail="Package not found") from e
-    except NotAuthorized as e:
-        log.exception(e)
-        raise HTTPException(status_code=403, detail="User not authorized") from e
-    except requests.exceptions.ConnectionError as e:
-        log.exception(e)
-        raise HTTPException(status_code=502, detail="Connection error") from e
+    If CKAN API call fails then logs error and raises HTTPException.
 
-    return package
+    Args:
+        ckan (RemoteCKAN): authorised RemoteCKAN session.
+        package_id (str): CKAN package id or name
+        data (dict): the dict with data used to update the CKAN package
+    """
+    update_data = {"id": package_id, **data}
+    return ckan_call_action_handle_errors(ckan, "package_patch", update_data)
+
+
+def ckan_package_create(ckan: RemoteCKAN, data: dict):
+    """Create a CKAN package.
+
+    If CKAN API call fails then logs error and raises HTTPException.
+
+    Args:
+        ckan (RemoteCKAN): authorised RemoteCKAN session.
+        data (dict): the dict with data used to create the CKAN package
+    """
+    return ckan_call_action_handle_errors(ckan, "package_create", data)
+
+
+def ckan_current_package_list_with_resources(ckan: RemoteCKAN):
+    """Return all current CKAN packages with resources.
+
+    If CKAN API call fails then logs error and raises HTTPException.
+
+    Args:
+        ckan (RemoteCKAN): authorised RemoteCKAN session.
+    """
+    return ckan_call_action_handle_errors(
+        ckan, "current_package_list_with_resources", {"limit": "100000"}
+    )
