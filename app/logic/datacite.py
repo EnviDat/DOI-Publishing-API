@@ -130,7 +130,6 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     url = f"{site_url}/{name}"
 
     # Assign name_doi_map used in DataCite conversion
-    name_doi_map = {name: doi}
 
     # Assign conversion_error to return if conversion of package to
     # DataCite XML fails
@@ -142,7 +141,7 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     # Convert metadata record to DataCite formatted XML
     # and encode to base64 formatted string
     try:
-        xml = convert_datacite(package, name_doi_map)
+        xml = convert_datacite(package)
         if xml:
             xml_encoded = xml_to_base64(xml)
             if not xml_encoded:
@@ -245,14 +244,20 @@ def validate_doi(package: dict):
         doi (str): validated doi from input package
     """
     # Check if doi is truthy in package
+    package_id = package.get("id")
     doi = package.get("doi")
+
+    log.debug(f"Validating DOI. Package ID: {package_id}, DOI: {doi}")
+
     if not doi:
+        log.error(f"Attempted publish, but no DOI exists for package ID: {package_id}")
         raise HTTPException(status_code=500, detail="Package does not have a doi")
 
     # Validate doi prefix
     doi_prefix = settings.DOI_PREFIX
     prefix = (doi.partition("/"))[0]
     if prefix != doi_prefix:
+        log.debug(f"DOI prefix is invalid: {prefix}")
         raise HTTPException(status_code=403, detail="Invalid DOI prefix")
 
     return doi

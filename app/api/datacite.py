@@ -21,7 +21,7 @@ from app.logic.datacite import (
 )
 from app.logic.mail import (
     approval_granted_email,
-    draft_failed_email,
+    datacite_failed_email,
     request_approval_email,
 )
 from app.logic.minter import create_db_doi
@@ -95,7 +95,7 @@ async def reserve_draft_doi(
 
         if datacite_response.get("status_code") in successful_status_codes:
             log.debug(
-                "DataCite publish successful, "
+                "DataCite draft reservation successful, "
                 f"patching CKAN package ID: {package_id} with DOI: {doi}"
             )
             ckan_package_patch(
@@ -104,7 +104,7 @@ async def reserve_draft_doi(
                 ckan,
             )
 
-            response.status_code = datacite_response.get("status_code")
+            response["status_code"] = datacite_response.get("status_code")
             return datacite_response
 
         # Else attempt to call DataCite API again
@@ -121,10 +121,10 @@ async def reserve_draft_doi(
     error_msg = get_error_message(datacite_response)
 
     # Send draft failed email
-    await draft_failed_email(package_id, user_name, user_email, error_msg)
+    await datacite_failed_email(package_id, user_name, user_email, error_msg)
 
     # Return DataCite response
-    response.status_code = datacite_response.get("status_code", 500)
+    response["status_code"] = datacite_response.get("status_code", 500)
     return datacite_response
 
 
@@ -154,6 +154,7 @@ async def request_publish_or_update(
     # Extract publication_state
     publication_state = package.get("publication_state")
     if not publication_state:
+        log.error("Package does not have 'publication_state' key")
         raise HTTPException(
             status_code=500, detail="Package does not have a 'publication_state'"
         )
@@ -168,22 +169,32 @@ async def request_publish_or_update(
         # User requests publication,
         # if 'publication_state' fails to update then raises HTTPExcpetion
         case "reserved":
+            log.info("Publication state: reserved --> pub_pending")
             publication_state = "pub_pending"
 
         # User requests metadata update
         case "published":
             publication_state = "pub_pending"
+            log.info("Publication state: published --> pub_pending (update requested)")
             is_update = True
+            pass
+
+        # User requests metadata update
+        case "pub_pending":
+            log.info("Publication already requested. Prompting admin again...")
             pass
 
         # Default case, raise HTTP excpetion
         case _:
+            log.debug(
+                "publication state field did not patch 'reserved' or 'published'. "
+                "Skipping..."
+            )
             raise HTTPException(
                 status_code=500,
                 detail="Value for 'publication_state' cannot be processed",
             )
 
-    # TODO test this works / sends
     await request_approval_email(
         package_id=package_id,
         user_name=user_name,
@@ -193,10 +204,8 @@ async def request_publish_or_update(
     )
 
     log.debug(f"Updating package {package_id} to publication_state={publication_state}")
-    response = ckan_package_patch(
-        package_id, {"publication_state": publication_state}, ckan
-    )
-    log.debug(f"CKAN response: {response}")
+    ckan_package_patch(package_id, {"publication_state": publication_state}, ckan)
+    log.debug("Successfully updated CKAN package")
     return JSONResponse(status_code=200, content={"success": True})
 
 
@@ -239,7 +248,8 @@ async def publish_or_update_datacite(
     # Extract publication_state
     publication_state = package.get("publication_state")
     if not publication_state:
-        response.status_code = 500
+        response["status_code"] = 500
+        log.error("Package does not have a 'publication_state'")
         raise HTTPException(
             status_code=500, detail="Package does not have a 'publication_state'"
         )
@@ -251,7 +261,8 @@ async def publish_or_update_datacite(
 
     # Check if publication_state can be processed
     if publication_state not in ["pub_pending", "published"]:
-        response.status_code = 500
+        response["status_code"] = 500
+        log.error("Publication state is not one of 'pub_pending', 'published'")
         raise HTTPException(
             status_code=500,
             detail="Value for 'publication_state' cannot be processed",
@@ -267,10 +278,18 @@ async def publish_or_update_datacite(
 
     while retry_count <= settings.DATACITE_RETRIES:
         # Send package to DataCite
-        datacite_response = publish_datacite(package)
+        try:
+            datacite_response = publish_datacite(package)
+            log.debug(f"DataCite response: {datacite_response}")
+        except Exception as e:
+            log.error(e)
+            traceback = str(e)
 
         if datacite_response.get("status_code") in successful_status_codes:
-            log.debug(f"Updating package {package_id} to publication_state=published")
+            log.debug(
+                "DataCite publish successful, patching "
+                f"CKAN package ID: {package_id} to publication_state=published"
+            )
             response = ckan_package_patch(
                 package_id, {"publication_state": "published"}, ckan
             )
@@ -279,7 +298,7 @@ async def publish_or_update_datacite(
             await approval_granted_email(package_id, user_name, user_email)
 
             # Return successful datacite_response
-            response.status_code = datacite_response.get("status_code")
+            response["status_code"] = datacite_response.get("status_code")
             return datacite_response
 
         # Else attempt to call DataCite API again
@@ -289,12 +308,13 @@ async def publish_or_update_datacite(
         time.sleep(settings.DATACITE_SLEEP_TIME)
 
     # Get error message
-    error_msg = get_error_message(datacite_response)
+    if datacite_response:
+        error_msg = get_error_message(datacite_response)
+    else:
+        error_msg = traceback
 
-    # TODO test this works / sends
-    # TODO update endpoint to be more generic: datacite update failed
-    await draft_failed_email(package_id, user_name, user_email, error_msg)
+    await datacite_failed_email(package_id, user_name, user_email, error_msg)
 
     # Return error datacite_response
-    response.status_code = datacite_response.get("status_code", 500)
+    response["status_code"] = datacite_response.get("status_code", 500)
     return datacite_response
