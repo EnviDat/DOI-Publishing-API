@@ -277,7 +277,12 @@ async def publish_or_update_datacite(
                 f"CKAN package ID: {package_id} to publication_state=published"
             )
             ckan_response = ckan_package_patch(
-                package_id, {"publication_state": "published"}, ckan
+                package_id,
+                {
+                    "private": False,
+                    "publication_state": "published",
+                },
+                ckan,
             )
             log.debug(f"CKAN package_patch response: {ckan_response}")
 
