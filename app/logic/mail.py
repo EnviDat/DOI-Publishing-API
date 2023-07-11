@@ -9,10 +9,10 @@ from app.config import settings
 log = logging.getLogger(__name__)
 
 
-async def draft_failed_email(
+async def datacite_failed_email(
     package_id: str, user_name: str, user_email: str, error_msg: str
 ):
-    """Inform the admin that the draft DOI creation failed."""
+    """Inform the admin that the a DOI task failed."""
     params = {
         "from": settings.EMAIL_FROM,
         "to": settings.EMAIL_FROM,
@@ -25,8 +25,9 @@ async def draft_failed_email(
             "site_url": settings.CKAN_API_URL,
         },
     }
+    log.debug(f"Sending DOI task failure email to admin {settings.EMAIL_FROM}")
     r = requests.post(
-        f"{settings.EMAIL_ENDPOINT}/templates/datacite-draft-failed/json",
+        f"{settings.EMAIL_ENDPOINT}/templates/datacite-task-failed/json",
         headers={"Content-Type": "application/json"},
         json=params,
     )
@@ -43,7 +44,7 @@ async def request_approval_email(
     """Send an email to the admin requesting publish approval."""
     params = {
         "from": settings.EMAIL_FROM,
-        "to": user_email,
+        "to": settings.EMAIL_FROM,
         "params": {
             "user_name": user_name,
             "user_email": user_email,
@@ -54,6 +55,7 @@ async def request_approval_email(
             "site_url": settings.CKAN_API_URL,
         },
     }
+    log.debug(f"Sending DOI approval email to admin {settings.EMAIL_FROM}")
     r = requests.post(
         f"{settings.EMAIL_ENDPOINT}/templates/datacite-request/json",
         headers={"Content-Type": "application/json"},
@@ -74,6 +76,7 @@ async def approval_granted_email(package_id: str, user_name: str, user_email: st
             "site_url": settings.CKAN_API_URL,
         },
     }
+    log.debug(f"Sending DOI approval granted email to {user_email}")
     r = requests.post(
         f"{settings.EMAIL_ENDPOINT}/templates/datacite-published/json",
         headers={"Content-Type": "application/json"},
