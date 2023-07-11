@@ -3,8 +3,6 @@
 import csv
 import json
 
-# Setup logging
-import logging
 from logging import getLogger
 
 import requests
@@ -20,17 +18,6 @@ from app.logic.external_doi.constants import (
 from app.logic.external_doi.zenodo import convert_zenodo_doi, get_envidat_dois
 
 log = getLogger(__name__)
-log.setLevel(level=logging.INFO)
-
-# Setup up file log handler
-log_file_formatter = logging.Formatter(
-    fmt="%(levelname)s %(asctime)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-)
-# file_handler = logging.FileHandler(filename='logs/zenodo_import_TEST.log')
-file_handler = logging.FileHandler(filename="scripts/logs/zenodo_import_TEST.log")
-file_handler.setFormatter(log_file_formatter)
-file_handler.setLevel(level=logging.INFO)
-log.addHandler(file_handler)
 
 
 def get_doi_external_platform(doi: str) -> ExternalPlatform | None:
