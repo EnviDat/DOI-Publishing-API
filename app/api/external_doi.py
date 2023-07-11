@@ -5,7 +5,8 @@ into EnviDat CKAN package format.
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Query, Response, Security
+from fastapi import APIRouter, Query, Security
+from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 
 from app.auth import get_user
@@ -18,8 +19,6 @@ from app.logic.external_doi.utils import convert_doi, get_doi_external_platform
 from app.logic.external_doi.zenodo import convert_zenodo_doi
 
 log = logging.getLogger(__name__)
-
-# TODO test with production instance
 
 # Setup external-doi router
 router = APIRouter(prefix="/external-doi", tags=["external-doi"])
@@ -64,7 +63,6 @@ def convert_external_doi(
             example="bd536a0f-d6ac-400e-923c-9dd351cb05fa",
         ),
     ],
-    response: Response,
     authorization: str = Security(authorization_header),
     add_placeholders: Annotated[
         bool,
@@ -91,5 +89,4 @@ def convert_external_doi(
         case _:
             result = convert_doi(doi, owner_org, user, add_placeholders)
 
-    response.status_code = result.get("status_code", 500)
-    return result
+    return JSONResponse(result, status_code=result.get("status_code", 500))

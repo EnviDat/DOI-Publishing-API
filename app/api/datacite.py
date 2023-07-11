@@ -5,7 +5,7 @@ import logging
 import time
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
 # from app.api.doi import create_doi_draft
@@ -29,20 +29,9 @@ from app.logic.remote_ckan import ckan_package_patch, ckan_package_show
 
 log = logging.getLogger(__name__)
 
-# TODO test with production
-# TODO verify signout
-# TODO review HTTPException formatting, possibly use more generic messages
 
-# TODO review implementation of auth and dependencies
-
-
-# TODO review and remove dependencies if unused
 # Setup datacite router
-router = APIRouter(
-    prefix="/datacite",
-    tags=["datacite"]
-    # dependencies=[Depends(get_user)]
-)
+router = APIRouter(prefix="/datacite", tags=["datacite"])
 
 
 @router.get(
@@ -63,7 +52,6 @@ async def reserve_draft_doi(
     package_id: Annotated[
         str, Query(alias="package-id", description="CKAN package id or name")
     ],
-    response: Response,
     user=Depends(get_user),
 ):
     """Generate new DOI from DB and reserve draft DOI in DataCite."""
@@ -104,8 +92,9 @@ async def reserve_draft_doi(
                 ckan,
             )
 
-            response["status_code"] = datacite_response.get("status_code")
-            return datacite_response
+            return JSONResponse(
+                datacite_response, status_code=datacite_response.get("status_code")
+            )
 
         # Else attempt to call DataCite API again
         retry_count += 1
@@ -124,8 +113,9 @@ async def reserve_draft_doi(
     await datacite_failed_email(package_id, user_name, user_email, error_msg)
 
     # Return DataCite response
-    response["status_code"] = datacite_response.get("status_code", 500)
-    return datacite_response
+    return JSONResponse(
+        datacite_response, status_code=datacite_response.get("status_code", 500)
+    )
 
 
 @router.get("/request", name="Request approval to publish/update")
@@ -209,7 +199,6 @@ async def request_publish_or_update(
     return JSONResponse(status_code=200, content={"success": True})
 
 
-# TODO implement email sending
 @router.get(
     "/publish",
     name="Publish/update dataset",
@@ -228,7 +217,6 @@ async def publish_or_update_datacite(
     package_id: Annotated[
         str, Query(alias="package-id", description="CKAN package id or name")
     ],
-    response: Response,
     admin=Depends(get_admin),
 ):
     """Publish or update dataset with DataCite.
@@ -248,7 +236,6 @@ async def publish_or_update_datacite(
     # Extract publication_state
     publication_state = package.get("publication_state")
     if not publication_state:
-        response["status_code"] = 500
         log.error("Package does not have a 'publication_state'")
         raise HTTPException(
             status_code=500, detail="Package does not have a 'publication_state'"
@@ -261,7 +248,6 @@ async def publish_or_update_datacite(
 
     # Check if publication_state can be processed
     if publication_state not in ["pub_pending", "published"]:
-        response["status_code"] = 500
         log.error("Publication state is not one of 'pub_pending', 'published'")
         raise HTTPException(
             status_code=500,
@@ -290,16 +276,18 @@ async def publish_or_update_datacite(
                 "DataCite publish successful, patching "
                 f"CKAN package ID: {package_id} to publication_state=published"
             )
-            response = ckan_package_patch(
+            ckan_response = ckan_package_patch(
                 package_id, {"publication_state": "published"}, ckan
             )
+            log.debug(f"CKAN package_patch response: {ckan_response}")
 
             # Email user that publication complete
             await approval_granted_email(package_id, user_name, user_email)
 
             # Return successful datacite_response
-            response["status_code"] = datacite_response.get("status_code")
-            return datacite_response
+            return JSONResponse(
+                datacite_response, status_code=datacite_response.get("status_code")
+            )
 
         # Else attempt to call DataCite API again
         retry_count += 1
@@ -316,5 +304,6 @@ async def publish_or_update_datacite(
     await datacite_failed_email(package_id, user_name, user_email, error_msg)
 
     # Return error datacite_response
-    response["status_code"] = datacite_response.get("status_code", 500)
-    return datacite_response
+    return JSONResponse(
+        datacite_response, status_code=datacite_response.get("status_code", 500)
+    )

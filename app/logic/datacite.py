@@ -11,14 +11,13 @@ import requests
 from envidat.converters.datacite_converter import convert_datacite
 from fastapi import HTTPException
 
-# from pydantic import BaseModel
 from app.config import settings
 
 log = logging.getLogger(__name__)
 
 
 class DoiSuccess(TypedDict):
-    """DOI sucesss class."""
+    """DOI success class."""
 
     status_code: int
     result: dict
@@ -29,19 +28,6 @@ class DoiErrors(TypedDict):
 
     status_code: int
     errors: list[dict]
-
-
-# TODO review and possibly remove dependencies in lib/envidat
-
-# TODO review if Pydantic model appropriate for function arguments
-# class DoiSuccess(BaseModel):
-#     status_code: int
-#     result: dict
-#
-#
-# class DoiErrors(BaseModel):
-#     status_code: int
-#     errors: list[dict]#
 
 
 def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
@@ -96,7 +82,6 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
     return format_response(response)
 
 
-# TODO review exception formatting, including from calls to helpers
 def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     """Publish/update an EnviDat record in DataCite.
 
