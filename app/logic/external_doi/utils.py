@@ -2,7 +2,6 @@
 
 import csv
 import json
-
 from logging import getLogger
 
 import requests
@@ -77,9 +76,7 @@ def convert_doi(
     }
 
 
-def get_zenodo_dois(
-    authorization: str, q: str, size: str = "10000"
-) -> list[str] | None:
+def get_zenodo_dois(api_token: str, q: str, size: str = "10000") -> list[str] | None:
     """Return Zenodo DOIs extracted from records produced by search query.
 
     In case of errors returns None.
@@ -87,7 +84,7 @@ def get_zenodo_dois(
     For Zenodo API documentation see: https://developers.zenodo.org/#records
 
     Args:
-        authorization (str): authorization token
+        api_token (str): api token for CKAN
         q (str): search query (using Elasticsearch query string syntax)
         size (str): number of results to return, default value is "10000"
     """
@@ -129,7 +126,7 @@ def get_zenodo_dois(
         records = response_json.get("hits", {}).get("hits", [])
 
         # Get EnviDat dois
-        envidat_dois = get_envidat_dois(authorization)
+        envidat_dois = get_envidat_dois(api_token)
 
         # Get list of Zenodo DOIs not already in EnviDat and that contain 'zenodo'
         dois = []

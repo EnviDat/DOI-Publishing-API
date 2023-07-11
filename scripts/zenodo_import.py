@@ -14,7 +14,7 @@ from logging import getLogger
 from app.auth import get_user
 from app.logic.external_doi.utils import read_dois_urls
 from app.logic.external_doi.zenodo import convert_zenodo_doi
-from app.logic.remote_ckan import ckan_call_action_return_exception
+from app.logic.remote_ckan import ckan_call_action_return_exception, get_ckan
 
 log = getLogger(__name__)
 log.setLevel(level=logging.INFO)
@@ -98,8 +98,9 @@ def import_zenodo_records():
             continue
 
         # Create CKAN package with converted DOI record
+        ckan = get_ckan(args.authorization)
         ckan_pkg = ckan_call_action_return_exception(
-            authorization=args.authorization,
+            ckan,
             action="package_create",
             data=record.get("result"),
         )

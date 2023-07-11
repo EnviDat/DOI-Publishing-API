@@ -85,40 +85,40 @@ def ckan_call_action_return_exception(
     return {"success": True, "result": response}
 
 
-def ckan_package_show(ckan: RemoteCKAN, package_id: str):
+def ckan_package_show(package_id: str, ckan: RemoteCKAN):
     """Return CKAN package.
 
     If CKAN API call fails then logs error and raises HTTPException.
 
     Args:
-        ckan (RemoteCKAN): authorised RemoteCKAN session.
         package_id (str): CKAN package id or name
+        ckan (RemoteCKAN): authorised RemoteCKAN session.
     """
     return ckan_call_action_handle_errors(ckan, "package_show", {"id": package_id})
 
 
-def ckan_package_patch(ckan: RemoteCKAN, package_id: str, data: dict):
+def ckan_package_patch(package_id: str, data: dict, ckan: RemoteCKAN):
     """Patch a CKAN package.
 
     If CKAN API call fails then logs error and raises HTTPException.
 
     Args:
-        ckan (RemoteCKAN): authorised RemoteCKAN session.
         package_id (str): CKAN package id or name
         data (dict): the dict with data used to update the CKAN package
+        ckan (RemoteCKAN): authorised RemoteCKAN session.
     """
     update_data = {"id": package_id, **data}
     return ckan_call_action_handle_errors(ckan, "package_patch", update_data)
 
 
-def ckan_package_create(ckan: RemoteCKAN, data: dict):
+def ckan_package_create(data: dict, ckan: RemoteCKAN):
     """Create a CKAN package.
 
     If CKAN API call fails then logs error and raises HTTPException.
 
     Args:
-        ckan (RemoteCKAN): authorised RemoteCKAN session.
         data (dict): the dict with data used to create the CKAN package
+        ckan (RemoteCKAN): authorised RemoteCKAN session.
     """
     return ckan_call_action_handle_errors(ckan, "package_create", data)
 

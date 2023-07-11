@@ -9,7 +9,7 @@ import markdownify
 import requests
 
 from app.logic.external_doi.constants import ConvertError, ConvertSuccess
-from app.logic.remote_ckan import ckan_current_package_list_with_resources
+from app.logic.remote_ckan import ckan_current_package_list_with_resources, get_ckan
 
 log = logging.getLogger(__name__)
 
@@ -654,17 +654,18 @@ def get_resources(files: list) -> list:
     return resources
 
 
-def get_envidat_dois(authorization: str) -> list[str]:
+def get_envidat_dois(api_token: str) -> list[str]:
     """Returns a list of all DOIs in packages in an EnviDat CKAN instance.
-    NOTE: if authorization invalid will still return packages available in public API!
+    NOTE: if api token invalid will still return packages available in public API!
 
     Args:
-        authorization (str): authorization token
+        api_token (str): api token for CKAN
     """
     dois = []
 
     # Get all packages in EnviDat CKAN instance
-    package_list = ckan_current_package_list_with_resources(authorization)
+    get_ckan(api_token)
+    package_list = ckan_current_package_list_with_resources(api_token)
 
     # Extract doi from each package
     for package in package_list:
