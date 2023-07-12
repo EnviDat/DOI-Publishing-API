@@ -3,7 +3,7 @@ type: application
 name: doi-publishing-api
 description: API for publishing DOIs to DataCite.
 version: "0.0.0-chart"
-appVersion: "0.0.0"
+appVersion: "0.1.0"
 maintainers:
 - email: samuel.woodcock@wsl.ch
   name: Sam Woodcock
