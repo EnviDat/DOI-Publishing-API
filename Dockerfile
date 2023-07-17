@@ -72,7 +72,6 @@ COPY . /opt/
 # Add appuser user, permissions
 RUN useradd -r -u 900 -m -c "appuser account" -d /home/appuser -s /bin/false appuser \
     && chown -R appuser:appuser /opt /home/appuser
-USER appuser
 
 
 
@@ -85,6 +84,7 @@ ENTRYPOINT ["python", "-m", "debugpy", "--listen", \
             "0.0.0.0:5678", "-m"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
     "--reload", "--log-level", "error", "--no-access-log"]
+USER appuser
 
 
 FROM runtime as prod
@@ -92,3 +92,4 @@ FROM runtime as prod
 RUN python -c "import compileall; compileall.compile_path(maxlevels=10, quiet=1)"
 ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 CMD ["--workers", "1", "--log-level", "error", "--no-access-log"]
+USER appuser
