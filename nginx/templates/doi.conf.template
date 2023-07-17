@@ -16,7 +16,7 @@ server {
     # For opentelemetry
     add_header 'Access-Control-Allow-Headers' 'traceparent,tracestate';
 
-    location ${PROXY_PREFIX}/ {
+    location /${PROXY_PREFIX} {
         proxy_pass http://api;
 
         # Requests headers
