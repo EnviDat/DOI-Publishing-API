@@ -40,7 +40,7 @@ services:
     depends_on:
       - api
     environment:
-      - API_HOST=api:8000
+      - APP_HOST=api:8000
       - AUTH_COOKIE_NAME=envidat
     ports:
       - "50010:80"
