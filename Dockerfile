@@ -76,6 +76,7 @@ RUN useradd -r -u 900 -m -c "appuser account" -d /home/appuser -s /bin/false app
 
 
 FROM runtime as debug
+USER appuser
 COPY --from=extract-deps \
     /opt/python/requirements-dev.txt /opt/python/
 RUN pip install --user --no-warn-script-location \
@@ -84,7 +85,6 @@ ENTRYPOINT ["python", "-m", "debugpy", "--listen", \
             "0.0.0.0:5678", "-m"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
     "--reload", "--log-level", "error", "--no-access-log"]
-USER appuser
 
 
 FROM runtime as prod
