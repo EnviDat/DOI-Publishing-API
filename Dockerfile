@@ -14,7 +14,7 @@ LABEL envidat.ch.app-version="${APP_VERSION}" \
       envidat.ch.maintainer-devops="${MAINTAINER_DEVOPS}" \
       envidat.ch.api-port="8000"
 RUN set -ex \
-    && apt-get update || true \
+    && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install \
         -y --no-install-recommends locales \
     && DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
@@ -39,7 +39,7 @@ RUN pdm export --prod > requirements.txt \
 
 FROM base as build
 RUN set -ex \
-    && apt-get update || true \
+    && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install \
         -y --no-install-recommends \
             build-essential \
@@ -58,7 +58,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONFAULTHANDLER=1 \
     PATH="/home/appuser/.local/bin:$PATH"
 RUN set -ex \
-    && apt-get update || true \
+    && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install \
         -y --no-install-recommends \
             nano \
