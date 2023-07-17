@@ -46,7 +46,4 @@ error_router = APIRouter(route_class=RouteErrorHandler)
 @api_router.get("/", include_in_schema=False)
 async def home(request: Request):
     """Redirect home to docs."""
-    path = request.scope.get("path", "")
-    log.debug(f"Assessing path for rediect: {path}")
-    if path == "/":
-        return RedirectResponse(f"{settings.PROXY_PREFIX}/docs")
+    return RedirectResponse(f"{settings.PROXY_PREFIX}/docs")
