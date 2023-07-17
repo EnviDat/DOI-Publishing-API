@@ -8,6 +8,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
 
 from app.api import datacite, doi, external_doi, prefix
+from app.config import settings
 
 log = logging.getLogger(__name__)
 
@@ -45,4 +46,4 @@ error_router = APIRouter(route_class=RouteErrorHandler)
 @api_router.get("/", include_in_schema=False)
 async def home():
     """Redirect home to docs."""
-    return RedirectResponse("/docs")
+    return RedirectResponse(f"{settings.PROXY_PREFIX}/docs")
