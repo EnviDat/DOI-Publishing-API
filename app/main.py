@@ -35,6 +35,7 @@ def get_application() -> FastAPI:
             "url": "https://gitlabext.wsl.ch/EnviDat/doi-publishing-api/-/raw/main/LICENSE",
         },
         debug=settings.DEBUG,
+        root_path=settings.PROXY_PREFIX,
     )
 
     _app.add_middleware(

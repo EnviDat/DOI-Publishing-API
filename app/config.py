@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     APP_NAME: str
     SECRET_KEY: str
     LOG_LEVEL: str = "INFO"
+    PROXY_PREFIX: Optional[str] = ""
 
     DEBUG_USER_ID: Optional[str]
     DEBUG_USER_EMAIL: Optional[str]

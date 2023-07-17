@@ -13,6 +13,7 @@ Requires secrets to be pre-populated.
 
   - key: DB_PASS  (for production database)
   - key: SECRET_KEY  (for fastapi)
+  - key: PROXY_PREFIX  (optional: for fastapi, if running behind a proxy)
   - key: BACKEND_CORS_ORIGINS  (list in format '["http://...", "..."]')
     - Note: also add the Auth0 domain to the CORS list.
 
