@@ -41,7 +41,6 @@ services:
       - api
     environment:
       - APP_HOST=api:8000
-      - PROXY_PREFIX=doi-api
       - AUTH_COOKIE_NAME=envidat
     ports:
       - "50010:80"
