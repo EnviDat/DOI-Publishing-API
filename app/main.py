@@ -36,6 +36,7 @@ def get_application() -> FastAPI:
         },
         debug=settings.DEBUG,
         root_path=settings.PROXY_PREFIX,
+        openapi_prefix=settings.PROXY_PREFIX,
     )
 
     _app.add_middleware(
