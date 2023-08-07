@@ -72,6 +72,9 @@ async def reserve_draft_doi(
         log.error("Failed creating new DOI in database")
         return HTTPException(status_code=500, detail="New DOI creation failed")
 
+    # Add DOI to dataset prior to datacite calls
+    ckan_package_patch(package_id, {"doi": doi}, ckan)
+
     successful_status_codes = range(200, 300)
     datacite_response = {}
     retry_count = 0
@@ -88,7 +91,7 @@ async def reserve_draft_doi(
             )
             ckan_package_patch(
                 package_id,
-                {"publication_state": "reserved", "doi": doi},
+                {"publication_state": "reserved"},
                 ckan,
             )
 
