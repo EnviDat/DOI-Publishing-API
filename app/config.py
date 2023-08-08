@@ -4,7 +4,8 @@ import logging
 from functools import lru_cache
 from typing import Any, Optional, Union
 
-from pydantic import AnyHttpUrl, BaseSettings, PostgresDsn, validator
+from pydantic import AnyHttpUrl, PostgresDsn, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ class Settings(BaseSettings):
     DEBUG_USER_EMAIL: Optional[str]
     DEBUG: bool = False
 
-    @validator("DEBUG", pre=True)
+    @field_validator("DEBUG", pre=True)
     def get_debug_user_details(cls, v: str, values: dict[str, Any]) -> Any:
         """If DEBUG var set, ensure debug user details are set."""
         if not v:
@@ -47,7 +48,8 @@ class Settings(BaseSettings):
 
     BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []
 
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
     def assemble_cors_origins(cls, v: Union[str, list[str]]) -> Union[list[str], str]:
         """Build and validate CORS origins list."""
         if isinstance(v, str) and not v.startswith("["):
@@ -62,7 +64,7 @@ class Settings(BaseSettings):
     DB_NAME: str
     DB_URI: Optional[PostgresDsn] = None
 
-    @validator("DB_URI", pre=True)
+    @field_validator("DB_URI", pre=True)
     def assemble_db_connection(cls, v: Optional[str], values: dict[str, Any]) -> Any:
         """Build Postgres connection from environment variables."""
         if isinstance(v, str):
@@ -78,11 +80,7 @@ class Settings(BaseSettings):
     EMAIL_ENDPOINT: AnyHttpUrl
     EMAIL_FROM: str
 
-    class Config:
-        """Pydantic settings config."""
-
-        case_sensitive = True
-        env_file = ".env"
+    model_config = SettingsConfigDict(case_sensitive=True, env_file=".env")
 
 
 @lru_cache
