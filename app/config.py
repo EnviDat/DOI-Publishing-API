@@ -4,7 +4,13 @@ import logging
 from functools import lru_cache
 from typing import Any, Optional, Union
 
-from pydantic import AnyHttpUrl, PostgresDsn, field_validator
+from pydantic import (
+    AnyHttpUrl,
+    Extra,
+    FieldValidationInfo,
+    PostgresDsn,
+    field_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger(__name__)
@@ -18,19 +24,20 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     PROXY_PREFIX: Optional[str] = ""
 
-    DEBUG_USER_ID: Optional[str]
-    DEBUG_USER_EMAIL: Optional[str]
+    DEBUG_USER_ID: Optional[str] = None
+    DEBUG_USER_EMAIL: Optional[str] = None
     DEBUG: bool = False
 
-    @field_validator("DEBUG", pre=True)
-    def get_debug_user_details(cls, v: str, values: dict[str, Any]) -> Any:
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def get_debug_user_details(cls, v: str, info: FieldValidationInfo) -> Any:
         """If DEBUG var set, ensure debug user details are set."""
         if not v:
             return v
-        if not values.get("DEBUG_USER_ID"):
-            log.error(values.get("DEBUG_USER_ID"))
+        if not info.data.get("DEBUG_USER_ID"):
+            log.error(info.data.get("DEBUG_USER_ID"))
             raise ValueError("DEBUG_USER_ID is not present in the environment")
-        if not values.get("DEBUG_USER_EMAIL"):
+        if not info.data.get("DEBUG_USER_EMAIL"):
             raise ValueError("DEBUG_USER_EMAIL is not present in the environment")
         return v
 
@@ -64,23 +71,29 @@ class Settings(BaseSettings):
     DB_NAME: str
     DB_URI: Optional[PostgresDsn] = None
 
-    @field_validator("DB_URI", pre=True)
-    def assemble_db_connection(cls, v: Optional[str], values: dict[str, Any]) -> Any:
+    @field_validator("DB_URI", mode="after")
+    @classmethod
+    def assemble_db_connection(cls, v: Optional[str], info: FieldValidationInfo) -> Any:
         """Build Postgres connection from environment variables."""
         if isinstance(v, str):
             return v
-        return PostgresDsn.build(
+        pg_url = PostgresDsn.build(
             scheme="postgres",
-            user=values.get("DB_USER"),
-            password=values.get("DB_PASS"),
-            host=values.get("DB_HOST"),
-            path=f"/{values.get('DB_NAME') or ''}",
+            username=info.data.get("DB_USER"),
+            password=info.data.get("DB_PASS"),
+            host=info.data.get("DB_HOST"),
+            path=f"/{info.data.get('DB_NAME') or ''}",
         )
+        # FIXME temp workaround for tortoise
+        # MultiHostUrl' object has no attribute 'get'
+        return str(pg_url)
 
     EMAIL_ENDPOINT: AnyHttpUrl
     EMAIL_FROM: str
 
-    model_config = SettingsConfigDict(case_sensitive=True, env_file=".env")
+    model_config = SettingsConfigDict(
+        case_sensitive=True, env_file=".env", extra=Extra.allow
+    )
 
 
 @lru_cache

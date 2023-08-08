@@ -5,11 +5,11 @@ import json
 
 # Setup logging
 import logging
-from typing import TypedDict
 
 import requests
 from envidat.converters.datacite_converter import convert_datacite
 from fastapi import HTTPException
+from typing_extensions import TypedDict
 
 from app.config import settings
 

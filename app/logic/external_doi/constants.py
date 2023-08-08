@@ -1,7 +1,8 @@
 """Constants used by envidat_doi module."""
 
 from enum import Enum
-from typing import TypedDict
+
+from typing_extensions import TypedDict
 
 
 class ConvertSuccess(TypedDict):
