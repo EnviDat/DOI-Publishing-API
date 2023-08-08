@@ -10,16 +10,7 @@ networks:
 services:
   api:
     container_name: doi_publishing
-    image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-debug"
-    build:
-      context: .
-      args:
-        - APP_VERSION=${APP_VERSION}
-        - PYTHON_IMG_TAG=${PYTHON_IMG_TAG}
-        - MAINTAINER_APP=${MAINTAINER_APP}
-        - MAINTAINER_DEVOPS=${MAINTAINER_DEVOPS}
-        - EXTERNAL_REG=${EXTERNAL_REG}
-      target: debug
+    image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-main"
     volumes:
       - ./app:/opt/app:ro
     extra_hosts:
@@ -39,12 +30,6 @@ services:
   proxy:
     container_name: doi_publishing_proxy
     image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-main"
-    build:
-      context: ./nginx
-      args:
-        - EXTERNAL_REG=${EXTERNAL_REG}
-        - NGINX_IMG_TAG=${NGINX_IMG_TAG}
-        - MAINTAINER_DEVOPS=${MAINTAINER_DEVOPS}
     depends_on:
       - api
     environment:
