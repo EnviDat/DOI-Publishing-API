@@ -36,7 +36,7 @@ services:
       - APP_HOST=api:8000
       - AUTH_COOKIE_NAME=envidat_local
     ports:
-      - "9555:80"
+      - "50010:80"
     networks:
       - net
 
