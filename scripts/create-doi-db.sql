@@ -62,7 +62,7 @@ ALTER TABLE ONLY public.doi_realisation
     ADD CONSTRAINT site_id_fk FOREIGN KEY (site_id) REFERENCES public.ckan_site(site_id);
 
 ALTER TABLE public.doi_realisation
-ADD CONSTRAINT unique_ckan_id_per_site
+ADD CONSTRAINT one_doi_per_package
 UNIQUE (ckan_id, site_id);
 
 -- access rights
