@@ -27,7 +27,9 @@ services:
       - "envidatdocker.wsl.ch:10.30.1.126"
     env_file:
       - .env
-      - secret/debug.env
+      - secret/db.env
+      - secret/fastapi.env
+      - secret/smtp.env
     environment:
       IS_DOCKER: "True"
     networks:
