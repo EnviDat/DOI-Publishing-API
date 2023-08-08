@@ -44,6 +44,7 @@ RUN set -ex \
         -y --no-install-recommends \
             build-essential \
             gcc \
+            git \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=extract-deps \
     /opt/python/requirements.txt /opt/python/
