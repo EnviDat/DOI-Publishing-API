@@ -32,7 +32,7 @@ WORKDIR /opt/python
 COPY pyproject.toml pdm.lock README.md /opt/python/
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir pdm==2.5.6
-RUN pdm export --prod > requirements.txt \
+RUN pdm export --prod --without-hashes > requirements.txt \
     && pdm export --dev --no-default > requirements-dev.txt
 
 
