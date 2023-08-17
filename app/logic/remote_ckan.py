@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 def get_ckan(api_token: str):
     """Get CKAN session once, to re-use the connection."""
-    return RemoteCKAN(settings.CKAN_API_URL, apikey=api_token)
+    return RemoteCKAN(address=str(settings.CKAN_API_URL), apikey=api_token)
 
 
 def ckan_call_action_handle_errors(
