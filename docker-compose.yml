@@ -27,6 +27,7 @@ services:
     extra_hosts:
       - "pgdboapp.wsl.ch:10.30.1.156"
       - "envidatdocker.wsl.ch:10.30.1.126"
+      - "host.docker.internal:host-gateway"
     env_file:
       - .env
       - secret/debug.env
