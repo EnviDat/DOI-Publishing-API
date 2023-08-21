@@ -104,10 +104,9 @@ class Settings(BaseSettings):
             username=info.data.get("DB_USER"),
             password=info.data.get("DB_PASS"),
             host=info.data.get("DB_HOST"),
-            path=f"/{info.data.get('DB_NAME') or ''}",
+            path=info.data.get("DB_NAME", ""),
         )
-        # FIXME temp workaround for tortoise
-        # MultiHostUrl' object has no attribute 'get'
+        # Convert Url type to string
         return str(pg_url)
 
     EMAIL_ENDPOINT: AnyHttpUrl
