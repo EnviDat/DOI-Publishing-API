@@ -99,6 +99,14 @@ async def reserve_draft_doi(
                 datacite_response, status_code=datacite_response.get("status_code")
             )
 
+        # Break loop if DataCite returns 422 status code,
+        # this means that the DOI already has been taken
+        elif datacite_response.get("status_code") == 422:
+            log.debug(f"DataCite draft reservation failed for CKAN package ID:"
+                      f" {package_id} with DOI: {doi} "
+                      f"because the DOI had already been taken ")
+            break
+
         # Else attempt to call DataCite API again
         retry_count += 1
         log.debug(
