@@ -11,21 +11,21 @@ ALTER TYPE public.ckan_entity_type OWNER TO postgres;
 
 CREATE TABLE public.ckan_site (
     site_pk SERIAL PRIMARY KEY,
-    site_id text NOT NULL,
-    url text,
-    description text
+    site_id TEXT NOT NULL,
+    url TEXT,
+    description TEXT
 );
 
 ALTER TABLE public.ckan_site OWNER TO postgres;
 ALTER TABLE ONLY public.ckan_site
-    ADD CONSTRAINT unique_ckan_site_id UNIQUE (site_id);
+ADD CONSTRAINT unique_ckan_site_id UNIQUE (site_id);
 
 -- TABLE doi_prefix
 
 CREATE TABLE public.doi_prefix (
     prefix_pk SERIAL PRIMARY KEY,
-    prefix_id text NOT NULL,
-    description text
+    prefix_id TEXT NOT NULL,
+    description TEXT
 );
 
 ALTER TABLE public.doi_prefix OWNER TO postgres;
@@ -36,18 +36,18 @@ ALTER TABLE ONLY public.doi_prefix
 
 CREATE TABLE public.doi_realisation (
     doi_pk SERIAL PRIMARY KEY,
-    prefix_id text NOT NULL,
-    suffix_id text NOT NULL,
+    prefix_id TEXT NOT NULL,
+    suffix_id TEXT NOT NULL,
     ckan_id uuid NOT NULL,
-    ckan_name text NOT NULL,
-    site_id text NOT NULL,
-    tag_id text DEFAULT 'envidat.' NOT NULL,
-    ckan_user text DEFAULT 'admin' NOT NULL,
-    metadata text NOT NULL,
-    metadata_format text DEFAULT 'ckan'::text,
+    ckan_name TEXT NOT NULL,
+    site_id TEXT NOT NULL,
+    tag_id TEXT DEFAULT 'envidat.' NOT NULL,
+    ckan_user TEXT DEFAULT 'admin' NOT NULL,
+    metadata TEXT NOT NULL,
+    metadata_format TEXT DEFAULT 'ckan'::text,
     ckan_entity public.ckan_entity_type DEFAULT 'package'::public.ckan_entity_type NOT NULL,
-    date_created timestamp without time zone DEFAULT now() NOT NULL,
-    date_modified timestamp without time zone DEFAULT now() NOT NULL
+    date_created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date_modified TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 );
 
 ALTER TABLE public.doi_realisation OWNER TO postgres;
