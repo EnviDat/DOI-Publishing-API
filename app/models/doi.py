@@ -89,10 +89,12 @@ DoiRealisationInPydantic = pydantic_model_creator(
     DoiRealisation,
     name="DoiRealisationIn",
     exclude_readonly=True,
+    exclude=["date_created", "date_modified"],
 )
 DoiRealisationEditPydantic = pydantic_model_creator(
     DoiRealisation,
     name="DoiRealisationEdit",
     exclude_readonly=True,
     optional=[],
+    exclude=["date_created", "date_modified"],
 )
