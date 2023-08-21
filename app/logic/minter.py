@@ -63,6 +63,7 @@ async def create_db_doi(user_name: str, package_metadata: dict):
         "ckan_entity": "package",
     }
 
+    log.debug("Checking database for existing DOI in database")
     database_doi = await DoiRealisation.get_or_none(
         prefix_id=new_doi.get("prefix_id"),
         suffix_id=new_doi.get("suffix_id"),
@@ -71,10 +72,13 @@ async def create_db_doi(user_name: str, package_metadata: dict):
     if database_doi:
         log.debug("DOI already exists in DB, continuing to datacite logic")
     else:
+        log.debug(f"New DOI for validation: {new_doi}")
         try:
             validated_doi = DoiRealisationInPydantic(**new_doi)
             new_doi_dict = validated_doi.dict(exclude_unset=True)
-            log.debug(f"Creating new DOI with params: {new_doi_dict}")
+            log.debug(
+                f"Creating new database DOI with ID: {new_doi_dict.get('doi_pk')}"
+            )
             await DoiRealisation.create(**new_doi_dict)
         except ValueError as e:
             log.error(f"DOI data failed validation: {e}")
