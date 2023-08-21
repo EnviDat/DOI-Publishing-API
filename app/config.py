@@ -43,6 +43,16 @@ class Settings(BaseSettings):
 
     CKAN_API_URL: AnyHttpUrl = "https://www.envidat.ch"
 
+    @field_validator("CKAN_API_URL", mode="before")
+    @classmethod
+    def convert_ckan_api_to_string(cls, v: AnyHttpUrl) -> str:
+        """Convert CKAN_API_URL to string."""
+        if isinstance(v, AnyHttpUrl):
+            return str(v)
+        elif isinstance(v, str):
+            return v
+        raise ValueError(v)
+
     DATACITE_API_URL: AnyHttpUrl
     DATACITE_CLIENT_ID: str
     DATACITE_PASSWORD: str
