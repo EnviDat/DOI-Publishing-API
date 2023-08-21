@@ -2,7 +2,7 @@
 
 import logging
 from functools import lru_cache
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from pydantic import (
     AnyHttpUrl,
@@ -11,6 +11,7 @@ from pydantic import (
     PostgresDsn,
     field_validator,
 )
+from pydantic_core import Url
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger(__name__)
@@ -43,7 +44,28 @@ class Settings(BaseSettings):
 
     CKAN_API_URL: AnyHttpUrl = "https://www.envidat.ch"
 
+    @field_validator("CKAN_API_URL", mode="after")
+    @classmethod
+    def convert_ckan_api_to_string(cls, v: AnyHttpUrl) -> str:
+        """Convert CKAN_API_URL to string."""
+        if isinstance(v, Url):
+            return str(v)
+        if isinstance(v, str):
+            return v
+        raise ValueError(v)
+
     DATACITE_API_URL: AnyHttpUrl
+
+    @field_validator("DATACITE_API_URL", mode="after")
+    @classmethod
+    def convert_datacite_api_to_string(cls, v: AnyHttpUrl) -> str:
+        """Convert DATACITE_API_URL to string."""
+        if isinstance(v, Url):
+            return str(v)
+        if isinstance(v, str):
+            return v
+        raise ValueError(v)
+
     DATACITE_CLIENT_ID: str
     DATACITE_PASSWORD: str
     DATACITE_TIMEOUT: int | float = 3
@@ -53,7 +75,17 @@ class Settings(BaseSettings):
     DOI_PREFIX: str
     DOI_SUFFIX_TAG: Optional[str] = ""
 
-    BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: Union[str, list[AnyHttpUrl]] = []
+
+    @field_validator("BACKEND_CORS_ORIGINS", mode="after")
+    @classmethod
+    def assemble_cors_origins(cls, v: Union[str, list[Url]]) -> Union[list[str], str]:
+        """Build and validate CORS origins list."""
+        if isinstance(v, str) and not v.startswith("["):
+            return [origin.strip() for origin in v.split(",")]
+        elif isinstance(v, list):
+            return [str(origin) for origin in v]
+        raise ValueError(v)
 
     DB_HOST: str
     DB_USER: str

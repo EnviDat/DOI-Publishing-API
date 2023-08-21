@@ -39,9 +39,10 @@ def get_application() -> FastAPI:
         openapi_prefix=settings.PROXY_PREFIX,
     )
 
+    log.debug(f"Allowed CORS origins: {settings.BACKEND_CORS_ORIGINS}")
     _app.add_middleware(
         CORSMiddleware,
-        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+        allow_origins=settings.BACKEND_CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
