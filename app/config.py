@@ -2,7 +2,7 @@
 
 import logging
 from functools import lru_cache
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from pydantic import (
     AnyHttpUrl,
@@ -43,16 +43,6 @@ class Settings(BaseSettings):
 
     CKAN_API_URL: AnyHttpUrl = "https://www.envidat.ch"
 
-    @field_validator("CKAN_API_URL", mode="before")
-    @classmethod
-    def convert_ckan_api_to_string(cls, v: AnyHttpUrl) -> str:
-        """Convert CKAN_API_URL to string."""
-        if isinstance(v, AnyHttpUrl):
-            return str(v)
-        elif isinstance(v, str):
-            return v
-        raise ValueError(v)
-
     DATACITE_API_URL: AnyHttpUrl
     DATACITE_CLIENT_ID: str
     DATACITE_PASSWORD: str
@@ -64,16 +54,6 @@ class Settings(BaseSettings):
     DOI_SUFFIX_TAG: Optional[str] = ""
 
     BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = []
-
-    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
-    @classmethod
-    def assemble_cors_origins(cls, v: Union[str, list[str]]) -> Union[list[str], str]:
-        """Build and validate CORS origins list."""
-        if isinstance(v, str) and not v.startswith("["):
-            return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
-            return v
-        raise ValueError(v)
 
     DB_HOST: str
     DB_USER: str
