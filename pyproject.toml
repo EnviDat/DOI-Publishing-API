@@ -15,7 +15,7 @@ dependencies = [
     "xlsxwriter>=3.1.2",
     "certifi>=2023.7.22",
     "asyncpg>=0.28.0",
-    "tortoise-orm @ git+https://github.com/tortoise/tortoise-orm.git",
+    "tortoise-orm>=0.20.0",
 ]
 requires-python = ">=3.9,<3.11"
 license = {text = "MIT"}
@@ -32,7 +32,6 @@ homepage = "https://gitlabext.wsl.ch/EnviDat/doi-publishing-api"
 documentation = "https://envidat.gitlab-pages.wsl.ch/doi-publishing-api"
 repository = "https://gitlabext.wsl.ch/EnviDat/doi-publishing-api"
 
-[project.optional-dependencies]
 [build-system]
 requires = ["pdm-pep517>=1.0.0"]
 build-backend = "pdm.pep517.api"
