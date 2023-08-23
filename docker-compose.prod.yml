@@ -3,6 +3,8 @@ version: "3"
 networks:
   net:
     name: doi-publishing
+  envidat:
+    external: true
 
 services:
   api:
@@ -28,6 +30,7 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - net
+      - envidat
     restart: unless-stopped
 
   proxy:
