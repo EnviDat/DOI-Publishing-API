@@ -1,4 +1,4 @@
-# DOI Publishing API
+# doi-publishing-api
 
 Microservice API to publish DOIs on Datacite.
 

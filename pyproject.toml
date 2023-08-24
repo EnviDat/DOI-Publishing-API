@@ -1,7 +1,7 @@
 [project]
-name = "DOI Publishing API"
+name = "doi-publishing-api"
 dynamic = ["version"]
-description = "API for publishing DOIs to DataCite."
+description = "API for publishing EnviDat DOIs to DataCite."
 authors = [
     {name = "Rebecca Kurup Buchholz", email = "rebecca.kurup@wsl.ch"},
     {name = "Sam Woodcock", email = "samuel.woodocck@wsl.ch"},
