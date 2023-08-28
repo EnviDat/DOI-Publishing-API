@@ -5,6 +5,7 @@ import logging
 import requests
 
 from app.config import settings
+from app.utils import fix_url_double_slash
 
 log = logging.getLogger(__name__)
 
@@ -26,8 +27,10 @@ async def datacite_failed_email(
         },
     }
     log.debug(f"Sending DOI task failure email to admin {settings.EMAIL_FROM}")
+    url = f"{settings.EMAIL_ENDPOINT}/templates/datacite-task-failed/json"
+    log.debug(f"Email URL: {url}")
     r = requests.post(
-        f"{settings.EMAIL_ENDPOINT}/templates/datacite-task-failed/json",
+        fix_url_double_slash(url),
         headers={"Content-Type": "application/json"},
         json=params,
     )
@@ -56,8 +59,10 @@ async def request_approval_email(
         },
     }
     log.debug(f"Sending DOI approval email to admin {settings.EMAIL_FROM}")
+    url = f"{settings.EMAIL_ENDPOINT}/templates/datacite-request/json"
+    log.debug(f"Email URL: {url}")
     r = requests.post(
-        f"{settings.EMAIL_ENDPOINT}/templates/datacite-request/json",
+        fix_url_double_slash(url),
         headers={"Content-Type": "application/json"},
         json=params,
     )
@@ -77,8 +82,10 @@ async def approval_granted_email(package_id: str, user_name: str, user_email: st
         },
     }
     log.debug(f"Sending DOI approval granted email to {user_email}")
+    url = f"{settings.EMAIL_ENDPOINT}/templates/datacite-published/json"
+    log.debug(f"Email URL: {url}")
     r = requests.post(
-        f"{settings.EMAIL_ENDPOINT}/templates/datacite-published/json",
+        fix_url_double_slash(url),
         headers={"Content-Type": "application/json"},
         json=params,
     )

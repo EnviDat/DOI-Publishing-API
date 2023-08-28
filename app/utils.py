@@ -69,3 +69,16 @@ def load_dotenv_if_not_docker(
         except Exception as e:
             log.error(e)
             log.error(f"Failed to load dotenv file: {secret_env}")
+
+
+def fix_url_double_slash(url):
+    """Removed double slashes from a URL.
+
+    Sometimes double slashes can be added by redirects, proxies, etc.
+    """
+    parts = url.split("://", 1)
+    if len(parts) == 2:
+        scheme, rest = parts
+        rest = rest.replace("//", "/")
+        return f"{scheme}://{rest}"
+    return url
