@@ -51,8 +51,8 @@ def get_admin(user=Depends(get_user)) -> dict:
     admin = user_info.get("sysadmin", False)
 
     if not admin:
-        log.debug(f"Extracting username from user obj: {user}")
-        username = user.info.get("name", None)
+        log.debug("Checking if admin: extracting username from user obj")
+        username = user_info.get("name", None)
         log.error(f"Not an admin. User: {username}")
         raise HTTPException(status_code=401, detail=f"Not an admin. User: {username}")
 
