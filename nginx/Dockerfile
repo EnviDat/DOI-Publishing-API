@@ -20,9 +20,9 @@ ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 ARG NGINX_IMG_TAG
 ARG MAINTAINER_DEVOPS
 LABEL envidat.ch.nginx-img-tag="${NGINX_IMG_TAG}" \
-      envidat.ch.maintainer="${MAINTAINER_DEVOPS}"
+      envidat.ch.maintainer="${MAINTAINER_DEVOPS}" \
+      envidat.ch.nginx-port="80"
 WORKDIR /etc/nginx
 # Remove default Nginx static assets
 RUN rm -rf ./conf.d/default.conf ./nginx.conf
 COPY . .
-EXPOSE 80
