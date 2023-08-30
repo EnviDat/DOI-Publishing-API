@@ -26,8 +26,6 @@ services:
       - secret/smtp.env
     environment:
       IS_DOCKER: "True"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     networks:
       - net
       - envidat
