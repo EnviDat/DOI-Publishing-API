@@ -80,7 +80,6 @@ async def reserve_draft_doi(
     retry_count = 0
 
     while retry_count <= settings.DATACITE_RETRIES:
-
         datacite_response = reserve_draft_doi_datacite(doi)
         log.debug(f"DataCite response: {datacite_response}")
 
@@ -102,9 +101,11 @@ async def reserve_draft_doi(
         # Break loop if DataCite returns 422 status code,
         # this means that the DOI already has been taken
         elif datacite_response.get("status_code") == 422:
-            log.debug(f"DataCite draft reservation failed for CKAN package ID:"
-                      f" {package_id} with DOI: {doi} "
-                      f"because the DOI had already been taken ")
+            log.debug(
+                f"DataCite draft reservation failed for CKAN package ID:"
+                f" {package_id} with DOI: {doi} "
+                f"because the DOI had already been taken "
+            )
             break
 
         # Else attempt to call DataCite API again
@@ -252,10 +253,13 @@ async def publish_or_update_datacite(
             status_code=500, detail="Package does not have a 'publication_state'"
         )
 
-    if not (user_name := admin_info.get("display_name", None)):
-        raise HTTPException(status_code=500, detail="Username not extracted")
-    if not (user_email := admin_info.get("email", None)):
-        raise HTTPException(status_code=500, detail="User email not extracted")
+    # Get maintainer user name
+    maintainer = package.get("maintainer", {})
+    maintainer_name = f"{maintainer.get('given_name', '')} {maintainer.get('name', '')}"
+    if not (maintainer_email := maintainer.get("email", None)):
+        raise HTTPException(status_code=500, detail="Package maintainer not extracted")
+    if not (admin_email := admin_info.get("email", None)):
+        raise HTTPException(status_code=500, detail="Admin email not extracted")
 
     # Check if publication_state can be processed
     if publication_state not in ["pub_pending", "published"]:
@@ -298,7 +302,9 @@ async def publish_or_update_datacite(
             log.debug(f"CKAN package_patch response: {ckan_response}")
 
             # Email user that publication complete
-            await approval_granted_email(package_id, user_name, user_email)
+            await approval_granted_email(
+                package_id, maintainer_name, [maintainer_email, admin_email]
+            )
 
             # Return successful datacite_response
             return JSONResponse(
@@ -317,7 +323,9 @@ async def publish_or_update_datacite(
     else:
         error_msg = traceback
 
-    await datacite_failed_email(package_id, user_name, user_email, error_msg)
+    await datacite_failed_email(
+        package_id, maintainer_name, maintainer_email, error_msg
+    )
 
     # Return error datacite_response
     return JSONResponse(

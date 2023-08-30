@@ -69,11 +69,11 @@ async def request_approval_email(
     log.debug(f"Email API response: {r.status_code}")
 
 
-async def approval_granted_email(package_id: str, user_name: str, user_email: str):
-    """Inform the user that publishing has been approved."""
+async def approval_granted_email(package_id: str, user_name: str, emails: list[str]):
+    """Inform the multiple users that publishing has been approved."""
     params = {
         "from": settings.EMAIL_FROM,
-        "to": user_email,
+        "to": emails,
         "params": {
             "user_name": user_name,
             "package_title": package_id,
@@ -81,7 +81,7 @@ async def approval_granted_email(package_id: str, user_name: str, user_email: st
             "site_url": settings.CKAN_API_URL,
         },
     }
-    log.debug(f"Sending DOI approval granted email to {user_email}")
+    log.debug(f"Sending DOI approval granted email to {emails}")
     url = f"{settings.EMAIL_ENDPOINT}/templates/datacite-published/json"
     log.debug(f"Email URL: {url}")
     r = requests.post(
