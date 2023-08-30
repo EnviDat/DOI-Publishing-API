@@ -33,7 +33,7 @@ COPY pyproject.toml pdm.lock README.md /opt/python/
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir pdm==2.5.6
 RUN pdm export --prod --without-hashes > requirements.txt \
-    && pdm export --dev --no-default > requirements-dev.txt
+    && pdm export -G dev --no-default > requirements-dev.txt
 
 
 
@@ -86,6 +86,7 @@ ENTRYPOINT ["python", "-m", "debugpy", "--listen", \
             "0.0.0.0:5678", "-m"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
     "--reload", "--log-level", "error", "--no-access-log"]
+
 
 
 FROM runtime as prod
