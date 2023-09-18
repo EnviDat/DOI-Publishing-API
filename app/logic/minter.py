@@ -25,6 +25,8 @@ async def get_next_doi_suffix_id():
     log.debug(f"Filtered suffix IDs: {ids_only}")
 
     numeric_ids = [int(suffix_id.split(".")[-1]) for suffix_id in suffix_ids]
+    log.debug(f"numeric_ids:  {numeric_ids}")
+
     next_suffix_id = max(numeric_ids, default=0) + 1
     log.debug(f"Generating next DOI suffix in sequence: {next_suffix_id}")
 
