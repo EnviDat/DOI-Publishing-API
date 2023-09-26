@@ -10,6 +10,8 @@ services:
   doi_api_dev:
     container_name: doi_api_dev
     image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-dev"
+    depends_on:
+      - doi_db_copy_dev
     env_file:
       - .env
       - secret/runtime.env
@@ -24,7 +26,7 @@ services:
     container_name: doi_api_proxy_dev
     image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-dev"
     depends_on:
-      - api
+      - doi_api_dev
     environment:
       - APP_HOST=doi_api_dev:8000
       - AUTH_COOKIE_NAME=envidat_dev

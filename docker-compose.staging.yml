@@ -10,6 +10,8 @@ services:
   doi_api_staging:
     container_name: doi_api_staging
     image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-staging"
+    depends_on:
+      - doi_db_copy_staging
     env_file:
       - .env
       - secret/runtime.env
@@ -24,7 +26,7 @@ services:
     container_name: doi_api_proxy_staging
     image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-staging"
     depends_on:
-      - api
+      - doi_api_staging
     environment:
       - APP_HOST=doi_api_staging:8000
       - AUTH_COOKIE_NAME=envidat_staging
