@@ -3,9 +3,10 @@ __pycache__/
 *.py[cod]
 
 # Secret files
-secret/**/*
+secret/**/*.env
 *.secret
 **/debug.env
+**/runtime.env
 
 # Packaging
 .pdm.toml

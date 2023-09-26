@@ -9,7 +9,7 @@ from fastapi.openapi.utils import get_openapi
 from app.utils import load_dotenv_if_not_docker
 
 load_dotenv_if_not_docker(
-    env_file=Path(__file__).parent.parent / "debug.env.example", force=True
+    env_file=Path(__file__).parent.parent / "secret/env.example", force=True
 )
 
 from app.main import app  # noqa: E402
