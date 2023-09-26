@@ -1,5 +1,5 @@
 """DataCite API Router."""
-
+import json
 # Setup logging
 import logging
 import time
@@ -255,6 +255,7 @@ async def publish_or_update_datacite(
 
     # Get maintainer user name
     maintainer = package.get("maintainer", {})
+    maintainer = json.loads(maintainer)
     maintainer_name = f"{maintainer.get('given_name', '')} {maintainer.get('name', '')}"
     if not (maintainer_email := maintainer.get("email", None)):
         raise HTTPException(status_code=500, detail="Package maintainer not extracted")
