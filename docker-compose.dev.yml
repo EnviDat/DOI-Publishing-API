@@ -31,7 +31,7 @@ services:
       - APP_HOST=doi_api_dev:8000
       - AUTH_COOKIE_NAME=envidat_dev
     ports:
-      - "50010:80"
+      - "50012:80"
     networks:
       - net
 
