@@ -30,7 +30,7 @@ services:
     restart: unless-stopped
 
   doi_proxy_main:
-    container_name: doi_api
+    container_name: doi_api_proxy
     image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-main"
     build:
       context: ./nginx
