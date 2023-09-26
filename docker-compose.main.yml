@@ -2,12 +2,12 @@ version: "3"
 
 networks:
   net:
-    name: doi-publishing
+    name: doi-publishing-prod
   envidat:
     external: true
 
 services:
-  api:
+  doi_api_main:
     container_name: doi_publishing
     image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-main"
     build:
@@ -21,9 +21,7 @@ services:
       target: prod
     env_file:
       - .env
-      - secret/db.env
-      - secret/fastapi.env
-      - secret/smtp.env
+      - secret/runtime.env
     environment:
       IS_DOCKER: "True"
     networks:
@@ -31,7 +29,7 @@ services:
       - envidat
     restart: unless-stopped
 
-  proxy:
+  doi_proxy_main:
     container_name: doi_publishing_proxy
     image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-main"
     build:
@@ -43,7 +41,7 @@ services:
     depends_on:
       - api
     environment:
-      - APP_HOST=api:8000
+      - APP_HOST=doi_api_main:8000
       - AUTH_COOKIE_NAME=envidat
     ports:
       - "50010:80"

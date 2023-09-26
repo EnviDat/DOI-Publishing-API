@@ -1,0 +1,45 @@
+version: "3"
+
+networks:
+  net:
+    name: doi-api-dev
+  envidat:
+    external: true
+
+services:
+  doi_api_dev:
+    container_name: doi_api_dev
+    image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-dev"
+    env_file:
+      - .env
+      - secret/runtime.env
+    environment:
+      IS_DOCKER: "True"
+    networks:
+      - net
+      - envidat
+    restart: unless-stopped
+
+  doi_proxy_dev:
+    container_name: doi_api_proxy_dev
+    image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-dev"
+    depends_on:
+      - api
+    environment:
+      - APP_HOST=doi_api_dev:8000
+      - AUTH_COOKIE_NAME=envidat_dev
+    ports:
+      - "50010:80"
+    networks:
+      - net
+
+  doi_db_copy_dev:
+    container_name: ckan_db_copy
+    image: "registry-gitlab.wsl.ch/envidat/ckan-container/db:15-dev"
+    env_file:
+      - secret/db-copy.env
+    networks:
+      - net
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+    restart: unless-stopped
