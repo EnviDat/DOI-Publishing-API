@@ -8,7 +8,7 @@ networks:
 
 services:
   doi_api_main:
-    container_name: doi_publishing
+    container_name: doi_api
     image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-main"
     build:
       context: .
@@ -30,7 +30,7 @@ services:
     restart: unless-stopped
 
   doi_proxy_main:
-    container_name: doi_publishing_proxy
+    container_name: doi_api
     image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-main"
     build:
       context: ./nginx

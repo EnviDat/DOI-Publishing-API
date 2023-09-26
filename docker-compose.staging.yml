@@ -36,7 +36,7 @@ services:
       - net
 
   doi_db_copy_staging:
-    container_name: ckan_db_copy
+    container_name: ckan_db_copy_staging
     image: "registry-gitlab.wsl.ch/envidat/ckan-container/db:15-staging"
     env_file:
       - secret/db-copy.env
