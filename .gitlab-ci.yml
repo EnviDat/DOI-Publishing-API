@@ -12,20 +12,20 @@ workflow:
   rules:
     - if: $CI_COMMIT_REF_NAME == "main"
       when: always
+    - if: $CI_COMMIT_REF_NAME == "staging"
+      when: always
+    - if: $CI_COMMIT_REF_NAME == "dev"
+      when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: always
 
 set-vars:
   stage: .pre
   image: docker.io/alpine:3.15
-  before_script:
-    - >
-      apk add jq yq --no-cache
-      --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
   script:
     - cat .env >> build.env
     - source build.env
-    - echo CHART_VERSION=$(yq '.version' chart/Chart.yaml) >> build.env
+    - echo "APP_NAME=doi-api-${CI_COMMIT_REF_NAME}" >> build.env
     - "echo DOI_PUB_IMAGE=${INTERNAL_REG}/doi-publishing-api:\
       ${APP_VERSION}-${CI_COMMIT_REF_NAME} >> build.env"
     - "echo PROXY_IMAGE=${INTERNAL_REG}/doi-publishing-api/proxy:\
@@ -153,32 +153,30 @@ proxy-retag:
   variables:
     IMAGE_NAME: ${PROXY_IMAGE}
 
-.helm:
+remote-docker:
   stage: deploy
-  image:
-    name: docker.io/alpine/helm:3.8.0
-    entrypoint: [""]
+  environment: $CI_COMMIT_REF_NAME
+  image: docker.io/docker:24.0
+  only:
+    - branches
+  variables:
+    DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
   before_script:
-    - mkdir -p /root/.config/helm/registry
-    - >
-      echo "{\"auths\":{\"${INTERNAL_REG}\":{\"auth\":\"$(printf "%s:%s"
-      "${IMAGE_REGISTRY_USER}" "${IMAGE_REGISTRY_PASS}" | base64
-      | tr -d '\n')\"}}}" > /root/.config/helm/registry/config.json
-
-create-helm-chart:
-  extends:
-    - .helm
-  stage: package
-  rules:
-    - if: $CI_COMMIT_REF_NAME == "main"
-      when: always
+    - mkdir -p secret
+    - echo "$DB_COPY_ENV" > secret/db-copy.env
+    - echo "$RUNTIME_ENV" > secret/runtime.env
+    - echo "Adding SSH Key"
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOY_SSH_KEY" > ~/.ssh/gitlab
+    - chmod 400 ~/.ssh/gitlab
+    - echo 'IdentityFile ~/.ssh/gitlab' > ~/.ssh/config
+    - ssh-keyscan -H $DEPLOY_HOSTNAME >> ~/.ssh/known_hosts
   script:
-    - >
-      apk add yq --no-cache
-      --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
-    - helm package chart
-    - CHART_VER=$(yq '.version' chart/Chart.yaml)
-    - helm push "doi-publishing-api-${CHART_VER}.tgz" "oci://${INTERNAL_REG}/doi-publishing-api"
+    - |
+      docker compose \
+        --project-name="$APP_NAME" \
+        --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
+        up --detach --force-recreate
 
 pages:
   stage: deploy
@@ -196,3 +194,29 @@ pages:
   artifacts:
     paths:
       - public
+# .helm:
+#   stage: deploy
+#   image:
+#     name: docker.io/alpine/helm:3.8.0
+#     entrypoint: [""]
+#   before_script:
+#     - mkdir -p /root/.config/helm/registry
+#     - >
+#       echo "{\"auths\":{\"${INTERNAL_REG}\":{\"auth\":\"$(printf "%s:%s"
+#       "${IMAGE_REGISTRY_USER}" "${IMAGE_REGISTRY_PASS}" | base64
+#       | tr -d '\n')\"}}}" > /root/.config/helm/registry/config.json
+
+# create-helm-chart:
+#   extends:
+#     - .helm
+#   stage: package
+#   rules:
+#     - if: $CI_COMMIT_REF_NAME == "main"
+#       when: always
+#   script:
+#     - >
+#       apk add yq --no-cache
+#       --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+#     - helm package chart
+#     - CHART_VER=$(yq '.version' chart/Chart.yaml)
+#     - helm push "doi-publishing-api-${CHART_VER}.tgz" "oci://${INTERNAL_REG}/doi-publishing-api"
