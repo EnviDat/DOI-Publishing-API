@@ -54,7 +54,10 @@ async def reserve_draft_doi(
     ],
     user=Depends(get_user),
 ):
-    """Generate new DOI from DB and reserve draft DOI in DataCite."""
+    """Generate new DOI from DB and reserve draft DOI in DataCite.
+
+       If call to DataCite API fails then send error email to envidat@wsl.ch
+    """
     user_info = user.get("info")
     ckan = user.get("ckan")
 
@@ -67,13 +70,25 @@ async def reserve_draft_doi(
         log.error("Failure extracting email using Authorization header")
         raise HTTPException(status_code=500, detail="User email not extracted")
 
-    # Create new DOI
-    if (doi := await create_db_doi(user_name, package)) is None:
-        log.error("Failed creating new DOI in database")
-        return HTTPException(status_code=500, detail="New DOI creation failed")
+    # Validate publication_state is "" (value for newly created package is empty string)
+    if publication_state := package.get("publication_state", None):
+        log.error(f"Package '{package_id} already has value assigned for "
+                  f"publication_state '{publication_state}'")
+        raise HTTPException(status_code=400,
+                            detail=f"Cannot reserve DOI because "
+                                   f"package '{package_id}' already has value assigned "
+                                   f"for publication_state: '{publication_state}'")
 
-    # Add DOI to dataset prior to datacite calls
-    ckan_package_patch(package_id, {"doi": doi}, ckan)
+    # Check if doi has already been assigned
+    if not (doi := package.get("doi", None)):
+
+        # Mint new DOI in DOI database if it does not exist
+        if (doi := await create_db_doi(user_name, package)) is None:
+            log.error("Failed creating new DOI in database")
+            return HTTPException(status_code=500, detail="New DOI creation failed")
+
+        # Add DOI to dataset prior to DataCite call
+        ckan_package_patch(package_id, {"doi": doi}, ckan)
 
     successful_status_codes = range(200, 300)
     datacite_response = {}

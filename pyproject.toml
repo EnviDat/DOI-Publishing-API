@@ -4,7 +4,7 @@ dynamic = ["version"]
 description = "API for publishing EnviDat DOIs to DataCite."
 authors = [
     {name = "Rebecca Kurup Buchholz", email = "rebecca.kurup@wsl.ch"},
-    {name = "Sam Woodcock", email = "samuel.woodocck@wsl.ch"},
+    {name = "Sam Woodcock", email = "samuel.woodcock@wsl.ch"},
 ]
 dependencies = [
     "envidat-utils>=1.4.2",
