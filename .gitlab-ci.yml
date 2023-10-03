@@ -167,6 +167,7 @@ remote-docker:
   before_script:
     - echo "***The app image is   ${APP_IMAGE}"
     - echo "***The app version is  ${APP_VERSION}"
+    - echo "Going to docker compose remote with file docker-compose.{$CI_COMMIT_REF_NAME}.yml"
     - mkdir -p secret
     - echo "$DB_COPY_ENV" > secret/db-copy.env
     - echo "$RUNTIME_ENV" > secret/runtime.env
@@ -180,11 +181,10 @@ remote-docker:
     # use docker compose with the --build flag to force building with the latest image
     # to avoid using the local cache
     - |
-      docker compose up \
+      docker compose \
         --project-name="$APP_NAME" \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
-        --build --force-recreate \
-        --detach
+        up --build --force-recreate --detach
 
 pages:
   stage: deploy
