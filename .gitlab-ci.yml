@@ -182,11 +182,11 @@ remote-docker:
     # use docker compose with the --build flag to force building with the latest image
     # to avoid using the local cache
     - |
-      docker compose \
+      docker compose up \
         --project-name="$APP_NAME" \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
-        up --detach --force-recreate
-        --build
+        --build --force-recreate \
+        --detach
 
 pages:
   stage: deploy
