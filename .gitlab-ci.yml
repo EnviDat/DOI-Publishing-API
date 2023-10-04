@@ -167,7 +167,7 @@ remote-docker:
   before_script:
     - echo "***The app image is   ${APP_IMAGE}"
     - echo "***The app version is  ${APP_VERSION}"
-    - echo "Going to docker compose remote with file docker-compose.{$CI_COMMIT_REF_NAME}.yml"
+    - echo "Going to docker compose remote with file docker-compose.$CI_COMMIT_REF_NAME.yml"
     - mkdir -p secret
     - echo "$DB_COPY_ENV" > secret/db-copy.env
     - echo "$RUNTIME_ENV" > secret/runtime.env
