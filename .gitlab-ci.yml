@@ -178,13 +178,16 @@ remote-docker:
     - echo 'IdentityFile ~/.ssh/gitlab' > ~/.ssh/config
     - ssh-keyscan -H $DEPLOY_HOSTNAME >> ~/.ssh/known_hosts
   script:
-    # use docker compose with the --build flag to force building with the latest image
+    # use docker compose create with --build to recreate the container and force pulling the latest image
     # to avoid using the local cache
     - |
-      docker compose \
-        --project-name="$APP_NAME" \
+      docker compose --project-name="$APP_NAME" \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
-        up --build --force-recreate --detach
+        create --build --force-recreate --pull="always"
+    - |
+      docker compose --project-name="$APP_NAME" \
+        --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
+        up --detach
 
 pages:
   stage: deploy
