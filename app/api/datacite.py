@@ -56,6 +56,8 @@ async def reserve_draft_doi(
 ):
     """Generate new DOI from DB and reserve draft DOI in DataCite.
 
+       Updates 'publication_state' to 'reserved'.
+
        If call to DataCite API fails then send error email to envidat@wsl.ch
     """
     user_info = user.get("info")
@@ -156,6 +158,7 @@ async def request_publish_or_update(
     """Request approval from admin to publish or update dataset with DataCite.
 
     Send email to admin and user.
+
     If initial 'publication_state' is 'reserved' or 'published'
     then update to 'pub_pending'.
     """
@@ -250,8 +253,12 @@ async def publish_or_update_datacite(
 
     Only authorized admin can use this endpoint.
     Sends email to admin and user.
+
     Updates 'publication_state' to 'published' in CKAN for datasets that were
-    published the first time and had a value of ‘pub_pending’.
+    published the first time and had a value of 'pub_pending'.
+
+    Also updates 'publication_state' to 'published' in CKAN for datasets that had the
+    value of 'approved'.
     """
     admin_info = admin.get("info")
     ckan = admin.get("ckan")
@@ -278,8 +285,9 @@ async def publish_or_update_datacite(
         raise HTTPException(status_code=500, detail="Admin email not extracted")
 
     # Check if publication_state can be processed
-    if publication_state not in ["pub_pending", "published"]:
-        log.error("Publication state is not one of 'pub_pending', 'published'")
+    if publication_state not in ["pub_pending", "published", "approved"]:
+        log.error("Publication state is not one of the following:"
+                  " 'pub_pending', 'published', 'approved'")
         raise HTTPException(
             status_code=500,
             detail="Value for 'publication_state' cannot be processed",
