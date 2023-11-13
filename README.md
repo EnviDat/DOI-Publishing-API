@@ -36,7 +36,7 @@ docker compose up -d
 
 ```bash
 pip install pdm
-pdm instal
+pdm install
 ```
 
 2. Run the FastAPI server directly with PDM:
