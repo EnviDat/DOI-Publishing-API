@@ -52,6 +52,7 @@ services:
       - "9555:80"
     networks:
       - net
+    restart: unless-stopped
 
   db:
     container_name: ckan_db_copy
