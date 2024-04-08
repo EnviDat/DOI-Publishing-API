@@ -14,7 +14,7 @@ An example implementation can be found [here](https://gitlabext.wsl.ch/EnviDat/e
 
 ## Generate debug.env
 
-1. Make a file **secret/debug.env**.
+1. Make a file **secret/debug.env** to be removed later.
 
 2. Generate the variables using **secret/env.example** as a reference.
 
