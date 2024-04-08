@@ -133,6 +133,10 @@ proxy-scan:
   image: docker.io/regclient/regctl:v0.3-alpine
   variables:
     GIT_STRATEGY: none
+  rules:
+    - changes:  # Image does not need to be rebuilt or tagged in a docker-compose change
+        - docker-compose*.yml
+      when: never
   before_script:
     - export REG_HOST=${INTERNAL_REG%/*}
     - >
