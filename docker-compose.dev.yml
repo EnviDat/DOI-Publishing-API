@@ -34,6 +34,7 @@ services:
       - "50012:80"
     networks:
       - net
+    restart: unless-stopped
 
   doi_db_copy_dev:
     container_name: ckan_db_copy_dev

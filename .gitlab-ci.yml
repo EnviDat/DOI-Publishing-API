@@ -14,8 +14,6 @@ workflow:
       when: always
     - if: $CI_COMMIT_REF_NAME == "staging"
       when: always
-    - if: $CI_COMMIT_REF_NAME == "dev"
-      when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: always
 
@@ -32,6 +30,7 @@ set-vars:
       ${NGINX_IMG_TAG}-${CI_COMMIT_REF_NAME} >> build.env"
     - echo "Printing build.env"
     - cat build.env
+    - echo "Loaded the DataCite Url '${DATACITE_API_URL}'"
   artifacts:
     reports:
       dotenv: build.env
@@ -167,6 +166,8 @@ remote-docker:
   before_script:
     - echo "***The app image is   ${APP_IMAGE}"
     - echo "***The app version is  ${APP_VERSION}"
+    - echo "Loaded the DataCite Url '${DATACITE_API_URL}'"
+    - echo "With DataCite Client ID '${DATACITE_CLIENT_ID}'"
     - echo "Going to docker compose remote with file docker-compose.$CI_COMMIT_REF_NAME.yml"
     - mkdir -p secret
     - echo "$DB_COPY_ENV" > secret/db-copy.env

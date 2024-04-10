@@ -47,3 +47,4 @@ services:
       - "50010:80"
     networks:
       - net
+    restart: unless-stopped
