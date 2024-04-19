@@ -28,8 +28,6 @@ services:
     env_file:
       - .env
       - secret/debug.env
-    environment:
-      IS_DOCKER: "True"
     networks:
       - net
     restart: unless-stopped

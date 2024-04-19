@@ -5,14 +5,14 @@ import logging
 from fastapi import FastAPI
 from tortoise.contrib.fastapi import register_tortoise
 
-from app.config import settings
+from app.config import config_app
 
 log = logging.getLogger(__name__)
 
 TORTOISE_ORM = {
-    "connections": {"default": settings.DB_URI},
+    "connections": {"default": config_app.DB_URI},
     "apps": {
-        settings.APP_NAME: {
+        config_app.__NAME__: {
             "models": [
                 "app.models.doi",
             ],
@@ -27,7 +27,7 @@ TORTOISE_ORM = {
 
 def init_db(app: FastAPI) -> None:
     """Register and create database connection."""
-    log.debug(f"Connecting to DB: {settings.DB_URI}")
+    log.debug(f"Connecting to DB: {TORTOISE_ORM}")
     register_tortoise(
         app,
         config=TORTOISE_ORM,

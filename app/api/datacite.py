@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 
 # from app.api.doi import create_doi_draft
 from app.auth import get_admin, get_user
-from app.config import settings
+from app.config import config_app
 from app.logic.datacite import (
     DoiErrors,
     DoiSuccess,
@@ -96,7 +96,7 @@ async def reserve_draft_doi(
     datacite_response = {}
     retry_count = 0
 
-    while retry_count <= settings.DATACITE_RETRIES:
+    while retry_count <= config_app.DATACITE_RETRIES:
         datacite_response = reserve_draft_doi_datacite(doi)
         log.debug(f"DataCite response: {datacite_response}")
 
@@ -132,8 +132,8 @@ async def reserve_draft_doi(
         )
 
         # Wait sleep_time seconds before trying to call DataCite again
-        log.debug(f"Waiting {settings.DATACITE_SLEEP_TIME} seconds...")
-        time.sleep(settings.DATACITE_SLEEP_TIME)
+        log.debug(f"Waiting {config_app.DATACITE_SLEEP_TIME} seconds...")
+        time.sleep(config_app.DATACITE_SLEEP_TIME)
 
     # Get error message
     error_msg = get_error_message(datacite_response)
@@ -301,7 +301,7 @@ async def publish_or_update_datacite(
     datacite_response = {}
     retry_count = 0
 
-    while retry_count <= settings.DATACITE_RETRIES:
+    while retry_count <= config_app.DATACITE_RETRIES:
         # Send package to DataCite
         try:
             datacite_response = publish_datacite(package)
@@ -339,7 +339,7 @@ async def publish_or_update_datacite(
         retry_count += 1
 
         # Wait sleep_time seconds before trying to call DataCite again
-        time.sleep(settings.DATACITE_SLEEP_TIME)
+        time.sleep(config_app.DATACITE_SLEEP_TIME)
 
     # Get error message
     if datacite_response:

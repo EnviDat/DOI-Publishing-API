@@ -8,11 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.__version__ import __version__
 from app.api.router import api_router, error_router
-from app.config import settings
+from app.config import config_app, log_level
 from app.db import init_db
 
 logging.basicConfig(
-    level=settings.LOG_LEVEL,
+    level=log_level,
     format=(
         "%(asctime)s.%(msecs)03d [%(levelname)s] "
         "%(name)s | %(funcName)s:%(lineno)d | %(message)s"
@@ -26,23 +26,23 @@ log = logging.getLogger(__name__)
 def get_application() -> FastAPI:
     """Create app instance using config."""
     _app = FastAPI(
-        title=settings.APP_NAME,
+        title=config_app.__NAME__,
         description="API for publishing DOIs to DataCite and importing DOIs "
         "from external platforms.",
-        version=__version__,
+        version=config_app.APP_VERSION,
         license_info={
             "name": "MIT",
             "url": "https://gitlabext.wsl.ch/EnviDat/doi-publishing-api/-/raw/main/LICENSE",
         },
-        debug=settings.DEBUG,
-        root_path=settings.PROXY_PREFIX,
-        openapi_prefix=settings.PROXY_PREFIX,
+        debug=config_app.DEBUG,
+        root_path=config_app.ROOT_PATH,
+        #openapi_prefix=config_app.PROXY_PREFIX,
     )
 
-    log.debug(f"Allowed CORS origins: {settings.BACKEND_CORS_ORIGINS}")
+    log.debug(f"Allowed CORS origins: {config_app.BACKEND_CORS_ORIGINS}")
     _app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.BACKEND_CORS_ORIGINS,
+        allow_origins=config_app.BACKEND_CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
