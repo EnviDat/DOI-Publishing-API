@@ -20,26 +20,16 @@ def get_user(authorization: Annotated[str | None, Header()] = None) -> dict:
 
     log.debug("Authorization header extracted from request headers")
 
-    if config_app.DEBUG:
-        ckan = None
-        user_info = {
-            "id": "334cee1e-6afa-4639-88a2-f980e6ff42c3",
-            "name": "admin",
-            "display_name": "Admin (Debug)",
-            "email": "envidat@wsl.ch",
-            "sysadmin": True,
-        }
-    else:
-        try:
-            ckan = get_ckan(authorization)
-            user_info = ckan.call_action("user_show")
-        except NotFound as e:
-            raise HTTPException(status_code=404, detail="User not found") from e
-        except Exception as e:
-            log.error(e)
-            raise HTTPException(
-                status_code=500, detail="Could not authenticate user"
-            ) from e
+    try:
+        ckan = get_ckan(authorization)
+        user_info = ckan.call_action("user_show")
+    except NotFound as e:
+        raise HTTPException(status_code=404, detail="User not found") from e
+    except Exception as e:
+        log.error(e)
+        raise HTTPException(
+            status_code=500, detail="Could not authenticate user"
+        ) from e
 
     return {"info": user_info, "ckan": ckan}
 
