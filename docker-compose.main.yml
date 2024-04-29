@@ -21,7 +21,6 @@ services:
       target: prod
     env_file:
       - .env
-      - secret/runtime.env
     networks:
       - net
       - envidat

@@ -14,7 +14,6 @@ services:
       - doi_db_copy_staging
     env_file:
       - .env
-      - secret/runtime.env
     networks:
       - net
       - envidat
@@ -38,7 +37,7 @@ services:
     container_name: ckan_db_copy_staging
     image: "registry-gitlab.wsl.ch/envidat/ckan-container/db:15-staging"
     env_file:
-      - secret/db-copy.env
+      - .env
     networks:
       - net
     healthcheck:

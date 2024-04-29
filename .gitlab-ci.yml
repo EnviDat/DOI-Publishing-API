@@ -171,7 +171,7 @@ remote-docker:
     - echo "Going to docker compose remote with file docker-compose.$CI_COMMIT_REF_NAME.yml"
     - mkdir -p secret
     - echo "$DB_COPY_ENV" > secret/db-copy.env
-    - echo "$RUNTIME_ENV" > secret/runtime.env
+    #- echo "$RUNTIME_ENV" > secret/runtime.env
     - echo "Adding SSH Key"
     - mkdir -p ~/.ssh
     - echo "$DEPLOY_SSH_KEY" > ~/.ssh/gitlab
