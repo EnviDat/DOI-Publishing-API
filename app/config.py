@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 class ConfigAppModel(BaseModel):
     """Main settings class, defining environment variables."""
 
-    __NAME__ = 'doi-publishing-api'
+    __NAME__ = "doi-publishing-api"
     APP_VERSION: str
     ROOT_PATH: Optional[str] = ""
     DEBUG: bool = False

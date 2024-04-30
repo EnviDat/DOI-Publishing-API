@@ -12,11 +12,11 @@ An example implementation can be found [here](https://gitlabext.wsl.ch/EnviDat/e
 
 ## Dev
 
-## Generate debug.env
+## Generate .env
 
-1. Make a file **secret/debug.env**.
+1. Make a file **.env**.
 
-2. Generate the variables using **secret/env.example** as a reference.
+2. Generate the variables using **env.example** as a reference.
 
 ### Option 1: Docker
 
@@ -28,63 +28,80 @@ docker compose up -d
 
 > The image should pull, or fallback to building.
 
-2. Access at: http://localhost:9555
 
 ### Option 2: Standalone
 
 1. Install dependencies:
 
 ```bash
-pip install pdm
-pdm install
+pip install virtualenv
+python -m venv <virtual-environment-name>
+   or
+Create a virtual environment with PyCharm
+
+<virtual-environment-name>\Scripts\activate
+pip install -r requirements.txt
 ```
 
 2. Run the FastAPI server directly with PDM:
 
 ```bash
-pdm run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 3. Access at: http://127.0.0.1:8000
 
 ## Prod
 
-Deployment should be handled automatically via Gitlab CI/CD.
+1. Configure environment variables used in production
 
-To deploy manually follow the instructions below.
+   - Configure CI/CD variables used to log in into production server: `DEPLOY_HOSTNAME`, `DEPLOY_SSH_KEY`, and `DEPLOY_SSH_USER`
+   - Create **individual CI/CD variables for each variable** listed in `env.example`
+     - The `remote-docker` job of the pipeline adds these environment variables to the Docker image
+   - `APP_VERSION` **must be incremented** so that a new image is built and the application includes the updated code
+     - Create a git tag for the commit that corresponds to the `APP_VERSION`
+   - `ROOT_PATH` is an optional environment variable and should only be used to if the application uses a proxy
+     - Be sure to include a `/` before the `ROOT_PATH` value
+     - Example configuration: `ROOT_PATH=/doi-api`
+     - [Click here for the FastAPI documentation about using a proxy server](https://fastapi.tiangolo.com/advanced/behind-a-proxy/)
+   - Create **individual CI/CD variables for each the following variables** that are used for deployment:
 
-### Option 1: Docker
+     > | Key                 | Example Value                    |
+     > | ------------------- | -------------------------------- |
+     > | `INTERNAL_REG`      | `registry-gitlab.org.ch/orgname` |
+     > | `EXTERNAL_REG`      | `docker.io`                      |
+     > | `MAINTAINER_APP`    | `nice.person@human.com`          |
+     > | `MAINTAINER_DEVOPS` | `nice.person@human.com`          |
+     > | `NGINX_IMG_TAG`     | `1.25`                           |
+     > | `PYTHON_IMG_TAG`    | `3.10`                           |
 
-1. Make a file **secret/runtime.env** with required prod env vars.
+2. Merge feature/development branch to `main` default branch
+   - The `main` branch has a pipeline set up in `.gitlab-ci.yml` that automatically deploys changes to production server
+   - The pipeline also requires CI/CD variables that are used to that are used to build and register a containter image: `IMAGE_REGISTRY_USER` and `IMAGE_REGISTRY_PASS`
+     - The image related variables can be group variables inherited from the parent group
 
-2. Run the production container:
+## Pre-commit hooks
 
-```bash
-docker compose -f docker-compose.main.yml up -d
-```
+- The pre-commit hooks run every time you attempt to commit files
+- To run the pre-commit hooks manually open app in terminal and execute: `pre-commit run --all-files`
+- These hooks ensure that the application uses standard stylistic conventions
+- To view or alter the pre-commit hooks see: `.pre-commit-config.yaml`
 
-### Option 2: Kubernetes
+## Tests
 
-See README.md under the `chart` directory.
+- Tests are located in `tests`
+- Tests are run during `test` stage of the pipeline, please see `.gitlab-ci.yml`
+- To run tests manually open app in terminal and execute: `pytest`
 
-## Pre-commit
+## Scripts
 
-- Install pre-commit hooks
+- Scripts and their associated logs are located in the `scripts` directory
 
-```bash
-# Install pre-commit
-pip install pre-commit
-# Install the hooks
-pre-commit install
-```
+## Authors
+Ranita Pal, Swiss Federal Institute for Forest, Snow and Landscape Research WSL \
+[Rebecca Kurup Buchholz](https://www.linkedin.com/in/rebeccakurupbuchholz/), Swiss Federal Institute for Forest, Snow and Landscape Research WSL \
+Sam Woodcock, Swiss Federal Institute for Forest, Snow and Landscape Research WSL
 
-- The hooks should run every time you attempt to commit files.
+## License
 
-- Alternatively, run the hooks manually on all files with: `pre-commit run --all-files`
-
-- Or to run the hooks using PDM (if PATH doesn't work, e.g. on Windows):
-
-```bash
-pdm add pre-commit
-pdm run pre-commit run --all-files
-```
+[MIT License](https://gitlabext.wsl.ch/EnviDat/envidat-converters-api/-/blob/main/LICENSE?ref_type=heads)

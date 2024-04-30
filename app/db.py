@@ -4,7 +4,6 @@ import logging
 
 from fastapi import FastAPI
 from tortoise.contrib.fastapi import register_tortoise
-from tortoise import Tortoise
 
 from app.config import config_app
 
@@ -35,7 +34,3 @@ def init_db(app: FastAPI) -> None:
         add_exception_handlers=True,
     )
 
-async def close_db() -> None:
-    """Close database connections."""
-    log.debug(f"Closing connections to DB")
-    await Tortoise.close_connections()

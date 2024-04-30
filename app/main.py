@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.__version__ import __version__
 from app.api.router import api_router, error_router
 from app.config import config_app, log_level
 from app.db import init_db, close_db
@@ -28,8 +27,6 @@ async def lifespan(app: FastAPI):
     # Load the DB
     init_db(app)
     yield
-    # Clean up the db connections
-    await close_db()
 
 def get_application() -> FastAPI:
     """Create app instance using config."""
@@ -45,7 +42,6 @@ def get_application() -> FastAPI:
         debug=config_app.DEBUG,
         root_path=config_app.ROOT_PATH,
         lifespan=lifespan,
-        #openapi_prefix=config_app.PROXY_PREFIX,
     )
 
     log.debug(f"Allowed CORS origins: {config_app.BACKEND_CORS_ORIGINS}")
