@@ -5,11 +5,11 @@ import sys
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
+#from contextlib import asynccontextmanager
 
 from app.api.router import api_router, error_router
 from app.config import config_app, log_level
-from app.db import init_db, close_db
+from app.db import init_db
 
 logging.basicConfig(
     level=log_level,
@@ -22,11 +22,11 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+#@asynccontextmanager
+#async def lifespan(app: FastAPI):
     # Load the DB
-    init_db(app)
-    yield
+#    init_db(app)
+#    yield
 
 def get_application() -> FastAPI:
     """Create app instance using config."""
@@ -41,7 +41,7 @@ def get_application() -> FastAPI:
         },
         debug=config_app.DEBUG,
         root_path=config_app.ROOT_PATH,
-        lifespan=lifespan,
+        #lifespan=lifespan,
     )
 
     log.debug(f"Allowed CORS origins: {config_app.BACKEND_CORS_ORIGINS}")
@@ -61,4 +61,9 @@ app = get_application()
 app.include_router(api_router)
 app.include_router(error_router)
 
+@app.on_event("startup")
+async def startup_event():
+    """Commands to run on server startup."""
+    log.debug("Starting up FastAPI server.")
+    init_db(app)
 

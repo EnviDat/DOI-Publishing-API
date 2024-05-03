@@ -11,8 +11,6 @@ services:
       args:
         - APP_VERSION=${APP_VERSION}
         - PYTHON_IMG_TAG=${PYTHON_IMG_TAG}
-        - MAINTAINER_APP=${MAINTAINER_APP}
-        - MAINTAINER_DEVOPS=${MAINTAINER_DEVOPS}
         - EXTERNAL_REG=${EXTERNAL_REG}
       dockerfile: ./Dockerfile
     env_file:

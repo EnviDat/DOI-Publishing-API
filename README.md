@@ -66,14 +66,28 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
      - [Click here for the FastAPI documentation about using a proxy server](https://fastapi.tiangolo.com/advanced/behind-a-proxy/)
    - Create **individual CI/CD variables for each the following variables** that are used for deployment:
 
-     > | Key                 | Example Value                    |
-     > | ------------------- | -------------------------------- |
-     > | `INTERNAL_REG`      | `registry-gitlab.org.ch/orgname` |
-     > | `EXTERNAL_REG`      | `docker.io`                      |
-     > | `MAINTAINER_APP`    | `nice.person@human.com`          |
-     > | `MAINTAINER_DEVOPS` | `nice.person@human.com`          |
-     > | `NGINX_IMG_TAG`     | `1.25`                           |
-     > | `PYTHON_IMG_TAG`    | `3.10`                           |
+     > | Key                        | Example Value                          |
+     > | -------------------------- | -------------------------------------- |
+     > | `INTERNAL_REG`             | `registry-gitlab.org.ch/orgname`       |
+     > | `EXTERNAL_REG`             | `docker.io`                            |
+     > | `NGINX_IMG_TAG`            | `1.25`                                 |
+     > | `PYTHON_IMG_TAG`           | `3.10`                                 |
+     > | `APP_VERSION`              | `0.1.2`                                |
+     > | `ROOT_PATH`                | `""`                                   |
+     > | `DEBUG`                    | `False`                                |
+     > | `DB_HOST`                  | `db_server`                            |
+     > | `DB_USER`                  | `envidat_test`                         |
+     > | `DB_PASS`                  | `************`                         |
+     > | `BACKEND_CORS_ORIGINS`     | `"http://localhost:3001"`              |
+     > | `CKAN_API_URL`             | `3.10`                                 |
+     > | `DATACITE_API_URL`         | `https://xxx.datacite.org/dois`        |
+     > | `DATACITE_DATA_URL_PREFIX` | `https://www.envidat.ch/#/metadata/"`  |
+     > | `DATACITE_CLIENT_ID`       | `WSLTEST`                              |
+     > | `DATACITE_PASSWORD`        | `*******`                              |
+     > | `DOI_PREFIX`               | `10.16904`                             |
+     > | `DOI_SUFFIX_TAG`           | `envidat.`                             |
+     > | `EMAIL_ENDPOINT`           | `http://abc.com`                       |
+     > | `EMAIL_FROM`               | `abc@mail.com`                         |
 
 2. Merge feature/development branch to `main` default branch
    - The `main` branch has a pipeline set up in `.gitlab-ci.yml` that automatically deploys changes to production server

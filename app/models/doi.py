@@ -4,7 +4,6 @@ from enum import Enum
 
 from tortoise import fields, models
 from tortoise.contrib.pydantic import pydantic_model_creator
-from tortoise import Tortoise
 
 from app.config import config_app
 from app.models.validators import EmptyStringValidator
@@ -69,7 +68,6 @@ class DoiRealisation(models.Model):
         table = "doi_realisation"
         unique_together = ["prefix_id", "suffix_id"]
 
-#Tortoise.init_models(["app.models.doi"], "models")
 DoiPrefixPydantic = pydantic_model_creator(DoiPrefix, name="DoiPrefix")
 DoiPrefixInPydantic = pydantic_model_creator(
     DoiPrefix,

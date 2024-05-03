@@ -6,12 +6,9 @@ ARG PYTHON_IMG_TAG
 FROM ${EXTERNAL_REG}/python:${PYTHON_IMG_TAG}-slim-bookworm as base
 ARG APP_VERSION
 ARG PYTHON_IMG_TAG
-ARG MAINTAINER_APP
-ARG MAINTAINER_DEVOPS
+
 LABEL envidat.ch.app-version="${APP_VERSION}" \
       envidat.ch.python-img-tag="${PYTHON_IMG_TAG}" \
-      envidat.ch.maintainer-app="${MAINTAINER_APP}" \
-      envidat.ch.maintainer-devops="${MAINTAINER_DEVOPS}" \
       envidat.ch.api-port="8000"
 RUN set -ex \
     && apt-get update \
