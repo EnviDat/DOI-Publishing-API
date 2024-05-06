@@ -6,6 +6,7 @@ import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 #from contextlib import asynccontextmanager
+#from tortoise.contrib.fastapi import RegisterTortoise
 
 from app.api.router import api_router, error_router
 from app.config import config_app, log_level
@@ -22,11 +23,35 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
+## The below work with Tortoise_orm 0.20.1 and the fix for this is currently in develop
+## https://github.com/tortoise/tortoise-orm/commit/7ded5c7cdbdcdc56d5def36c8cf865abc27c9823
+#TORTOISE_ORM = {
+#    "connections": {"default": config_app.DB_URI},
+#    "apps": {
+#        config_app.__NAME__: {
+#            "models": [
+#                "app.models.doi",
+#            ],
+#            "default_connection": "default",
+#        },
+#    },
+#    "routers": [],
+#    "use_tz": False,
+#    "timezone": "UTC",
+#}
+
 #@asynccontextmanager
 #async def lifespan(app: FastAPI):
-    # Load the DB
-#    init_db(app)
-#    yield
+    # app startup
+#    async with RegisterTortoise(
+#        app,
+#        config=TORTOISE_ORM,
+#        add_exception_handlers=True,
+#    ):
+        # db connected
+#        yield
+        # app teardown
+    # db connections closed
 
 def get_application() -> FastAPI:
     """Create app instance using config."""
