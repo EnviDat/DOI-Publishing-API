@@ -167,6 +167,27 @@ remote-docker:
     - echo "Loaded the DataCite Url '${DATACITE_API_URL}'"
     - echo "With DataCite Client ID '${DATACITE_CLIENT_ID}'"
     - echo "Going to docker compose remote with file docker-compose.$CI_COMMIT_REF_NAME.yml"
+    - echo "APP_VERSION=$APP_VERSION" > .env
+    - echo "EXTERNAL_REG=$EXTERNAL_REG" > .env
+    - echo "INTERNAL_REG=$INTERNAL_REG" > .env
+    - echo "NGINX_IMG_TAG=$NGINX_IMG_TAG" > .env
+    - echo "PYTHON_IMG_TAG=$PYTHON_IMG_TAG" > .env
+    - echo "ROOT_PATH=$ROOT_PATH" > .env
+    - echo "DEBUG=$DEBUG" > .env
+    - echo "DB_HOST=$DB_HOST" > .env
+    - echo "DB_NAME=$DB_NAME" > .env
+    - echo "DB_USER=$DB_USER" > .env
+    - echo "DB_PASS=$DB_PASS" > .env
+    - echo "BACKEND_CORS_ORIGINS=$BACKEND_CORS_ORIGINS" > .env
+    - echo "CKAN_API_URL=$CKAN_API_URL" > .env
+    - echo "DATACITE_API_URL=$DATACITE_API_URL" > .env
+    - echo "DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX" > .env
+    - echo "DATACITE_CLIENT_ID=$DATACITE_CLIENT_ID" > .env
+    - echo "DATACITE_PASSWORD=$DATACITE_PASSWORD" > .env
+    - echo "DOI_PREFIX=$DOI_PREFIX" > .env
+    - echo "DOI_SUFFIX_TAG=$DOI_SUFFIX_TAG" > .env
+    - echo "EMAIL_ENDPOINT=$EMAIL_ENDPOINT" > .env
+    - echo "EMAIL_FROM=$EMAIL_FROM" > .env
     - echo "Adding SSH Key"
     - mkdir -p ~/.ssh
     - echo "$DEPLOY_SSH_KEY" > ~/.ssh/gitlab

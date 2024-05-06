@@ -2,7 +2,7 @@
 
 Microservice API to publish DOIs on Datacite.
 
-[View the API docs](https://envidat.gitlab-pages.wsl.ch/doi-publishing-api)
+[View the API docs](https://www.envidat.ch/doi-api/docs)
 
 ## Usage
 
@@ -23,7 +23,7 @@ An example implementation can be found [here](https://gitlabext.wsl.ch/EnviDat/e
 1. Run the docker container:
 
 ```bash
-docker compose up -d
+docker compose up  -f <docker compose file> -d
 ```
 
 > The image should pull, or fallback to building.
@@ -64,31 +64,14 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
      - Be sure to include a `/` before the `ROOT_PATH` value
      - Example configuration: `ROOT_PATH=/doi-api`
      - [Click here for the FastAPI documentation about using a proxy server](https://fastapi.tiangolo.com/advanced/behind-a-proxy/)
-   - Create **individual CI/CD variables for each the following variables** that are used for deployment:
+   - Create **individual CI/CD variables for each the following variables** (apart from the ones in env.example) that are used for deployment:
 
      > | Key                        | Example Value                          |
      > | -------------------------- | -------------------------------------- |
-     > | `INTERNAL_REG`             | `registry-gitlab.org.ch/orgname`       |
-     > | `EXTERNAL_REG`             | `docker.io`                            |
-     > | `NGINX_IMG_TAG`            | `1.25`                                 |
-     > | `PYTHON_IMG_TAG`           | `3.10`                                 |
-     > | `APP_VERSION`              | `0.1.2`                                |
-     > | `ROOT_PATH`                | `""`                                   |
-     > | `DEBUG`                    | `False`                                |
-     > | `DB_HOST`                  | `db_server`                            |
-     > | `DB_USER`                  | `envidat_test`                         |
-     > | `DB_PASS`                  | `************`                         |
-     > | `BACKEND_CORS_ORIGINS`     | `"http://localhost:3001"`              |
-     > | `CKAN_API_URL`             | `3.10`                                 |
-     > | `DATACITE_API_URL`         | `https://xxx.datacite.org/dois`        |
-     > | `DATACITE_DATA_URL_PREFIX` | `https://www.envidat.ch/#/metadata/"`  |
-     > | `DATACITE_CLIENT_ID`       | `WSLTEST`                              |
-     > | `DATACITE_PASSWORD`        | `*******`                              |
-     > | `DOI_PREFIX`               | `10.16904`                             |
-     > | `DOI_SUFFIX_TAG`           | `envidat.`                             |
-     > | `EMAIL_ENDPOINT`           | `http://abc.com`                       |
-     > | `EMAIL_FROM`               | `abc@mail.com`                         |
-
+     > | `DEPLOY_HOSTNAME`          | `server.wsl.ch`                        |
+     > | `DEPLOY_SSH_KEY`           | `encryption private key`               |
+     > | `DEPLOY_SSH_USER`          | `test_user`                            |
+    
 2. Merge feature/development branch to `main` default branch
    - The `main` branch has a pipeline set up in `.gitlab-ci.yml` that automatically deploys changes to production server
    - The pipeline also requires CI/CD variables that are used to that are used to build and register a containter image: `IMAGE_REGISTRY_USER` and `IMAGE_REGISTRY_PASS`
