@@ -70,19 +70,6 @@ RUN useradd -r -u 900 -m -c "appuser account" -d /home/appuser -s /bin/false app
 
 
 
-FROM runtime as debug
-USER appuser
-COPY --from=extract-deps \
-    /opt/python/requirements-dev.txt /opt/python/
-RUN pip install --user --no-warn-script-location \
-    --no-cache-dir -r /opt/python/requirements-dev.txt
-ENTRYPOINT ["python", "-m", "debugpy", "--listen", \
-            "0.0.0.0:5678", "-m"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
-    "--reload", "--log-level", "error", "--no-access-log"]
-
-
-
 FROM runtime as prod
 # Pre-compile packages to .pyc (init perf gains)
 RUN python -c "import compileall; compileall.compile_path(maxlevels=10, quiet=1)"
