@@ -1,0 +1,60 @@
+{
+  "zenodoAPI": {
+    "zenodoRecords": "https://zenodo.org/api/records"
+  },
+  "timeout": 3,
+  "author": {
+    "default": {
+      "name": "UNKNOWN",
+      "affiliation": "UNKNOWN"
+    }
+  },
+  "maintainer": {
+    "default": {
+      "name": "UNKNOWN",
+      "email": "envidat@wsl.ch"
+    }
+  },
+  "publication": {
+    "default": {
+      "publisher": "Zenodo"
+    }
+  },
+  "funding": {
+    "default": {
+      "institution": "UNKNOWN"
+    }
+  },
+  "licenses": {
+    "cc-by": {
+      "license_id": "cc-by",
+      "license_title": "Creative Commons Attribution",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    "cc-by-sa": {
+      "license_id": "cc-by-sa",
+      "license_title": "Creative Commons Attribution Share-Alike (CC-BY-SA)",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    "cc-by-nc": {
+      "license_id": "cc-by-nc",
+      "license_title": "Creative Commons Attribution-NonCommercial (CC-BY-NC)",
+      "license_url": "https://creativecommons.org/licenses/by-nc/4.0/"
+    },
+    "CC0-1.0": {
+      "license_id": "CC0-1.0",
+      "license_title": "Creative Commons Zero - No Rights Reserved (CC0 1.0)",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    "other-undefined": {
+      "license_id": "other-undefined",
+      "license_title": "Other (Specified in the description)"
+    }
+  },
+  "notes": {
+    "default": "Automatic message from EnviDat Admin: the description of this dataset is too short and therefore, not informative enough. Please improve and then delete this message. "
+  },
+  "spatial": {
+    "default": "{\"type\": \"Point\", \"coordinates\": [8.4545978, 47.3606372]}"
+  }
+}

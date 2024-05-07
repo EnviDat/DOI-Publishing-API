@@ -6,9 +6,12 @@ ARG PYTHON_IMG_TAG
 FROM ${EXTERNAL_REG}/python:${PYTHON_IMG_TAG}-slim-bookworm as base
 ARG APP_VERSION
 ARG PYTHON_IMG_TAG
-
+ARG MAINTAINER_APP
+ARG MAINTAINER_DEVOPS
 LABEL envidat.ch.app-version="${APP_VERSION}" \
       envidat.ch.python-img-tag="${PYTHON_IMG_TAG}" \
+      envidat.ch.maintainer-app="${MAINTAINER_APP}" \
+      envidat.ch.maintainer-devops="${MAINTAINER_DEVOPS}" \
       envidat.ch.api-port="8000"
 RUN set -ex \
     && apt-get update \
@@ -26,8 +29,11 @@ ENV LC_ALL en_US.UTF-8
 
 FROM base as extract-deps
 WORKDIR /opt/python
-COPY README.md requirements.txt /opt/python/
-RUN pip install --no-cache-dir --upgrade pip
+COPY pyproject.toml pdm.lock README.md /opt/python/
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir pdm==2.5.6
+RUN pdm export --prod --without-hashes > requirements.txt \
+    && pdm export -G dev --no-default > requirements-dev.txt
 
 
 

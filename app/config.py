@@ -3,30 +3,45 @@
 import logging
 from functools import lru_cache
 from typing import Any, Optional, Union
-from dotenv import dotenv_values
 
 from pydantic import (
     AnyHttpUrl,
     Extra,
-    ValidationInfo,
+    FieldValidationInfo,
     PostgresDsn,
     field_validator,
-    BaseModel,
-    ValidationError,
-    computed_field,
 )
 from pydantic_core import Url
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger(__name__)
 
 
-class ConfigAppModel(BaseModel):
+class Settings(BaseSettings):
     """Main settings class, defining environment variables."""
 
-    __NAME__ = "doi-publishing-api"
-    APP_VERSION: str
-    ROOT_PATH: Optional[str] = ""
+    APP_NAME: str
+    SECRET_KEY: str
+    LOG_LEVEL: str = "INFO"
+    PROXY_PREFIX: Optional[str] = ""
+
+    DEBUG_USER_ID: Optional[str] = None
+    DEBUG_USER_EMAIL: Optional[str] = None
     DEBUG: bool = False
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def get_debug_user_details(cls, v: str, info: FieldValidationInfo) -> Any:
+        """If DEBUG var set, ensure debug user details are set."""
+        if not v:
+            return v
+        if not info.data.get("DEBUG_USER_ID"):
+            log.error(info.data.get("DEBUG_USER_ID"))
+            raise ValueError("DEBUG_USER_ID is not present in the environment")
+        if not info.data.get("DEBUG_USER_EMAIL"):
+            raise ValueError("DEBUG_USER_EMAIL is not present in the environment")
+        return v
+
     CKAN_API_URL: AnyHttpUrl = "https://www.envidat.ch"
 
     @field_validator("CKAN_API_URL", mode="after")
@@ -76,51 +91,42 @@ class ConfigAppModel(BaseModel):
     DB_USER: str
     DB_PASS: str
     DB_NAME: str
+    DB_URI: Optional[PostgresDsn] = None
 
-    @computed_field
-    @property
-    def DB_URI(cls) -> Any:
+    @field_validator("DB_URI", mode="after")
+    @classmethod
+    def assemble_db_connection(cls, v: Optional[str], info: FieldValidationInfo) -> Any:
         """Build Postgres connection from environment variables."""
+        if isinstance(v, str):
+            return v
         pg_url = PostgresDsn.build(
             scheme="postgres",
-            username=cls.DB_USER,
-            password=cls.DB_PASS,
-            host=cls.DB_HOST,
-            path=cls.DB_NAME,
+            username=info.data.get("DB_USER"),
+            password=info.data.get("DB_PASS"),
+            host=info.data.get("DB_HOST"),
+            path=info.data.get("DB_NAME", ""),
         )
+        # Convert Url type to string
         return str(pg_url)
 
     EMAIL_ENDPOINT: AnyHttpUrl
     EMAIL_FROM: str
 
+    model_config = SettingsConfigDict(
+        case_sensitive=True, env_file=".env", extra=Extra.allow
+    )
+
+
 @lru_cache
-def get_config_app() -> ConfigAppModel | Exception:
-    """Return config for app as object. Validate and cache .env environment variables.
+def get_settings():
+    """Cache settings, for calling in multiple modules."""
+    # Dotenv loaded here to allow debugging files directly
+    from app.utils import load_dotenv_if_not_docker
 
-    :return ConfigAppModel with valiated environment variables
-        or Exception if validation fails
-    """
-    env_dict = dotenv_values(".env", verbose=True)
-
-    try:
-        _config = ConfigAppModel(**env_dict)
-        return _config
-    except ValidationError as e:
-        raise Exception(f"Failed to validate environment variables, error(s): {e}")
+    load_dotenv_if_not_docker(force=True)
+    _settings = Settings()
+    log.info("Loaded settings from cache")
+    return _settings
 
 
-config_app = get_config_app()
-
-
-def get_log_level(debug: bool) -> str:
-    """Return string used for log level of app.
-
-    :param debug: Bool that indicates if debug mode is being used
-    :return string: "DEBUG" or "WARNING"
-    """
-    if debug:
-        return "DEBUG"
-    return "WARNING"
-
-
-log_level = get_log_level(config_app.DEBUG)
+settings = get_settings()

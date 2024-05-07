@@ -11,7 +11,7 @@ from envidat.converters.datacite_converter import convert_datacite
 from fastapi import HTTPException
 from typing_extensions import TypedDict
 
-from app.config import config_app
+from app.config import settings
 
 log = logging.getLogger(__name__)
 
@@ -45,10 +45,10 @@ def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
     log.info("Reserving draft DOI in datacite")
 
     # Extract variables from config needed to call DataCite API
-    api_url = config_app.DATACITE_API_URL
-    client_id = config_app.DATACITE_CLIENT_ID
-    password = config_app.DATACITE_PASSWORD
-    timeout = config_app.DATACITE_TIMEOUT
+    api_url = settings.DATACITE_API_URL
+    client_id = settings.DATACITE_CLIENT_ID
+    password = settings.DATACITE_PASSWORD
+    timeout = settings.DATACITE_TIMEOUT
 
     # Assign DOI to payload in DataCite format
     payload = {"data": {"type": "dois", "attributes": {"doi": doi}}}
@@ -100,11 +100,11 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
         DoiSuccess | DoiErrors: See TypedDict class definitions
     """
     # Extract variables from config needed to call DataCite API
-    api_url = config_app.DATACITE_API_URL
-    client_id = config_app.DATACITE_CLIENT_ID
-    password = config_app.DATACITE_PASSWORD
-    site_url = config_app.DATACITE_DATA_URL_PREFIX
-    timeout = config_app.DATACITE_TIMEOUT
+    api_url = settings.DATACITE_API_URL
+    client_id = settings.DATACITE_CLIENT_ID
+    password = settings.DATACITE_PASSWORD
+    site_url = settings.DATACITE_DATA_URL_PREFIX
+    timeout = settings.DATACITE_TIMEOUT
 
     # Get doi and validate,
     # if doi not truthy or has invalid prefix then raises HTTPException
@@ -239,7 +239,7 @@ def validate_doi(package: dict):
         raise HTTPException(status_code=500, detail="Package does not have a doi")
 
     # Validate doi prefix
-    doi_prefix = config_app.DOI_PREFIX
+    doi_prefix = settings.DOI_PREFIX
     prefix = (doi.partition("/"))[0]
     if prefix != doi_prefix:
         log.debug(f"DOI prefix is invalid: {prefix}")

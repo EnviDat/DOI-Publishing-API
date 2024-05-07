@@ -3,7 +3,7 @@
 import json
 import logging
 
-from app.config import config_app
+from app.config import settings
 from app.models.doi import DoiRealisation, DoiRealisationInPydantic
 
 log = logging.getLogger(__name__)
@@ -13,14 +13,14 @@ async def get_next_doi_suffix_id():
     """Get the next suffix ID in a prefix sequence."""
     suffix_ids = (
         await DoiRealisation.filter(
-            prefix_id=config_app.DOI_PREFIX,
-            suffix_id__startswith=config_app.DOI_SUFFIX_TAG,
+            prefix_id=settings.DOI_PREFIX,
+            suffix_id__startswith=settings.DOI_SUFFIX_TAG,
         )
         .order_by("-suffix_id")
         .values_list("suffix_id", flat=True)
     )
     ids_only = ", ".join(
-        [suffix.lstrip(config_app.DOI_SUFFIX_TAG) for suffix in suffix_ids]
+        [suffix.lstrip(settings.DOI_SUFFIX_TAG) for suffix in suffix_ids]
     )
     log.debug(f"Filtered suffix IDs: {ids_only}")
 
@@ -53,12 +53,12 @@ async def create_db_doi(user_name: str, package_metadata: dict):
     log.debug(f"Creating new DOI for package id: {package_id}")
 
     new_doi = {
-        "prefix_id": config_app.DOI_PREFIX,
-        "suffix_id": f"{config_app.DOI_SUFFIX_TAG}{next_id}",
+        "prefix_id": settings.DOI_PREFIX,
+        "suffix_id": f"{settings.DOI_SUFFIX_TAG}{next_id}",
         "ckan_id": package_id,
         "ckan_name": package_name,
         "site_id": "doi-publishing-api",
-        "tag_id": config_app.DOI_SUFFIX_TAG,
+        "tag_id": settings.DOI_SUFFIX_TAG,
         "ckan_user": user_name,
         "metadata": json.dumps(package_metadata),
         "metadata_format": "ckan",
