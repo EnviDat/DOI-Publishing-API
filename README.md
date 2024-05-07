@@ -28,6 +28,7 @@ docker compose up  -f <docker compose file> -d
 
 > The image should pull, or fallback to building.
 
+
 ### Option 2: Standalone
 
 1. Install dependencies:
@@ -65,12 +66,12 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
      - [Click here for the FastAPI documentation about using a proxy server](https://fastapi.tiangolo.com/advanced/behind-a-proxy/)
    - Create **individual CI/CD variables for each the following variables** (apart from the ones in env.example) that are used for deployment:
 
-     > | Key               | Example Value            |
-     > | ----------------- | ------------------------ |
-     > | `DEPLOY_HOSTNAME` | `server.wsl.ch`          |
-     > | `DEPLOY_SSH_KEY`  | `encryption private key` |
-     > | `DEPLOY_SSH_USER` | `test_user`              |
-
+     > | Key                        | Example Value                          |
+     > | -------------------------- | -------------------------------------- |
+     > | `DEPLOY_HOSTNAME`          | `server.wsl.ch`                        |
+     > | `DEPLOY_SSH_KEY`           | `encryption private key`               |
+     > | `DEPLOY_SSH_USER`          | `test_user`                            |
+    
 2. Merge feature/development branch to `main` default branch
    - The `main` branch has a pipeline set up in `.gitlab-ci.yml` that automatically deploys changes to production server
    - The pipeline also requires CI/CD variables that are used to that are used to build and register a containter image: `IMAGE_REGISTRY_USER` and `IMAGE_REGISTRY_PASS`
@@ -94,7 +95,6 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - Scripts and their associated logs are located in the `scripts` directory
 
 ## Authors
-
 Ranita Pal, Swiss Federal Institute for Forest, Snow and Landscape Research WSL \
 [Rebecca Kurup Buchholz](https://www.linkedin.com/in/rebeccakurupbuchholz/), Swiss Federal Institute for Forest, Snow and Landscape Research WSL \
 Sam Woodcock, Swiss Federal Institute for Forest, Snow and Landscape Research WSL

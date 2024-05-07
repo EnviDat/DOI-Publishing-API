@@ -7,6 +7,8 @@ from dotenv import dotenv_values
 
 from pydantic import (
     AnyHttpUrl,
+    Extra,
+    ValidationInfo,
     PostgresDsn,
     field_validator,
     BaseModel,
