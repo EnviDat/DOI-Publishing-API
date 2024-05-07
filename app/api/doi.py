@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.auth import get_admin
-from app.config import config_app
+from app.config import settings
 from app.models.doi import (
     DoiRealisation,
     DoiRealisationEditPydantic,
@@ -65,7 +65,7 @@ async def create_doi_db_only(doi: DoiRealisationInPydantic):
     log.debug(f"Creating new DOI with params: {doi}")
 
     doi_exists = await DoiRealisation.get_or_none(
-        prefix_id=config_app.DOI_PREFIX,
+        prefix_id=settings.DOI_PREFIX,
         suffix_id=doi.suffix_id,
     )
 

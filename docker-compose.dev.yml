@@ -14,6 +14,9 @@ services:
       - doi_db_copy_dev
     env_file:
       - .env
+      - secret/runtime.env
+    environment:
+      IS_DOCKER: "True"
     networks:
       - net
       - envidat
@@ -37,7 +40,7 @@ services:
     container_name: ckan_db_copy_dev
     image: "registry-gitlab.wsl.ch/envidat/ckan-container/db:15-dev"
     env_file:
-      - .env
+      - secret/db-copy.env
     networks:
       - net
     healthcheck:

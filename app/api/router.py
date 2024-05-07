@@ -7,8 +7,8 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
 
-from app.api import datacite, doi, prefix
-from app.config import config_app
+from app.api import datacite, doi, external_doi, prefix
+from app.config import settings
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +36,7 @@ class RouteErrorHandler(APIRoute):
 
 api_router = APIRouter()
 api_router.include_router(datacite.router)
+api_router.include_router(external_doi.router)
 api_router.include_router(doi.router)
 api_router.include_router(prefix.router)
 
@@ -45,4 +46,4 @@ error_router = APIRouter(route_class=RouteErrorHandler)
 @api_router.get("/", include_in_schema=False)
 async def home(request: Request):
     """Redirect home to docs."""
-    return RedirectResponse(f"{config_app.ROOT_PATH}/docs")
+    return RedirectResponse(f"{settings.PROXY_PREFIX}/docs")
