@@ -16,8 +16,6 @@ services:
       args:
         - APP_VERSION=${APP_VERSION}
         - PYTHON_IMG_TAG=${PYTHON_IMG_TAG}
-        - MAINTAINER_APP=${MAINTAINER_APP}
-        - MAINTAINER_DEVOPS=${MAINTAINER_DEVOPS}
         - EXTERNAL_REG=${EXTERNAL_REG}
       target: debug
     volumes:
@@ -27,9 +25,6 @@ services:
       - "envidatdocker.wsl.ch:10.30.1.126"
     env_file:
       - .env
-      - secret/debug.env
-    environment:
-      IS_DOCKER: "True"
     networks:
       - net
     restart: unless-stopped
@@ -42,7 +37,6 @@ services:
       args:
         - EXTERNAL_REG=${EXTERNAL_REG}
         - NGINX_IMG_TAG=${NGINX_IMG_TAG}
-        - MAINTAINER_DEVOPS=${MAINTAINER_DEVOPS}
     depends_on:
       - api
     environment:
@@ -61,7 +55,7 @@ services:
       - POSTGRES_PASSWORD=ai4ncF6GpHokPaNmW25UftzMjM7hrC
       - PGDATA=/var/lib/postgresql/data/db
     env_file:
-      - secret/db-copy.env
+      - .env
     volumes:
       - local-ckan-db:/var/lib/postgresql/data
     extra_hosts:

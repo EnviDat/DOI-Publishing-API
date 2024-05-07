@@ -1,0 +1,20 @@
+networks:
+  micro-net:
+    external: true
+
+services:
+  doi_api:
+    container_name: doi_api
+    #image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-dev"
+    build:
+      context: .
+      args:
+        - APP_VERSION=${APP_VERSION}
+        - PYTHON_IMG_TAG=${PYTHON_IMG_TAG}
+        - EXTERNAL_REG=${EXTERNAL_REG}
+      dockerfile: ./Dockerfile
+    env_file:
+      - .env
+    networks:
+      - micro-net
+    restart: unless-stopped
