@@ -7,6 +7,7 @@ stages:
 variables:
   ARTIFACT_COMPRESSION_LEVEL: "fast"
   CACHE_COMPRESSION_LEVEL: "fast"
+  APP_VERSION: "${APP_VERSION}"
 
 workflow:
   rules:
