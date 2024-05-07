@@ -12,17 +12,11 @@ workflow:
   rules:
     - if: $CI_COMMIT_REF_NAME == "main"
       when: always
-    - if: $CI_COMMIT_REF_NAME == "staging"
-      when: always
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-      when: always
 
 set-vars:
   stage: .pre
   image: docker.io/alpine:3.15
   script:
-    - cat .env >> build.env
-    - source build.env
     - echo "APP_NAME=${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}" >> build.env
     - "echo APP_IMAGE=${INTERNAL_REG}/${CI_PROJECT_NAME}:\
       ${APP_VERSION}-${CI_COMMIT_REF_NAME} >> build.env"
@@ -30,7 +24,6 @@ set-vars:
       ${NGINX_IMG_TAG}-${CI_COMMIT_REF_NAME} >> build.env"
     - echo "Printing build.env"
     - cat build.env
-    - echo "Loaded the DataCite Url '${DATACITE_API_URL}'"
   artifacts:
     reports:
       dotenv: build.env
@@ -167,27 +160,27 @@ remote-docker:
     - echo "Loaded the DataCite Url '${DATACITE_API_URL}'"
     - echo "With DataCite Client ID '${DATACITE_CLIENT_ID}'"
     - echo "Going to docker compose remote with file docker-compose.$CI_COMMIT_REF_NAME.yml"
-    - echo "APP_VERSION=$APP_VERSION" > .env
-    - echo "EXTERNAL_REG=$EXTERNAL_REG" > .env
-    - echo "INTERNAL_REG=$INTERNAL_REG" > .env
-    - echo "NGINX_IMG_TAG=$NGINX_IMG_TAG" > .env
-    - echo "PYTHON_IMG_TAG=$PYTHON_IMG_TAG" > .env
-    - echo "ROOT_PATH=$ROOT_PATH" > .env
-    - echo "DEBUG=$DEBUG" > .env
-    - echo "DB_HOST=$DB_HOST" > .env
-    - echo "DB_NAME=$DB_NAME" > .env
-    - echo "DB_USER=$DB_USER" > .env
-    - echo "DB_PASS=$DB_PASS" > .env
-    - echo "BACKEND_CORS_ORIGINS=$BACKEND_CORS_ORIGINS" > .env
-    - echo "CKAN_API_URL=$CKAN_API_URL" > .env
-    - echo "DATACITE_API_URL=$DATACITE_API_URL" > .env
-    - echo "DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX" > .env
-    - echo "DATACITE_CLIENT_ID=$DATACITE_CLIENT_ID" > .env
-    - echo "DATACITE_PASSWORD=$DATACITE_PASSWORD" > .env
-    - echo "DOI_PREFIX=$DOI_PREFIX" > .env
-    - echo "DOI_SUFFIX_TAG=$DOI_SUFFIX_TAG" > .env
-    - echo "EMAIL_ENDPOINT=$EMAIL_ENDPOINT" > .env
-    - echo "EMAIL_FROM=$EMAIL_FROM" > .env
+    - echo "APP_VERSION=$APP_VERSION" >> .env
+    - echo "EXTERNAL_REG=$EXTERNAL_REG" >> .env
+    - echo "INTERNAL_REG=$INTERNAL_REG" >> .env
+    - echo "NGINX_IMG_TAG=$NGINX_IMG_TAG" >> .env
+    - echo "PYTHON_IMG_TAG=$PYTHON_IMG_TAG" >> .env
+    - echo "ROOT_PATH=$ROOT_PATH" >> .env
+    - echo "DEBUG=$DEBUG" >> .env
+    - echo "DB_HOST=$DB_HOST" >> .env
+    - echo "DB_NAME=$DB_NAME" >> .env
+    - echo "DB_USER=$DB_USER" >> .env
+    - echo "DB_PASS=$DB_PASS" >> .env
+    - echo "BACKEND_CORS_ORIGINS=$BACKEND_CORS_ORIGINS" >> .env
+    - echo "CKAN_API_URL=$CKAN_API_URL" >> .env
+    - echo "DATACITE_API_URL=$DATACITE_API_URL" >> .env
+    - echo "DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX" >> .env
+    - echo "DATACITE_CLIENT_ID=$DATACITE_CLIENT_ID" >> .env
+    - echo "DATACITE_PASSWORD=$DATACITE_PASSWORD" >> .env
+    - echo "DOI_PREFIX=$DOI_PREFIX" >> .env
+    - echo "DOI_SUFFIX_TAG=$DOI_SUFFIX_TAG" >> .env
+    - echo "EMAIL_ENDPOINT=$EMAIL_ENDPOINT" >> .env
+    - echo "EMAIL_FROM=$EMAIL_FROM" >> .env
     - echo "Adding SSH Key"
     - mkdir -p ~/.ssh
     - echo "$DEPLOY_SSH_KEY" > ~/.ssh/gitlab
@@ -206,46 +199,3 @@ remote-docker:
       docker compose --project-name="$APP_NAME" \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
         up --detach
-
-pages:
-  stage: deploy
-  image: docker.io/python:3.10
-  before_script:
-    - wget https://github.com/swagger-api/swagger-ui/archive/refs/tags/v5.4.2.zip
-    - unzip v5.4.2.zip
-    - cp -r swagger-ui-5.4.2/dist/ public/
-  script:
-    - pip install pdm>=2.5.6
-    - pdm install
-    - pdm run python scripts/gen_openapi_json.py
-    - mv openapi.json public/
-    - sed -i "s|https://petstore.swagger.io/v2/swagger.json|https://envidat.gitlab-pages.wsl.ch/$CI_PROJECT_NAME/openapi.json|g" public/swagger-initializer.js
-  artifacts:
-    paths:
-      - public
-# .helm:
-#   stage: deploy
-#   image:
-#     name: docker.io/alpine/helm:3.8.0
-#     entrypoint: [""]
-#   before_script:
-#     - mkdir -p /root/.config/helm/registry
-#     - >
-#       echo "{\"auths\":{\"${INTERNAL_REG}\":{\"auth\":\"$(printf "%s:%s"
-#       "${IMAGE_REGISTRY_USER}" "${IMAGE_REGISTRY_PASS}" | base64
-#       | tr -d '\n')\"}}}" > /root/.config/helm/registry/config.json
-
-# create-helm-chart:
-#   extends:
-#     - .helm
-#   stage: package
-#   rules:
-#     - if: $CI_COMMIT_REF_NAME == "main"
-#       when: always
-#   script:
-#     - >
-#       apk add yq --no-cache
-#       --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
-#     - helm package chart
-#     - CHART_VER=$(yq '.version' chart/Chart.yaml)
-#     - helm push "$CI_PROJECT_NAME-${CHART_VER}.tgz" "oci://${INTERNAL_REG}/$CI_PROJECT_NAME"

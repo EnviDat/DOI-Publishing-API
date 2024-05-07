@@ -6,13 +6,6 @@ repos:
       - id: commitizen
         stages: [commit-msg]
 
-  # Autoformat: Python code
-  - repo: https://github.com/psf/black
-    rev: 23.3.0
-    hooks:
-      - id: black
-        args: [--target-version=py310]
-
   # Lint / autoformat: Python code
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     # Ruff version.
