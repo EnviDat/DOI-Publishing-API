@@ -56,7 +56,9 @@ async def reserve_draft_doi(
 ):
     """Generate new DOI from DB and reserve draft DOI in DataCite.
 
-       Updates 'publication_state' to 'reserved'.
+       Updates 'publication_state' from '' to 'reserved'.
+
+       This also updates the field 'doi' from a '' to the new doi from the db.
 
        If call to DataCite API fails then send error email to envidat@wsl.ch
     """
