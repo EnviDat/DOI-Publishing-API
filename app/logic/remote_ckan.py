@@ -6,14 +6,14 @@ import requests
 from ckanapi import NotAuthorized, NotFound, RemoteCKAN, ValidationError
 from fastapi import HTTPException
 
-from app.config import settings
+from app.config import config_app
 
 log = logging.getLogger(__name__)
 
 
 def get_ckan(api_token: str):
     """Get CKAN session once, to re-use the connection."""
-    return RemoteCKAN(address=settings.CKAN_API_URL, apikey=api_token)
+    return RemoteCKAN(address=config_app.CKAN_API_URL, apikey=api_token)
 
 
 def ckan_call_action_handle_errors(

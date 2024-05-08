@@ -1,5 +1,3 @@
-version: "3"
-
 networks:
   net:
     name: doi-api-staging
@@ -14,9 +12,6 @@ services:
       - doi_db_copy_staging
     env_file:
       - .env
-      - secret/runtime.env
-    environment:
-      IS_DOCKER: "True"
     networks:
       - net
       - envidat
@@ -34,14 +29,15 @@ services:
       - "50011:80"
     networks:
       - net
-
-  doi_db_copy_staging:
-    container_name: ckan_db_copy_staging
-    image: "registry-gitlab.wsl.ch/envidat/ckan-container/db:15-staging"
-    env_file:
-      - secret/db-copy.env
-    networks:
-      - net
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
     restart: unless-stopped
+
+  #doi_db_copy_staging:
+  #  container_name: ckan_db_copy_staging
+  #  image: "registry-gitlab.wsl.ch/envidat/ckan-container/db:15-staging"
+  #  env_file:
+  #    - .env
+  #  networks:
+  #    - net
+  #  healthcheck:
+  #    test: ["CMD", "pg_isready", "-U", "postgres"]
+  #  restart: unless-stopped
