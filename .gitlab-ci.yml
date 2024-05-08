@@ -21,6 +21,8 @@ set-vars:
   stage: .pre
   image: docker.io/alpine:3.15
   script:
+    - echo "APP_VERSION=$APP_VERSION"
+    - echo "INTERNAL_REG=$INTERNAL_REG"
     - echo "APP_NAME=$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME" >> build.env
     - "echo APP_IMAGE=$INTERNAL_REG/$CI_PROJECT_NAME:\
       $APP_VERSION-$CI_COMMIT_REF_NAME >> build.env"
