@@ -188,6 +188,9 @@ remote-docker:
     - echo "DOI_SUFFIX_TAG=$DOI_SUFFIX_TAG" >> .env
     - echo "EMAIL_ENDPOINT=$EMAIL_ENDPOINT" >> .env
     - echo "EMAIL_FROM=$EMAIL_FROM" >> .env
+    - echo $HOSTNAME
+    - echo $PWD
+    - realpath .env
     - echo "Adding SSH Key"
     - mkdir -p ~/.ssh
     - echo "$DEPLOY_SSH_KEY" >> ~/.ssh/gitlab
