@@ -201,12 +201,12 @@ remote-docker:
     # use docker compose create to recreate the container and force pulling the latest image
     # to avoid using the local cache
     - |
-      docker compose --project-name="$APP_NAME" \
+      docker compose --project-name="$APP_NAME" --env-file .env \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
         create --force-recreate --pull="always"
     # use docker compose up to start the service on the remote machine
     - |
-      docker compose --project-name="$APP_NAME" \
+      docker compose --project-name="$APP_NAME" --env-file .env \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
         up --detach
 
