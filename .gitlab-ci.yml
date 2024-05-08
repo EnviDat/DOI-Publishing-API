@@ -197,18 +197,17 @@ remote-docker:
     - chmod 400 ~/.ssh/gitlab
     - echo 'IdentityFile ~/.ssh/gitlab' >> ~/.ssh/config
     - ssh-keyscan -H $DEPLOY_HOSTNAME >> ~/.ssh/known_hosts
-    - scp .env $DEPLOY_SSH_USER@$DEPLOY_HOSTNAME:.env
   script:
     # use docker compose create to recreate the container and force pulling the latest image
     # to avoid using the local cache
 
     - |
-      docker compose --project-name="$APP_NAME" --env-file .env \
+      docker compose --project-name="$APP_NAME" \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
         create --force-recreate --pull="always"
     # use docker compose up to start the service on the remote machine
     - |
-      docker compose --project-name="$APP_NAME" --env-file .env \
+      docker compose --project-name="$APP_NAME" \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
         up --detach
 
