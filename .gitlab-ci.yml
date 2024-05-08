@@ -159,8 +159,8 @@ remote-docker:
   image: docker.io/docker:24.0
   only:
     - branches
-  #variables:
-  #  DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
+  variables:
+    DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
   before_script:
     - echo "***The app image is   $APP_IMAGE"
     - echo "***The app version is  $APP_VERSION"
@@ -197,7 +197,7 @@ remote-docker:
     - chmod 400 ~/.ssh/gitlab
     - echo 'IdentityFile ~/.ssh/gitlab' >> ~/.ssh/config
     - ssh-keyscan -H $DEPLOY_HOSTNAME >> ~/.ssh/known_hosts
-    - cp .env ./.env
+    - scp .env $DOCKER_HOST:.env
   script:
     # use docker compose create to recreate the container and force pulling the latest image
     # to avoid using the local cache
