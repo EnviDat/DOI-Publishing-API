@@ -1,23 +1,33 @@
 """Config file for Pydantic and FastAPI, using environment variables."""
 
 import logging
+import os
 from functools import lru_cache
 from typing import Any, Optional, Union
-from dotenv import dotenv_values
 
+from dotenv import dotenv_values
 from pydantic import (
     AnyHttpUrl,
-    Extra,
-    ValidationInfo,
-    PostgresDsn,
-    field_validator,
     BaseModel,
+    PostgresDsn,
     ValidationError,
     computed_field,
+    field_validator,
 )
 from pydantic_core import Url
 
 log = logging.getLogger(__name__)
+
+
+def env_example_keys() -> list[str]:
+    """Return list with strings of keys in 'env.example', excludes comments that
+    start with '#'.
+    """
+    with open("env.example") as file:
+        equals_char = "="
+        keys = [(line.rstrip()).split(equals_char)[0]
+                for line in file if not line.startswith("#")]
+    return keys
 
 
 class ConfigAppModel(BaseModel):
@@ -93,20 +103,31 @@ class ConfigAppModel(BaseModel):
     EMAIL_ENDPOINT: AnyHttpUrl
     EMAIL_FROM: str
 
+
 @lru_cache
 def get_config_app() -> ConfigAppModel | Exception:
-    """Return config for app as object. Validate and cache .env environment variables.
+    """Return config for app as object. Validate and cache environment variables.
+    If system variable 'IS_DOCKER' is "True" then reads environment variables
+    passed from Docker container, else reads local .env.
 
     :return ConfigAppModel with valiated environment variables
         or Exception if validation fails
     """
-    env_dict = dotenv_values(".env", verbose=True)
-
     try:
+        if os.getenv("IS_DOCKER") == "True":
+            env_keys = env_example_keys()
+            env_dict = {}
+            for key in env_keys:
+                if val := os.getenv(key):
+                    env_dict[key] = val
+        else:
+            env_dict = dotenv_values(".env", verbose=True)
+
         _config = ConfigAppModel(**env_dict)
         return _config
-    except ValidationError as e:
-        raise Exception(f"Failed to validate environment variables, error(s): {e}")
+
+    except ValidationError as err:
+        raise Exception(f"Failed to validate environment variables, error(s): {err}")
 
 
 config_app = get_config_app()
