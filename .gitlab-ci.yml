@@ -21,16 +21,13 @@ set-vars:
   stage: .pre
   image: docker.io/alpine:3.15
   script:
-    - cat .env >> build.env
-    - source build.env
-    - echo "APP_NAME=${CI_PROJECT_NAME}-${CI_COMMIT_REF_NAME}" >> build.env
-    - "echo APP_IMAGE=${INTERNAL_REG}/${CI_PROJECT_NAME}:\
-      ${APP_VERSION}-${CI_COMMIT_REF_NAME} >> build.env"
-    - "echo PROXY_IMAGE=${INTERNAL_REG}/${CI_PROJECT_NAME}/proxy:\
-      ${NGINX_IMG_TAG}-${CI_COMMIT_REF_NAME} >> build.env"
-    - echo "Printing build.env"
-    - cat build.env
-    - echo "Loaded the DataCite Url '${DATACITE_API_URL}'"
+    - echo "APP_VERSION=$APP_VERSION"
+    - echo "INTERNAL_REG=$INTERNAL_REG"
+    - echo "APP_NAME=$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME" >> build.env
+    - "echo APP_IMAGE=$INTERNAL_REG/$CI_PROJECT_NAME:\
+      $APP_VERSION-$CI_COMMIT_REF_NAME >> build.env"
+    - "echo PROXY_IMAGE=$INTERNAL_REG/$CI_PROJECT_NAME/proxy:\
+      $NGINX_IMG_TAG-$CI_COMMIT_REF_NAME >> build.env"
   artifacts:
     reports:
       dotenv: build.env
@@ -47,35 +44,33 @@ set-vars:
       "%s:%s" "${IMAGE_REGISTRY_USER}" "${IMAGE_REGISTRY_PASS}"
       | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
   script:
-    - echo "Build image  ${IMAGE_NAME}"
+    - echo "Build image  $IMAGE_NAME"
     - >
       /kaniko/executor
       --force
-      --context "${CONTEXT_DIR}"
-      --dockerfile "${CONTEXT_DIR}/Dockerfile"
+      --context "$CONTEXT_DIR"
+      --dockerfile "$CONTEXT_DIR/Dockerfile"
       --cache=true
-      --destination "${IMAGE_NAME}-unverified"
-      --build-arg MAINTAINER_APP=${MAINTAINER_APP}
-      --build-arg MAINTAINER_DEVOPS=${MAINTAINER_DEVOPS}
-      --build-arg EXTERNAL_REG="${EXTERNAL_REG}"
-      --build-arg INTERNAL_REG="${INTERNAL_REG}"
-      --build-arg PYTHON_IMG_TAG="${PYTHON_IMG_TAG}"
-      --build-arg APP_VERSION="${APP_VERSION}"
-      --build-arg NGINX_IMG_TAG="${NGINX_IMG_TAG}"
+      --destination "$IMAGE_NAME-unverified"
+      --build-arg EXTERNAL_REG="$EXTERNAL_REG"
+      --build-arg INTERNAL_REG="$INTERNAL_REG"
+      --build-arg PYTHON_IMG_TAG="$PYTHON_IMG_TAG"
+      --build-arg APP_VERSION="$APP_VERSION"
+      --build-arg NGINX_IMG_TAG="$NGINX_IMG_TAG"
 
 app-build:
   extends:
     - .build
   variables:
-    IMAGE_NAME: ${APP_IMAGE}
-    CONTEXT_DIR: "${CI_PROJECT_DIR}"
+    IMAGE_NAME: $APP_IMAGE
+    CONTEXT_DIR: "$CI_PROJECT_DIR"
 
 proxy-build:
   extends:
     - .build
   variables:
-    IMAGE_NAME: ${PROXY_IMAGE}
-    CONTEXT_DIR: "${CI_PROJECT_DIR}/nginx"
+    IMAGE_NAME: $PROXY_IMAGE
+    CONTEXT_DIR: "$CI_PROJECT_DIR/nginx"
 
 .scan:
   stage: scan
@@ -116,14 +111,14 @@ app-scan:
   extends:
     - .scan
   variables:
-    IMAGE_NAME: ${APP_IMAGE}
+    IMAGE_NAME: $APP_IMAGE
     SHORT_NAME: "app"
 
 proxy-scan:
   extends:
     - .scan
   variables:
-    IMAGE_NAME: ${PROXY_IMAGE}
+    IMAGE_NAME: $PROXY_IMAGE
     SHORT_NAME: "proxy"
 
 .retag:
@@ -140,20 +135,20 @@ proxy-scan:
   script:
     - >
       regctl --verbosity debug image copy
-      "${IMAGE_NAME}-unverified" "${IMAGE_NAME}"
-    - regctl --verbosity debug tag delete "${IMAGE_NAME}-unverified"
+      "$IMAGE_NAME-unverified" "$IMAGE_NAME"
+    - regctl --verbosity debug tag delete "$IMAGE_NAME-unverified"
 
 app-retag:
   extends:
     - .retag
   variables:
-    IMAGE_NAME: ${APP_IMAGE}
+    IMAGE_NAME: $APP_IMAGE
 
 proxy-retag:
   extends:
     - .retag
   variables:
-    IMAGE_NAME: ${PROXY_IMAGE}
+    IMAGE_NAME: $PROXY_IMAGE
 
 remote-docker:
   stage: deploy
@@ -164,23 +159,21 @@ remote-docker:
   variables:
     DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
   before_script:
-    - echo "***The app image is   ${APP_IMAGE}"
-    - echo "***The app version is  ${APP_VERSION}"
-    - echo "Loaded the DataCite Url '${DATACITE_API_URL}'"
-    - echo "With DataCite Client ID '${DATACITE_CLIENT_ID}'"
+    - echo "***The app image is   $APP_IMAGE"
+    - echo "***The app version is  $APP_VERSION"
+    - echo "Loaded the DataCite Url '$DATACITE_API_URL'"
+    - echo "With DataCite Client ID '$DATACITE_CLIENT_ID'"
     - echo "Going to docker compose remote with file docker-compose.$CI_COMMIT_REF_NAME.yml"
-    - mkdir -p secret
-    - echo "$DB_COPY_ENV" > secret/db-copy.env
-    - echo "$RUNTIME_ENV" > secret/runtime.env
     - echo "Adding SSH Key"
     - mkdir -p ~/.ssh
-    - echo "$DEPLOY_SSH_KEY" > ~/.ssh/gitlab
+    - echo "$DEPLOY_SSH_KEY" >> ~/.ssh/gitlab
     - chmod 400 ~/.ssh/gitlab
-    - echo 'IdentityFile ~/.ssh/gitlab' > ~/.ssh/config
+    - echo 'IdentityFile ~/.ssh/gitlab' >> ~/.ssh/config
     - ssh-keyscan -H $DEPLOY_HOSTNAME >> ~/.ssh/known_hosts
   script:
     # use docker compose create to recreate the container and force pulling the latest image
     # to avoid using the local cache
+
     - |
       docker compose --project-name="$APP_NAME" \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
