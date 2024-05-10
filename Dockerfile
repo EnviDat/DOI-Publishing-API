@@ -6,12 +6,9 @@ ARG PYTHON_IMG_TAG
 FROM ${EXTERNAL_REG}/python:${PYTHON_IMG_TAG}-slim-bookworm as base
 ARG APP_VERSION
 ARG PYTHON_IMG_TAG
-ARG MAINTAINER_APP
-ARG MAINTAINER_DEVOPS
+
 LABEL envidat.ch.app-version="${APP_VERSION}" \
       envidat.ch.python-img-tag="${PYTHON_IMG_TAG}" \
-      envidat.ch.maintainer-app="${MAINTAINER_APP}" \
-      envidat.ch.maintainer-devops="${MAINTAINER_DEVOPS}" \
       envidat.ch.api-port="8000"
 RUN set -ex \
     && apt-get update \
@@ -29,11 +26,8 @@ ENV LC_ALL en_US.UTF-8
 
 FROM base as extract-deps
 WORKDIR /opt/python
-COPY pyproject.toml pdm.lock README.md /opt/python/
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir pdm==2.5.6
-RUN pdm export --prod --without-hashes > requirements.txt \
-    && pdm export -G dev --no-default > requirements-dev.txt
+COPY README.md requirements.txt /opt/python/
+RUN pip install --no-cache-dir --upgrade pip
 
 
 
@@ -74,18 +68,6 @@ COPY . /opt/
 RUN useradd -r -u 900 -m -c "appuser account" -d /home/appuser -s /bin/false appuser \
     && chown -R appuser:appuser /opt /home/appuser
 
-
-
-FROM runtime as debug
-USER appuser
-COPY --from=extract-deps \
-    /opt/python/requirements-dev.txt /opt/python/
-RUN pip install --user --no-warn-script-location \
-    --no-cache-dir -r /opt/python/requirements-dev.txt
-ENTRYPOINT ["python", "-m", "debugpy", "--listen", \
-            "0.0.0.0:5678", "-m"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", \
-    "--reload", "--log-level", "error", "--no-access-log"]
 
 
 
