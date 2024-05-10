@@ -1,5 +1,3 @@
-version: "3"
-
 networks:
   net:
     name: doi-publishing-prod
@@ -15,15 +13,27 @@ services:
       args:
         - APP_VERSION=${APP_VERSION}
         - PYTHON_IMG_TAG=${PYTHON_IMG_TAG}
-        - MAINTAINER_APP=${MAINTAINER_APP}
-        - MAINTAINER_DEVOPS=${MAINTAINER_DEVOPS}
         - EXTERNAL_REG=${EXTERNAL_REG}
       target: prod
-    env_file:
-      - .env
-      - secret/runtime.env
-    environment:
-      IS_DOCKER: "True"
+      environment:
+        - IS_DOCKER=True
+        - DB_HOST=${DB_HOST}
+        - DB_NAME=${DB_NAME}
+        - DB_USER=${DB_USER}
+        - DB_PASS=${DB_PASS}
+        - APP_VERSION=${APP_VERSION}
+        - DEBUG=${DEBUG}
+        - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+        - ROOT_PATH=${ROOT_PATH}
+        - CKAN_API_URL=${CKAN_API_URL}
+        - DATACITE_API_URL=${DATACITE_API_URL}
+        - DATACITE_DATA_URL_PREFIX=${DATACITE_DATA_URL_PREFIX}
+        - DATACITE_CLIENT_ID=${DATACITE_CLIENT_ID}
+        - DATACITE_PASSWORD=${DATACITE_PASSWORD}
+        - DOI_PREFIX=${DOI_PREFIX}
+        - DOI_SUFFIX_TAG=${DOI_SUFFIX_TAG}
+        - EMAIL_ENDPOINT=${EMAIL_ENDPOINT}
+        - EMAIL_FROM=${EMAIL_FROM}
     networks:
       - net
       - envidat
@@ -37,7 +47,6 @@ services:
       args:
         - EXTERNAL_REG=${EXTERNAL_REG}
         - NGINX_IMG_TAG=${NGINX_IMG_TAG}
-        - MAINTAINER_DEVOPS=${MAINTAINER_DEVOPS}
     depends_on:
       - doi_api_main
     environment:

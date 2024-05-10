@@ -3,11 +3,7 @@ __pycache__/
 *.py[cod]
 
 # Secret files
-secret/**/*.env
-*.secret
-**/debug.env
-**/runtime.env
+.env
 
 # Packaging
-.pdm.toml
 __pypackages__/
