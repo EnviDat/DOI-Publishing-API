@@ -31,7 +31,7 @@ def env_example_keys() -> list[str]:
 
 
 class ConfigAppModel(BaseModel):
-    """Main settings class, defining environment variables."""
+    """Main config class, defines environment variables."""
 
     __NAME__ = "doi-publishing-api"
     APP_VERSION: str

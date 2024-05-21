@@ -161,8 +161,6 @@ remote-docker:
   before_script:
     - echo "***The app image is   $APP_IMAGE"
     - echo "***The app version is  $APP_VERSION"
-    - echo "Loaded the DataCite Url '$DATACITE_API_URL'"
-    - echo "With DataCite Client ID '$DATACITE_CLIENT_ID'"
     - echo "Going to docker compose remote with file docker-compose.$CI_COMMIT_REF_NAME.yml"
     - echo "Adding SSH Key"
     - mkdir -p ~/.ssh
