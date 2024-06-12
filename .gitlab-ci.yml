@@ -23,15 +23,6 @@ variables:
 set-vars:
   stage: .pre
   image: docker.io/alpine:3.15
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
-      when: always
-    - if: $CI_COMMIT_REF_NAME == "main"
-      when: always
-    - if: $CI_COMMIT_REF_NAME == "staging"
-      when: always
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-      when: always  
   script:
     - echo "APP_VERSION=$APP_VERSION"
     - echo "INTERNAL_REG=$INTERNAL_REG"
