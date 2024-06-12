@@ -182,8 +182,6 @@ remote-docker:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: never
-  only:
-    - branches
   needs:
     - set-vars
     - app-retag
