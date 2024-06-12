@@ -17,6 +17,9 @@ workflow:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: always
+    - if: '$CI_PIPELINE_SOURCE == "source"'
+      when: never
+
 
 set-vars:
   stage: .pre
@@ -202,9 +205,14 @@ manual-remote-docker:
   stage: manual-deploy
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:24.0
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "source"'
+      when: always
+    - when: manual
   needs:
     - set-vars
-  when: manual
   variables:
     DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
   before_script:
