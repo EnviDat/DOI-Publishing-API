@@ -17,7 +17,7 @@ workflow:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "source"'
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: never
 
 
@@ -217,7 +217,7 @@ manual-remote-docker:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "source"'
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: always
     - when: manual
   needs:
