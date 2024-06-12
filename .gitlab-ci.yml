@@ -17,8 +17,6 @@ workflow:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: always
-    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
-      when: never
 
 
 set-vars:
@@ -38,11 +36,14 @@ set-vars:
 
 .build:
   stage: build
-  needs:
-    - set-vars
   image:
     name: gcr.io/kaniko-project/executor:v1.8.1-debug
     entrypoint: [""]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
+      when: never
+  needs:
+    - set-vars
   before_script:
     - mkdir -p /kaniko/.docker
     - >
@@ -83,6 +84,9 @@ proxy-build:
   image:
     name: docker.io/aquasec/trivy:0.23.0
     entrypoint: [""]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
+      when: never
   variables:
     GIT_STRATEGY: none
   script:
@@ -136,6 +140,9 @@ proxy-scan:
 .retag:
   stage: package
   image: docker.io/regclient/regctl:v0.3-alpine
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
+      when: never
   variables:
     GIT_STRATEGY: none
   before_script:
@@ -172,6 +179,9 @@ remote-docker:
   stage: deploy
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:24.0
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
+      when: never
   only:
     - branches
   needs:
@@ -215,8 +225,6 @@ manual-remote-docker:
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:24.0
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-      when: always
     - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: always
     - when: manual
