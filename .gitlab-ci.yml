@@ -17,6 +17,9 @@ workflow:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: always
+    - if: '$CI_PIPELINE_SOURCE == "source"'
+      when: never
+
 
 set-vars:
   stage: .pre
@@ -114,6 +117,7 @@ app-scan:
   extends:
     - .scan
   needs:
+    - set-vars
     - app-build
   variables:
     IMAGE_NAME: $APP_IMAGE
@@ -123,6 +127,7 @@ proxy-scan:
   extends:
     - .scan
   needs:
+    - set-vars
     - proxy-build
   variables:
     IMAGE_NAME: $PROXY_IMAGE
@@ -149,6 +154,7 @@ app-retag:
   extends:
     - .retag
   needs:
+    - set-vars
     - app-scan
   variables:
     IMAGE_NAME: $APP_IMAGE
@@ -157,6 +163,7 @@ proxy-retag:
   extends:
     - .retag
   needs:
+    - set-vars
     - proxy-scan
   variables:
     IMAGE_NAME: $PROXY_IMAGE
@@ -168,6 +175,7 @@ remote-docker:
   only:
     - branches
   needs:
+    - set-vars
     - app-retag
     - proxy-retag
   variables:
@@ -183,6 +191,10 @@ remote-docker:
     - echo 'IdentityFile ~/.ssh/gitlab' >> ~/.ssh/config
     - ssh-keyscan -H $DEPLOY_HOSTNAME >> ~/.ssh/known_hosts
   script:
+    - USER_DIR=$(echo "/home/$DEPLOY_SSH_USER")
+    - echo "Defined USER_DIR ${USER_DIR}"
+    - HOME=$USER_DIR
+    - echo "Going to remotely start the docker-compose.${CI_COMMIT_REF_NAME}.yml on ${DEPLOY_SSH_USER}@${DEPLOY_HOSTNAME}"
     # use docker compose create to recreate the container and force pulling the latest image
     # to avoid using the local cache
     - |
@@ -202,9 +214,14 @@ manual-remote-docker:
   stage: manual-deploy
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:24.0
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "source"'
+      when: always
+    - when: manual
   needs:
     - set-vars
-  when: manual
   variables:
     DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
   before_script:
@@ -218,6 +235,10 @@ manual-remote-docker:
     - echo 'IdentityFile ~/.ssh/gitlab' >> ~/.ssh/config
     - ssh-keyscan -H $DEPLOY_HOSTNAME >> ~/.ssh/known_hosts
   script:
+    - USER_DIR=$(echo "/home/$DEPLOY_SSH_USER")
+    - echo "Defined USER_DIR ${USER_DIR}"
+    - HOME=$USER_DIR
+    - echo "Going to remotely start the docker-compose.${CI_COMMIT_REF_NAME}.yml on ${DEPLOY_SSH_USER}@${DEPLOY_HOSTNAME}"
     # use docker compose create to recreate the container and force pulling the latest image
     # to avoid using the local cache
     - |
