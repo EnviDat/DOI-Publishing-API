@@ -9,7 +9,7 @@ variables:
   ARTIFACT_COMPRESSION_LEVEL: "fast"
   CACHE_COMPRESSION_LEVEL: "fast"
 
-workflow:
+.triggers:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: never
@@ -23,6 +23,15 @@ workflow:
 set-vars:
   stage: .pre
   image: docker.io/alpine:3.15
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
+      when: always
+    - if: $CI_COMMIT_REF_NAME == "main"
+      when: always
+    - if: $CI_COMMIT_REF_NAME == "staging"
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: always  
   script:
     - echo "APP_VERSION=$APP_VERSION"
     - echo "INTERNAL_REG=$INTERNAL_REG"
@@ -65,6 +74,7 @@ set-vars:
 
 app-build:
   extends:
+    - .triggers
     - .build
   variables:
     IMAGE_NAME: $APP_IMAGE
@@ -72,6 +82,7 @@ app-build:
 
 proxy-build:
   extends:
+    - .triggers
     - .build
   variables:
     IMAGE_NAME: $PROXY_IMAGE
@@ -114,6 +125,7 @@ proxy-build:
 
 app-scan:
   extends:
+    - .triggers
     - .scan
   needs:
     - set-vars
@@ -124,6 +136,7 @@ app-scan:
 
 proxy-scan:
   extends:
+    - .triggers
     - .scan
   needs:
     - set-vars
@@ -151,6 +164,7 @@ proxy-scan:
 
 app-retag:
   extends:
+    - .triggers
     - .retag
   needs:
     - set-vars
@@ -160,6 +174,7 @@ app-retag:
 
 proxy-retag:
   extends:
+    - .triggers
     - .retag
   needs:
     - set-vars
@@ -171,6 +186,8 @@ remote-docker:
   stage: deploy
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:24.0
+  extends:
+    - .triggers
   needs:
     - set-vars
     - app-retag
