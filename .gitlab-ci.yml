@@ -11,13 +11,14 @@ variables:
 
 workflow:
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
+      when: never
     - if: $CI_COMMIT_REF_NAME == "main"
       when: always
     - if: $CI_COMMIT_REF_NAME == "staging"
       when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: always
-
 
 set-vars:
   stage: .pre
@@ -39,9 +40,6 @@ set-vars:
   image:
     name: gcr.io/kaniko-project/executor:v1.8.1-debug
     entrypoint: [""]
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
-      when: never
   needs:
     - set-vars
   before_script:
@@ -84,9 +82,6 @@ proxy-build:
   image:
     name: docker.io/aquasec/trivy:0.23.0
     entrypoint: [""]
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
-      when: never
   variables:
     GIT_STRATEGY: none
   script:
@@ -140,9 +135,6 @@ proxy-scan:
 .retag:
   stage: package
   image: docker.io/regclient/regctl:v0.3-alpine
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
-      when: never
   variables:
     GIT_STRATEGY: none
   before_script:
@@ -179,9 +171,6 @@ remote-docker:
   stage: deploy
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:24.0
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
-      when: never
   needs:
     - set-vars
     - app-retag
