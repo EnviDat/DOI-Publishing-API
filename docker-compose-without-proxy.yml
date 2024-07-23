@@ -1,0 +1,39 @@
+networks:
+  envidat:
+    external: true
+
+services:
+  doi_api:
+    container_name: doi_api
+    #image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-dev"
+    build:
+      context: .
+      args:
+        - APP_VERSION=${APP_VERSION}
+        - PYTHON_IMG_TAG=${PYTHON_IMG_TAG}
+        - EXTERNAL_REG=${EXTERNAL_REG}
+      dockerfile: ./Dockerfile
+    environment:
+      - IS_DOCKER=True
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - APP_VERSION=${APP_VERSION}
+      - DEBUG=${DEBUG}
+      - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+      - ROOT_PATH=${ROOT_PATH}
+      - CKAN_API_URL=${CKAN_API_URL}
+      - DATACITE_API_URL=${DATACITE_API_URL}
+      - DATACITE_DATA_URL_PREFIX=${DATACITE_DATA_URL_PREFIX}
+      - DATACITE_CLIENT_ID=${DATACITE_CLIENT_ID}
+      - DATACITE_PASSWORD=${DATACITE_PASSWORD}
+      - DOI_PREFIX=${DOI_PREFIX}
+      - DOI_SUFFIX_TAG=${DOI_SUFFIX_TAG}
+      - EMAIL_ENDPOINT=${EMAIL_ENDPOINT}
+      - EMAIL_FROM=${EMAIL_FROM}
+    env_file:
+      - .env
+    networks:
+      - envidat
+    restart: unless-stopped
