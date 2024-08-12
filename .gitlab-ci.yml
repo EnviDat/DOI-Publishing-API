@@ -3,16 +3,13 @@ stages:
   - scan
   - package
   - deploy
-  - manual-deploy
 
 variables:
   ARTIFACT_COMPRESSION_LEVEL: "fast"
   CACHE_COMPRESSION_LEVEL: "fast"
 
-.triggers:
+workflow:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
-      when: never
     - if: $CI_COMMIT_REF_NAME == "main"
       when: always
     - if: $CI_COMMIT_REF_NAME == "staging"
@@ -40,8 +37,6 @@ set-vars:
   image:
     name: gcr.io/kaniko-project/executor:v1.8.1-debug
     entrypoint: [""]
-  needs:
-    - set-vars
   before_script:
     - mkdir -p /kaniko/.docker
     - >
@@ -65,7 +60,6 @@ set-vars:
 
 app-build:
   extends:
-    - .triggers
     - .build
   variables:
     IMAGE_NAME: $APP_IMAGE
@@ -73,7 +67,6 @@ app-build:
 
 proxy-build:
   extends:
-    - .triggers
     - .build
   variables:
     IMAGE_NAME: $PROXY_IMAGE
@@ -116,22 +109,14 @@ proxy-build:
 
 app-scan:
   extends:
-    - .triggers
     - .scan
-  needs:
-    - set-vars
-    - app-build
   variables:
     IMAGE_NAME: $APP_IMAGE
     SHORT_NAME: "app"
 
 proxy-scan:
   extends:
-    - .triggers
     - .scan
-  needs:
-    - set-vars
-    - proxy-build
   variables:
     IMAGE_NAME: $PROXY_IMAGE
     SHORT_NAME: "proxy"
@@ -155,21 +140,13 @@ proxy-scan:
 
 app-retag:
   extends:
-    - .triggers
     - .retag
-  needs:
-    - set-vars
-    - app-scan
   variables:
     IMAGE_NAME: $APP_IMAGE
 
 proxy-retag:
   extends:
-    - .triggers
     - .retag
-  needs:
-    - set-vars
-    - proxy-scan
   variables:
     IMAGE_NAME: $PROXY_IMAGE
 
@@ -177,17 +154,14 @@ remote-docker:
   stage: deploy
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:24.0
-  extends:
-    - .triggers
-  needs:
-    - set-vars
-    - app-retag
-    - proxy-retag
+  only:
+    - branches
   variables:
     DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
   before_script:
     - echo "***The app image is   $APP_IMAGE"
     - echo "***The app version is  $APP_VERSION"
+    - echo "The DataCite API URL is '$DATACITE_API_URL'"
     - echo "Going to docker compose remote with file docker-compose.$CI_COMMIT_REF_NAME.yml"
     - echo "Adding SSH Key"
     - mkdir -p ~/.ssh
@@ -196,12 +170,9 @@ remote-docker:
     - echo 'IdentityFile ~/.ssh/gitlab' >> ~/.ssh/config
     - ssh-keyscan -H $DEPLOY_HOSTNAME >> ~/.ssh/known_hosts
   script:
-    - USER_DIR=$(echo "/home/$DEPLOY_SSH_USER")
-    - echo "Defined USER_DIR ${USER_DIR}"
-    - HOME=$USER_DIR
-    - echo "Going to remotely start the docker-compose.${CI_COMMIT_REF_NAME}.yml on ${DEPLOY_SSH_USER}@${DEPLOY_HOSTNAME}"
     # use docker compose create to recreate the container and force pulling the latest image
     # to avoid using the local cache
+
     - |
       docker compose --project-name="$APP_NAME" \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
@@ -212,44 +183,3 @@ remote-docker:
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
         up --detach
 
-# Job for manual deploying of a docker-compose file, to use it's
-# docker images, make sure before you run it that the images referenced
-# in the docker-compose.$CI_COMMIT_REF_NAME.yml exist!
-manual-remote-docker:
-  stage: manual-deploy
-  environment: $CI_COMMIT_REF_NAME
-  image: docker.io/docker:24.0
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
-      when: always
-    - when: manual
-  needs:
-    - set-vars
-  variables:
-    DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
-  before_script:
-    - echo "***The app image is   $APP_IMAGE"
-    - echo "***The app version is  $APP_VERSION"
-    - echo "Going to docker compose remote with file docker-compose.$CI_COMMIT_REF_NAME.yml"
-    - echo "Adding SSH Key"
-    - mkdir -p ~/.ssh
-    - echo "$DEPLOY_SSH_KEY" >> ~/.ssh/gitlab
-    - chmod 400 ~/.ssh/gitlab
-    - echo 'IdentityFile ~/.ssh/gitlab' >> ~/.ssh/config
-    - ssh-keyscan -H $DEPLOY_HOSTNAME >> ~/.ssh/known_hosts
-  script:
-    - USER_DIR=$(echo "/home/$DEPLOY_SSH_USER")
-    - echo "Defined USER_DIR ${USER_DIR}"
-    - HOME=$USER_DIR
-    - echo "Going to remotely start the docker-compose.${CI_COMMIT_REF_NAME}.yml on ${DEPLOY_SSH_USER}@${DEPLOY_HOSTNAME}"
-    # use docker compose create to recreate the container and force pulling the latest image
-    # to avoid using the local cache
-    - |
-      docker compose --project-name="$APP_NAME" \
-        --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
-        create --force-recreate --pull="always"
-    # use docker compose up to start the service on the remote machine
-    - |
-      docker compose --project-name="$APP_NAME" \
-        --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
-        up --detach
