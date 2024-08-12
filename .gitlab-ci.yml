@@ -182,4 +182,3 @@ remote-docker:
       docker compose --project-name="$APP_NAME" \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
         up --detach
-
