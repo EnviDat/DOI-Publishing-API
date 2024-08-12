@@ -1,5 +1,3 @@
-version: "3"
-
 networks:
   net:
     name: doi-api-dev
@@ -9,12 +7,18 @@ networks:
 services:
   doi_api_dev:
     container_name: doi_api_dev
-    image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-dev"
-    depends_on:
-      - doi_db_copy_dev
+    #image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-dev"
+    build:
+      context: .
+      args:
+        - APP_VERSION=${APP_VERSION}
+        - PYTHON_IMG_TAG=${PYTHON_IMG_TAG}
+        - EXTERNAL_REG=${EXTERNAL_REG}
+      dockerfile: ./Dockerfile
+    #depends_on:
+    #  - doi_db_copy_dev
     env_file:
       - .env
-      - secret/runtime.env
     environment:
       IS_DOCKER: "True"
     networks:
@@ -24,7 +28,7 @@ services:
 
   doi_proxy_dev:
     container_name: doi_api_proxy_dev
-    image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-dev"
+    image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-main"
     depends_on:
       - doi_api_dev
     environment:
@@ -36,13 +40,13 @@ services:
       - net
     restart: unless-stopped
 
-  doi_db_copy_dev:
-    container_name: ckan_db_copy_dev
-    image: "registry-gitlab.wsl.ch/envidat/ckan-container/db:15-dev"
-    env_file:
-      - secret/db-copy.env
-    networks:
-      - net
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
-    restart: unless-stopped
+#  doi_db_copy_dev:
+#   container_name: ckan_db_copy_dev
+#    image: "registry-gitlab.wsl.ch/envidat/ckan-container/db:15-dev"
+#    env_file:
+#      - secret/db-copy.env
+#    networks:
+#      - net
+#    healthcheck:
+#      test: ["CMD", "pg_isready", "-U", "postgres"]
+#    restart: unless-stopped
