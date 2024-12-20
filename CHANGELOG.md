@@ -1,3 +1,10 @@
+## 1.0.2 (2024-12-20)
+
+### Fix
+
+- upgrade envidat-python-utils to version 1.4.10 to use newest version of DataCite 
+  converter
+
 ## 0.1.0 (2023-07-12)
 
 ### Feat

@@ -110,7 +110,7 @@ def get_config_app() -> ConfigAppModel | Exception:
     If system variable 'IS_DOCKER' is "True" then reads environment variables
     passed from Docker container, else reads local .env.
 
-    :return ConfigAppModel with valiated environment variables
+    Return ConfigAppModel with validated environment variables
         or Exception if validation fails
     """
     try:
