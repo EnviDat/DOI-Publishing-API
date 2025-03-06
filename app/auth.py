@@ -15,6 +15,7 @@ log = logging.getLogger(__name__)
 def get_user(authorization: Annotated[str | None, Header()] = None) -> dict:
     """Return a CKAN API instance for a standard user."""
     if not authorization:
+        log.debug("Authorization is: %{authorization}")
         log.error("No Authorization header present")
         raise HTTPException(status_code=401, detail="No Authorization header present")
 
