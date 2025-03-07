@@ -41,7 +41,7 @@ services:
       - doi_api_staging
     environment:
       - APP_HOST=doi_api_staging:8000
-      - AUTH_COOKIE_NAME=envidat_staging
+      - AUTH_COOKIE_NAME=envidat
     ports:
       - "50011:80"
     networks:
