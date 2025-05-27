@@ -22,7 +22,7 @@ variables:
 
 set-vars:
   stage: .pre
-  image: docker.io/alpine:3.15
+  image: docker.io/alpine:3.20
   script:
     - echo "APP_VERSION=$APP_VERSION"
     - echo "INTERNAL_REG=$INTERNAL_REG"
@@ -39,7 +39,7 @@ set-vars:
 .build:
   stage: build
   image:
-    name: gcr.io/kaniko-project/executor:v1.8.1-debug
+    name: gcr.io/kaniko-project/executor:v1.9.1-debug
     entrypoint: [""]
   before_script:
     - mkdir -p /kaniko/.docker
@@ -232,6 +232,8 @@ manual-remote-docker:
     - USER_DIR=$(echo "/home/$DEPLOY_SSH_USER")
     - echo "Defined USER_DIR ${USER_DIR}"
     - HOME=$USER_DIR
+    - echo "going to docker login with user ${DOCKER_USERNAME}"
+    - echo "${DOCKER_TOKEN}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
     - > 
       if ! docker network inspect envidat >/dev/null 2>&1; then 
         docker network create envidat
