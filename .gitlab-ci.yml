@@ -54,7 +54,7 @@ set-vars:
         }
       }}" > /kaniko/.docker/config.json
   script:
-    - echo "Build image  $IMAGE_NAME"
+    - echo "Build image $IMAGE_NAME"
     - >
       /kaniko/executor
       --force
@@ -92,6 +92,7 @@ proxy-build:
   variables:
     GIT_STRATEGY: none
   script:
+    - echo "Going to scan image $IMAGE_NAME-unverified"
     - trivy --version
     - time trivy image --clear-cache
     - time trivy --cache-dir .trivycache/ image --download-db-only --no-progress
