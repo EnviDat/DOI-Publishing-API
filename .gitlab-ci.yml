@@ -25,20 +25,22 @@ set-vars:
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/alpine:3.20
   script:
-    - echo "DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX" >> build.env
-    - echo "DOI_PREFIX=$DOI_PREFIX" >> build.env
-    - echo "DATACITE_API_URL=$DATACITE_API_URL" >> build.env
-    - echo "DOI_SUFFIX_TAG=$DOI_SUFFIX_TAG" >> build.env
+    - echo "DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX" >> .env
+    - echo "DOI_PREFIX=$DOI_PREFIX" >> .env
+    - echo "DATACITE_API_URL=$DATACITE_API_URL" >> .env
+    - echo "DOI_SUFFIX_TAG=$DOI_SUFFIX_TAG" >> .env
     - echo "INTERNAL_REG=$INTERNAL_REG"
-    - echo "APP_NAME=$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME" >> build.env
+    - echo "APP_NAME=$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME" >> .env
     - "echo APP_IMAGE=$INTERNAL_REG/$CI_PROJECT_NAME:\
-      $APP_VERSION-$CI_COMMIT_REF_NAME >> build.env"
+      $APP_VERSION-$CI_COMMIT_REF_NAME >> .env"
     - "echo PROXY_IMAGE=$INTERNAL_REG/$CI_PROJECT_NAME/proxy:\
-      $NGINX_IMG_TAG-$CI_COMMIT_REF_NAME >> build.env"
-    - cat build.env
+      $NGINX_IMG_TAG-$CI_COMMIT_REF_NAME >> .env"
+    - cat .env
   artifacts:
     reports:
-      dotenv: build.env
+      dotenv: .env
+    paths:
+      - .env         
 
 .build:
   stage: build
@@ -137,6 +139,7 @@ proxy-build:
 
 app-scan:
   needs:
+    - set-vars
     - app-build
   extends:
     - .triggers
@@ -147,6 +150,7 @@ app-scan:
 
 proxy-scan:
   needs:
+    - set-vars
     - proxy-build
   extends:
     - .triggers
@@ -177,6 +181,7 @@ proxy-scan:
 
 app-retag:
   needs:
+    - set-vars
     - app-scan
   extends:
     - .triggers
@@ -186,6 +191,7 @@ app-retag:
 
 proxy-retag:
   needs:
+    - set-vars
     - proxy-scan
   extends:
     - .triggers
@@ -198,6 +204,7 @@ remote-docker:
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:24.0
   needs:
+    - set-vars  
     - app-retag
     - proxy-retag
   extends:
