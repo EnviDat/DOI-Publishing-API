@@ -47,6 +47,8 @@ set-vars:
     name: gcr.io/kaniko-project/executor:v1.9.1-debug
     entrypoint: [""]
   before_script:
+    - echo "With these environmental variables"
+    - cat .env
     - mkdir -p /kaniko/.docker
     - echo "going to create kaniko config.json for auth for ${INTERNAL_REG} -> '${IMAGE_REGISTRY_USER}' and https://index.docker.io/v1/ -> '${DOCKER_USERNAME}'"
     - >
@@ -60,9 +62,6 @@ set-vars:
       }}" > /kaniko/.docker/config.json
   script:
     - echo "Build image $IMAGE_NAME"
-    - source build.env
-    - echo "With these environmental variables"
-    - cat .env
     - >
       /kaniko/executor
       --force
@@ -104,6 +103,9 @@ proxy-build:
     entrypoint: [""]
   variables:
     GIT_STRATEGY: none
+  before_script:
+    - echo "With these environmental variables"
+    - cat .env
   script:
     - echo "Going to scan image $IMAGE_NAME-unverified"
     - trivy --version
@@ -160,6 +162,8 @@ proxy-scan:
   variables:
     GIT_STRATEGY: none
   before_script:
+    - echo "With these environmental variables"
+    - cat .env
     - export REG_HOST=${INTERNAL_REG%/*}
     - >
       echo "{\"hosts\":{\"${REG_HOST}\":{\"tls\":\"enabled\",\"hostname\":
@@ -201,12 +205,10 @@ remote-docker:
   variables:
     DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
   before_script:
+    - echo "With these environmental variables"
+    - cat .env
     - echo "*** The app image is '$APP_IMAGE'"
     - echo "*** The app version is '$APP_VERSION'"
-    - echo "*** The DataCite API URL is '$DATACITE_API_URL'"
-    - echo "*** DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX"
-    - echo "*** DOI_PREFIX=$DOI_PREFIX"
-    - echo "*** DOI_SUFFIX_TAG=$DOI_SUFFIX_TAG"
     - echo "*** Going to docker compose remote with file 'docker-compose.$CI_COMMIT_REF_NAME.yml'"
     - echo "Adding SSH Key"
     - mkdir -p ~/.ssh
@@ -248,8 +250,11 @@ manual-remote-docker:
   variables:
     DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
   before_script:
-    - echo "***The app image is   $APP_IMAGE"
-    - echo "***The app version is  $APP_VERSION"
+    - echo "With these environmental variables"
+    - cat .env
+    - echo "*** The app image is '$APP_IMAGE'"
+    - echo "*** The app version is '$APP_VERSION'"
+    - echo "*** Going to docker compose remote with file 'docker-compose.$CI_COMMIT_REF_NAME.yml'"
     - echo "Going to docker compose remote with file docker-compose.$CI_COMMIT_REF_NAME.yml"
     - echo "Adding SSH Key"
     - mkdir -p ~/.ssh
