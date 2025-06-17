@@ -22,6 +22,7 @@ variables:
 
 set-vars:
   stage: .pre
+  environment: $CI_COMMIT_REF_NAME
   image: docker.io/alpine:3.20
   script:
     - echo "DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX" >> build.env
@@ -41,6 +42,7 @@ set-vars:
 
 .build:
   stage: build
+  environment: $CI_COMMIT_REF_NAME
   image:
     name: gcr.io/kaniko-project/executor:v1.9.1-debug
     entrypoint: [""]
@@ -96,6 +98,7 @@ proxy-build:
 
 .scan:
   stage: scan
+  environment: $CI_COMMIT_REF_NAME
   image:
     name: docker.io/aquasec/trivy:0.23.0
     entrypoint: [""]
@@ -152,6 +155,7 @@ proxy-scan:
 
 .retag:
   stage: package
+  environment: $CI_COMMIT_REF_NAME
   image: docker.io/regclient/regctl:v0.3-alpine
   variables:
     GIT_STRATEGY: none
