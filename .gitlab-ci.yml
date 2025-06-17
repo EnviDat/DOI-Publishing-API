@@ -24,7 +24,9 @@ set-vars:
   stage: .pre
   image: docker.io/alpine:3.20
   script:
-    - echo "APP_VERSION=$APP_VERSION"
+    - echo "DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX" >> build.env
+    - echo "DOI_PREFIX=$DOI_PREFIX" >> build.env
+    - echo "DOI_SUFFIX_TAG=$DOI_SUFFIX_TAG" >> build.env
     - echo "INTERNAL_REG=$INTERNAL_REG"
     - echo "APP_NAME=$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME" >> build.env
     - "echo APP_IMAGE=$INTERNAL_REG/$CI_PROJECT_NAME:\
@@ -55,6 +57,9 @@ set-vars:
       }}" > /kaniko/.docker/config.json
   script:
     - echo "Build image $IMAGE_NAME"
+    - source build.env
+    - echo "With these environmental variables"
+    - cat .env
     - >
       /kaniko/executor
       --force
@@ -69,6 +74,8 @@ set-vars:
       --build-arg NGINX_IMG_TAG="$NGINX_IMG_TAG"
 
 app-build:
+  needs:
+    - set-vars
   extends:
     - .triggers
     - .build
@@ -77,6 +84,8 @@ app-build:
     CONTEXT_DIR: "$CI_PROJECT_DIR"
 
 proxy-build:
+  needs:
+    - set-vars
   extends:
     - .triggers
     - .build
@@ -121,6 +130,8 @@ proxy-build:
       container_scanning: $SHORT_NAME-imgscan.json
 
 app-scan:
+  needs:
+    - app-build
   extends:
     - .triggers
     - .scan
@@ -129,6 +140,8 @@ app-scan:
     SHORT_NAME: "app"
 
 proxy-scan:
+  needs:
+    - proxy-build
   extends:
     - .triggers
     - .scan
@@ -154,6 +167,8 @@ proxy-scan:
     - regctl --verbosity debug tag delete "$IMAGE_NAME-unverified"
 
 app-retag:
+  needs:
+    - app-scan
   extends:
     - .triggers
     - .retag
@@ -161,6 +176,8 @@ app-retag:
     IMAGE_NAME: $APP_IMAGE
 
 proxy-retag:
+  needs:
+    - proxy-scan
   extends:
     - .triggers
     - .retag
@@ -171,6 +188,9 @@ remote-docker:
   stage: deploy
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:24.0
+  needs:
+    - app-retag
+    - proxy-retag
   extends:
     - .triggers
   variables:
