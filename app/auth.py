@@ -32,7 +32,7 @@ def get_user(authorization: Annotated[str | None, Header()] = None) -> dict:
             status_code=500, detail="Could not authenticate user"
         ) from e
 
-    return {"info": user_info, "ckan": ckan}
+    return {"info": user_info[0], "ckan": ckan}
 
 
 def get_admin(user=Depends(get_user)) -> dict:
