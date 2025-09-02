@@ -7,7 +7,7 @@ networks:
 services:
   doi_api_dev:
     container_name: doi_api_dev
-    #image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-dev"
+    image: "${INTERNAL_REG}/doi-publishing-api:${APP_VERSION}-dev"
     build:
       context: .
       args:
@@ -26,19 +26,42 @@ services:
       - envidat
     restart: unless-stopped
 
+
   doi_proxy_dev:
     container_name: doi_api_proxy_dev
-    image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-main"
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+      args:
+        BASE_DEBIAN: debian:bookworm
+        NGINX_BASE: nginx:bookworm
+        MAINTAINER_DEVOPS: "envidat"
+    # image: doi-proxy:local
     depends_on:
       - doi_api_dev
     environment:
       - APP_HOST=doi_api_dev:8000
       - AUTH_COOKIE_NAME=envidat_dev
     ports:
-      - "50012:80"
+      - "50010:80"
     networks:
       - net
     restart: unless-stopped
+
+
+  # doi_proxy_dev:
+  #   container_name: doi_api_proxy_dev
+  #   image: "${INTERNAL_REG}/doi-publishing-api/proxy:${NGINX_IMG_TAG}-main"
+  #   depends_on:
+  #     - doi_api_dev
+  #   environment:
+  #     - APP_HOST=doi_api_dev:8000
+  #     - AUTH_COOKIE_NAME=envidat_dev
+  #   ports:
+  #     - "50011:80"
+  #   networks:
+  #     - net
+  #   restart: unless-stopped
 
 #  doi_db_copy_dev:
 #   container_name: ckan_db_copy_dev
