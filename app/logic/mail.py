@@ -41,7 +41,6 @@ async def request_approval_email(
     package_id: str,
     user_name: str,
     user_email: str,
-    approval_url: str,
     is_update: bool = False,
 ):
     """Send an email to the admin requesting publish approval."""
@@ -53,7 +52,6 @@ async def request_approval_email(
             "user_email": user_email,
             "package_title": package_id,
             "package_url_prefix": config_app.DATACITE_DATA_URL_PREFIX,
-            "approval_url": approval_url,
             "is_update": is_update,
             "site_url": config_app.CKAN_API_URL,
         },
