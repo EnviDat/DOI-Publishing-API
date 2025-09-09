@@ -221,7 +221,6 @@ async def request_publish_or_update(
         package_id=package_id,
         user_name=user_name,
         user_email=user_email,
-        approval_url=str(request.base_url).rstrip("/"),
         is_update=is_update,
     )
 
