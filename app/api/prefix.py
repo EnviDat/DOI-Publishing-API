@@ -4,7 +4,6 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.auth import get_admin
 from app.models.doi import (
@@ -39,7 +38,6 @@ async def get_all_doi_prefixes():
 @router.get(
     "/{id}",
     response_model=DoiPrefixPydantic,
-    responses={404: {"model": HTTPNotFoundError}},
 )
 async def get_doi_prefix(id: str):
     """Get specific doi prefix."""
@@ -58,7 +56,6 @@ async def create_doi_prefix(doi_prefix: DoiPrefixInPydantic):
 @router.put(
     "/{id}",
     response_model=DoiPrefixEditPydantic,
-    responses={404: {"model": HTTPNotFoundError}},
 )
 async def update_species(id: int, doi_prefix: DoiPrefixEditPydantic):
     """Update specific doi prefix."""
@@ -68,7 +65,7 @@ async def update_species(id: int, doi_prefix: DoiPrefixEditPydantic):
 
 
 @router.delete(
-    "/{id}", response_model=Status, responses={404: {"model": HTTPNotFoundError}}
+    "/{id}", response_model=Status,
 )
 async def delete_doi_prefix(id: str):
     """Delete specific doi prefix."""

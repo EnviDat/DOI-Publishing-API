@@ -6,7 +6,6 @@ from typing import Annotated
 from ckanapi import NotFound
 from fastapi import Depends, Header, HTTPException
 
-from app.config import config_app
 from app.logic.remote_ckan import get_ckan
 
 log = logging.getLogger(__name__)
