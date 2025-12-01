@@ -101,9 +101,11 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 - Scripts are located in the `scripts` directory
 
 ## Authors
-Ranita Pal, Swiss Federal Institute for Forest, Snow and Landscape Research WSL \
-[Rebecca Kurup Buchholz](https://www.linkedin.com/in/rebeccakurupbuchholz/), Swiss Federal Institute for Forest, Snow and Landscape Research WSL \
-Sam Woodcock, Swiss Federal Institute for Forest, Snow and Landscape Research WSL
+
+The following employees of the Swiss Federal Institute for Forest, Snow and Landscape Research WSL:
+- Ranita Pal
+- [Rebecca Buchholz](https://www.linkedin.com/in/rebeccabuchholz/)
+- Sam Woodcock
 
 ## License
 
