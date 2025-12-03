@@ -22,18 +22,7 @@ The EnviDat email microservice can be found [here](https://gitlabext.wsl.ch/Envi
       - `env.example` because this file is used for validation
       - `environment` section of the `doi-api` containers in the `docker-compose.<branch>.yml` files
 
-### Option 1: Docker
-
-1. Run the docker container:
-
-```bash
-docker compose up  -f <docker compose file> -d
-```
-
-> The image should pull, or fallback to building.
-
-
-### Option 2: Standalone
+### Installation and Dev Server
 
 1. Install dependencies:
 
