@@ -38,8 +38,8 @@ class ConfigAppModel(BaseModel):
     ROOT_PATH: Optional[str] = ""
     DEBUG: bool = False
 
-    CKAN_API_URL: AnyHttpUrl = "https://www.envidat.ch"
-    DATACITE_API_URL: AnyHttpUrl
+    CKAN_API_URL: str = "https://www.envidat.ch"
+    DATACITE_API_URL: str
 
     DATACITE_CLIENT_ID: str
     DATACITE_PASSWORD: str
