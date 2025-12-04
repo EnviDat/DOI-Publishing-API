@@ -9,3 +9,5 @@
 !README.md
 !requirements.txt
 !env.example
+!pdm.lock
+!pyproject.toml
