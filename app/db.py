@@ -25,13 +25,12 @@ TORTOISE_ORM = {
 }
 
 
-async def init_db(app: FastAPI) -> None:
+def init_db(app: FastAPI) -> None:
     """Register and create database connection."""
     log.debug("Connecting to DB...")
-    await register_tortoise(
+    register_tortoise(
         app,
         config=TORTOISE_ORM,
         add_exception_handlers=True,
     )
-    log.debug("DB initialization complete.")
 
