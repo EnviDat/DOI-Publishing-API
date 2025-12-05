@@ -58,5 +58,5 @@ app.include_router(error_router)
 async def startup_event():
     """Commands to run on server startup."""
     log.debug("Starting up FastAPI server.")
-    await init_db(app)
+    init_db(app)
 
