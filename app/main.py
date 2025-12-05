@@ -51,6 +51,8 @@ def get_application() -> FastAPI:
 
 app = get_application()
 
+init_db(app)
+
 app.include_router(api_router)
 app.include_router(error_router)
 
@@ -58,5 +60,3 @@ app.include_router(error_router)
 async def startup_event():
     """Commands to run on server startup."""
     log.debug("Starting up FastAPI server.")
-    init_db(app)
-
