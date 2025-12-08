@@ -1,12 +1,14 @@
 """Logic and helpers for Forest3D router."""
+from pprint import pprint
 
 import aiohttp
-from envidat_converters.logic.converter_logic.envidat_to_datacite import EnviDatToDataCite
+
 
 from app.config import config_app
 from app.logic.datacite import DoiSuccess, DoiErrors, xml_to_base64
 
 import logging
+
 log = logging.getLogger(__name__)
 
 
@@ -16,6 +18,34 @@ async def doi_exists(session: aiohttp.ClientSession, doi: str) -> bool:
         if resp.status == 200:
             return True
         return False
+
+
+# TODO review and compare Forest3D and EnviDat, need to adjust keys for stringified keys
+#  possibly first convert to strings some keys
+def format_forest3d_dataset(dataset: dict) -> dict:
+    """
+    Format Forest3D dataset so that is compatible with the EnviDat package format.
+    """
+    # TODO remove
+    # formatted_dataset = dataset.copy()
+    #
+    # if isinstance(maintainer := dataset.get("maintainer"), dict):
+    #     formatted_dataset["maintainer"] = str(maintainer)
+
+    formatted_dataset = {}
+
+    for key, value in dataset.items():
+        clean_key = key.strip()
+        if isinstance(value, str):
+            val = value.strip()
+            formatted_dataset[clean_key] = val
+        else:
+            formatted_dataset[clean_key] = value
+
+    if isinstance(maintainer := dataset.get("maintainer"), dict):
+        formatted_dataset["maintainer"] = str(maintainer)
+
+    return formatted_dataset
 
 
 async def publish_forest3d_to_datacite(
@@ -60,15 +90,18 @@ async def publish_forest3d_to_datacite(
     # and encode to base64 formatted string
     try:
         # TODO resolve differences with input data and expected data from converter
-        xml = EnviDatToDataCite(dataset)
-        if xml:
-            xml_to_str = xml.__str__()
-            return xml_to_str
-            xml_encoded = xml_to_base64(xml_to_str)
-            if not xml_encoded:
-                return conversion_error
-        else:
-            return conversion_error
+        return dataset
+        # xml = EnviDatToDataCite(dataset)
+        # return "test3"
+        # return xml
+        # if xml:
+        #     xml_to_str = xml.__str__()
+        #     return xml_to_str
+            # xml_encoded = xml_to_base64(xml_to_str)
+            # if not xml_encoded:
+            #     return conversion_error
+        # else:
+        #     return conversion_error
     except ValueError as e:
         log.error(e)
         return conversion_error

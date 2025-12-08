@@ -1,7 +1,9 @@
 """Forest3D API Router."""
+
 import asyncio
 
-from app.logic.forest3d import doi_exists, publish_forest3d_to_datacite
+from app.logic.forest3d import doi_exists, publish_forest3d_to_datacite, \
+    format_forest3d_dataset
 from fastapi import APIRouter, Depends, HTTPException
 import aiohttp
 
@@ -16,7 +18,7 @@ router = APIRouter(prefix="/forest3d", tags=["forest3d"])
 
 
 # TODO specify and return a data type
-@router.post(
+@router.get(
     "/publish-bulk-datacite"
 )
 async def publish_bulk_forest3d(
@@ -31,6 +33,7 @@ async def publish_bulk_forest3d(
     forest3d_url = config_app.FOREST3D_URL
 
     async with aiohttp.ClientSession() as public_session:
+
         async with public_session.get(forest3d_url) as resp:
             if resp.status != 200:
                 raise HTTPException(resp.status, "Could not download JSON")
@@ -50,14 +53,17 @@ async def publish_bulk_forest3d(
             if not doi:
                 return {"error": "Missing 'doi field", "dataset": dataset}
 
-            # TODO handle updating existing datasets, possibly as a boolean flag
+            # TODO handle updating existing datasets, possibly as a query parameter
+            #  boolean flag
             if await doi_exists(session, doi):
                 return {"doi": doi, "status": "DOI already registered with DataCite"}
 
             # TODO resolve differences with input data and expected data from converter
-            result = await publish_forest3d_to_datacite(session, dataset)
+            formatted_dataset = format_forest3d_dataset(dataset)
+            result = await publish_forest3d_to_datacite(session, formatted_dataset)
 
-            return {"doi": doi, "result": result}
+            return result
+            # return {"doi": doi, "result": result}
 
         results = await asyncio.gather(*(process_dataset(i) for i in forest3d_datasets))
 
