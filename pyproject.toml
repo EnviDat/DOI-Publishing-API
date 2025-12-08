@@ -6,6 +6,7 @@ authors = [
     {name = "EnviDat", email = "envidat@wsl.ch"},
 ]
 dependencies = [
+    "aiohttp>=3.13.2",
     "asyncpg>=0.31.0",
     "ckanapi>=4.8",
     "envidat-converter>=0.2.0",
@@ -14,7 +15,7 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "requests>=2.32.5",
     "uvicorn>=0.38.0",
-    "tortoise-orm>=0.25.1"
+    "tortoise-orm>=0.25.1",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
