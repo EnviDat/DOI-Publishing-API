@@ -2,17 +2,16 @@
 
 import base64
 import json
-
-# Setup logging
-import logging
-
 import requests
-from envidat.converters.datacite_converter import convert_datacite
 from fastapi import HTTPException
 from typing_extensions import TypedDict
 
+from envidat_converters.logic.converter_logic.envidat_to_datacite import EnviDatToDataCite
+
 from app.config import config_app
 
+# Setup logging
+import logging
 log = logging.getLogger(__name__)
 
 
@@ -126,9 +125,10 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     # Convert metadata record to DataCite formatted XML
     # and encode to base64 formatted string
     try:
-        xml = convert_datacite(package)
+        xml = EnviDatToDataCite(package)
         if xml:
-            xml_encoded = xml_to_base64(xml)
+            xml_to_str = xml.__str__()
+            xml_encoded = xml_to_base64(xml_to_str)
             if not xml_encoded:
                 return conversion_error
         else:

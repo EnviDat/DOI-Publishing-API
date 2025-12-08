@@ -36,11 +36,16 @@ Create a virtual environment with PyCharm
 pip install -r requirements.txt
 ```
 
-2. Run the FastAPI server directly with PDM:
+2. Run the FastAPI development server:
 
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
+   ```bash
+   pdm run dev
+   ```
+    Alternatively, the development server can be run directly using uvicorn:
+
+   ```bash
+   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
 
 3. Access at: http://127.0.0.1:8000
 
