@@ -1,8 +1,9 @@
 """Logic and helpers for Forest3D router."""
-from pprint import pprint
-
+import json
 import aiohttp
 
+from envidat_converters.logic.converter_logic.envidat_to_datacite import \
+    EnviDatToDataCite
 
 from app.config import config_app
 from app.logic.datacite import DoiSuccess, DoiErrors, xml_to_base64
@@ -20,34 +21,42 @@ async def doi_exists(session: aiohttp.ClientSession, doi: str) -> bool:
         return False
 
 
-# TODO review and compare Forest3D and EnviDat, need to adjust keys for stringified keys
-#  possibly first convert to strings some keys
-def format_forest3d_dataset(dataset: dict) -> dict:
+def prepare_dataset_for_envidat(dataset):
     """
-    Format Forest3D dataset so that is compatible with the EnviDat package format.
+    Convert Forest3D dataset into EnviDat-like package format.
+    Only stringifies fields EnviDat expects as JSON strings.
     """
-    # TODO remove
-    # formatted_dataset = dataset.copy()
-    #
-    # if isinstance(maintainer := dataset.get("maintainer"), dict):
-    #     formatted_dataset["maintainer"] = str(maintainer)
+    dataset_copy = dataset.copy()
+    fields_to_stringify = ["author", "date", "funding", "maintainer", "publication",
+                           "spatial"]
 
-    formatted_dataset = {}
+    for field in fields_to_stringify:
+        if field in dataset_copy:
+            val = dataset_copy[field]
+            if isinstance(val, (dict, list)):
+                dataset_copy[field] = json.dumps(val)
+            elif isinstance(val, str):
+                # normalize quotes in case single quotes are used
+                try:
+                    parsed = json.loads(val.replace("'", '"'))
+                    dataset_copy[field] = json.dumps(parsed)
+                except json.JSONDecodeError:
+                    dataset_copy[field] = val.replace("'", '"')
+            else:
+                # convert numeric or boolean values to string
+                dataset_copy[field] = str(val)
 
-    for key, value in dataset.items():
-        clean_key = key.strip()
-        if isinstance(value, str):
-            val = value.strip()
-            formatted_dataset[clean_key] = val
-        else:
-            formatted_dataset[clean_key] = value
+    # Convert numeric tag names/display_names to strings
+    if "tags" in dataset_copy:
+        for tag in dataset_copy["tags"]:
+            for key in ["name", "display_name"]:
+                if key in tag and not isinstance(tag[key], str):
+                    tag[key] = str(tag[key])
 
-    if isinstance(maintainer := dataset.get("maintainer"), dict):
-        formatted_dataset["maintainer"] = str(maintainer)
-
-    return formatted_dataset
+    return dataset_copy
 
 
+# TODO finish WIP
 async def publish_forest3d_to_datacite(
         session: aiohttp.ClientSession,
         dataset: dict
@@ -89,17 +98,18 @@ async def publish_forest3d_to_datacite(
     # Convert Forest3D dataset to DataCite formatted XML
     # and encode to base64 formatted string
     try:
-        # TODO resolve differences with input data and expected data from converter
-        return dataset
-        # xml = EnviDatToDataCite(dataset)
-        # return "test3"
-        # return xml
+        if datacite_dataset := EnviDatToDataCite(dataset):
+            xml_datacite_dataset = datacite_dataset.__str__()
+            return xml_datacite_dataset
+        else:
+            return conversion_error
+        # TODO start dev here
         # if xml:
         #     xml_to_str = xml.__str__()
         #     return xml_to_str
-            # xml_encoded = xml_to_base64(xml_to_str)
-            # if not xml_encoded:
-            #     return conversion_error
+        # xml_encoded = xml_to_base64(xml_to_str)
+        # if not xml_encoded:
+        #     return conversion_error
         # else:
         #     return conversion_error
     except ValueError as e:
