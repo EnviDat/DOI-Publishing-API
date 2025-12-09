@@ -22,7 +22,7 @@ router = APIRouter(prefix="/forest3d", tags=["forest3d"])
     "/publish-bulk-datacite"
 )
 async def publish_bulk_forest3d(
-    # admin=Depends(get_admin),  TODO implement
+    # admin=Depends(get_admin),  # TODO start dev here, implement
 ):
     """Publish or update several Forest3D datasets with Datacite.
 
@@ -59,12 +59,8 @@ async def publish_bulk_forest3d(
                 return {"doi": doi, "status": "DOI already registered with DataCite"}
 
             formatted_dataset = prepare_dataset_for_envidat(dataset)
-
-            # TODO start dev here and finish WIP
             result = await publish_forest3d_to_datacite(session, formatted_dataset)
-
             return result
-            # return {"doi": doi, "result": result}
 
         results = await asyncio.gather(*(process_dataset(i) for i in forest3d_datasets))
 

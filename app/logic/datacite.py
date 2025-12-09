@@ -19,7 +19,7 @@ class DoiSuccess(TypedDict):
     """DOI success class."""
 
     status_code: int
-    result: dict
+    result: dict | str
 
 
 class DoiErrors(TypedDict):
