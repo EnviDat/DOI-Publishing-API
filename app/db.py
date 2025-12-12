@@ -27,7 +27,7 @@ TORTOISE_ORM = {
 
 def init_db(app: FastAPI) -> None:
     """Register and create database connection."""
-    log.debug(f"Connecting to DB...")
+    log.debug("Connecting to DB...")
     register_tortoise(
         app,
         config=TORTOISE_ORM,

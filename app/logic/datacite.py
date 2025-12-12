@@ -2,17 +2,16 @@
 
 import base64
 import json
-
-# Setup logging
-import logging
-
 import requests
-from envidat.converters.datacite_converter import convert_datacite
 from fastapi import HTTPException
 from typing_extensions import TypedDict
 
+from envidat_converters.logic.converter_logic.envidat_to_datacite import EnviDatToDataCite
+
 from app.config import config_app
 
+# Setup logging
+import logging
 log = logging.getLogger(__name__)
 
 
@@ -20,7 +19,7 @@ class DoiSuccess(TypedDict):
     """DOI success class."""
 
     status_code: int
-    result: dict
+    result: dict | str
 
 
 class DoiErrors(TypedDict):
@@ -31,7 +30,7 @@ class DoiErrors(TypedDict):
 
 
 def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
-    """Reserve a DOI identifer in "Draft" state with DataCite.
+    """Reserve a DOI identifier in "Draft" state with DataCite.
 
     For relevant DataCite documentation see:
     https://support.datacite.org/docs/api-create-dois#create-an-identifier-in-draft-state
@@ -114,8 +113,6 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     name = package.get("name", package["id"])
     url = f"{site_url}/{name}"
 
-    # Assign name_doi_map used in DataCite conversion
-
     # Assign conversion_error to return if conversion of package to
     # DataCite XML fails
     conversion_error = {
@@ -126,9 +123,10 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     # Convert metadata record to DataCite formatted XML
     # and encode to base64 formatted string
     try:
-        xml = convert_datacite(package)
+        xml = EnviDatToDataCite(package)
         if xml:
-            xml_encoded = xml_to_base64(xml)
+            xml_to_str = xml.__str__()
+            xml_encoded = xml_to_base64(xml_to_str)
             if not xml_encoded:
                 return conversion_error
         else:

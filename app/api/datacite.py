@@ -1,14 +1,12 @@
 """DataCite API Router."""
+
 import json
-# Setup logging
-import logging
 import time
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
-# from app.api.doi import create_doi_draft
 from app.auth import get_admin, get_user
 from app.config import config_app
 from app.logic.datacite import (
@@ -27,6 +25,7 @@ from app.logic.mail import (
 from app.logic.minter import create_db_doi
 from app.logic.remote_ckan import ckan_package_patch, ckan_package_show
 
+import logging
 log = logging.getLogger(__name__)
 
 

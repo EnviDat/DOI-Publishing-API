@@ -37,29 +37,9 @@ class ConfigAppModel(BaseModel):
     APP_VERSION: str
     ROOT_PATH: Optional[str] = ""
     DEBUG: bool = False
-    CKAN_API_URL: AnyHttpUrl = "https://www.envidat.ch"
 
-    @field_validator("CKAN_API_URL", mode="after")
-    @classmethod
-    def convert_ckan_api_to_string(cls, v: AnyHttpUrl) -> str:
-        """Convert CKAN_API_URL to string."""
-        if isinstance(v, Url):
-            return str(v)
-        if isinstance(v, str):
-            return v
-        raise ValueError(v)
-
-    DATACITE_API_URL: AnyHttpUrl
-
-    @field_validator("DATACITE_API_URL", mode="after")
-    @classmethod
-    def convert_datacite_api_to_string(cls, v: AnyHttpUrl) -> str:
-        """Convert DATACITE_API_URL to string."""
-        if isinstance(v, Url):
-            return str(v)
-        if isinstance(v, str):
-            return v
-        raise ValueError(v)
+    CKAN_API_URL: str = "https://www.envidat.ch"
+    DATACITE_API_URL: str
 
     DATACITE_CLIENT_ID: str
     DATACITE_PASSWORD: str
@@ -102,6 +82,8 @@ class ConfigAppModel(BaseModel):
 
     EMAIL_ENDPOINT: AnyHttpUrl
     EMAIL_FROM: str
+
+    FOREST3D_URL: str
 
 
 @lru_cache
