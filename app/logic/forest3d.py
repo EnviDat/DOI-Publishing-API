@@ -1,6 +1,7 @@
 """Logic and helpers for Forest3D router."""
 
 import json
+
 import aiohttp
 import asyncio
 
@@ -8,7 +9,7 @@ from envidat_converters.logic.converter_logic.envidat_to_datacite import \
     EnviDatToDataCite
 
 from app.config import config_app
-from app.logic.datacite import DoiSuccess, DoiErrors, xml_to_base64
+from app.logic.datacite import xml_to_base64
 
 import logging
 log = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ def prepare_dataset_for_envidat(dataset):
 async def publish_forest3d_to_datacite(
         session: aiohttp.ClientSession,
         dataset: dict
-) -> DoiSuccess | DoiErrors:
+):
     """Publish/update a Forest3D dataset in DataCite.
 
        Converts Forest3D record to DataCite XML format before publication.

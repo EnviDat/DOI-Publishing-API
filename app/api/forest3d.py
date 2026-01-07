@@ -30,6 +30,7 @@ async def publish_bulk_forest3d(
 
     Only authorized admin can use this endpoint.
     """
+    # ---- Load input Forest3D JSON
     forest3d_url = config_app.FOREST3D_URL
 
     async with aiohttp.ClientSession() as public_session:
@@ -46,15 +47,18 @@ async def publish_bulk_forest3d(
         raise HTTPException(422,
                             "Remote JSON must be a list of dictionaries")
 
-    # Publish DOIs concurrently to DataCite
+    # ---- Process DOI with database
+
+
+    # ---- Publish DOIs concurrently to DataCite
     async with get_datacite_session() as session:
         async def process_dataset(dataset):
             doi = dataset.get("doi")
             if not doi:
                 return {"error": "Missing 'doi field", "dataset": dataset}
 
-            # TODO handle updating existing datasets, possibly as a query parameter
-            #  boolean flag
+            # TODO handle updating existing and registered datasets, possibly as a
+            #  query parameter boolean flag
             if await doi_exists(session, doi):
                 return {"doi": doi, "status": "DOI already registered with DataCite"}
 
