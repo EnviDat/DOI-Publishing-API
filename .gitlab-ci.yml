@@ -1,6 +1,5 @@
 stages:
   - build
-  - scan
   - package
   - deploy
   - manual-deploy
