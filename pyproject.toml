@@ -1,6 +1,6 @@
 [project]
 name = "doi-publishing-api"
-version = "1.0.2"
+version = "1.1.0"
 description = "API for publishing EnviDat DOIs to DataCite."
 authors = [
     {name = "EnviDat", email = "envidat@wsl.ch"},
@@ -16,7 +16,7 @@ dependencies = [
     "uvicorn>=0.38.0",
     "tortoise-orm>=0.25.1"
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.10, <=3.13"
 readme = "README.md"
 license = {text = "MIT"}
 

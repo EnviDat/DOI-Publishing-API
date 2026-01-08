@@ -1,14 +1,29 @@
+# CHANGELOG
+
+## 1.1.0 (2026-01-08)
+
+### Refactor
+- Implement pdm for project management
+- Remove requirements.txt and replace with pdm.lock and pyproject.toml
+
+### CI
+- Refactor build job to use Docker instead of Kaniko
+
+### Docs
+- Update dev usage instructions to use pdm dev server
+- Simplify other sections of README
+
+
 ## 1.0.2 (2024-12-20)
 
 ### Fix
-
 - upgrade envidat-python-utils to version 1.4.10 to use newest version of DataCite 
   converter
+
 
 ## 0.1.0 (2023-07-12)
 
 ### Feat
-
 - merge zenodo import feature
 - add read_dois_url() to external_doi/utils.py
 - add simplified CKAN call_action function
