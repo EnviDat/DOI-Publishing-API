@@ -12,42 +12,28 @@ The EnviDat email microservice can be found [here](https://gitlabext.wsl.ch/Envi
 
 ## Development Usage
 
-## Environment Variables
+1. Configure environment variables for use **only in local development**
 
-1. Make a file named `.env` in the root directory
+   - Make a file named `.env` in the root directory
+   - Generate the variables using `env.example` as a reference
+   - New environment variables must be added to:
+     - `env.example` because this file is used for validation
+     - `environment` section of the `doi-api` containers in the `docker-compose.<branch>.yml` files
 
-2. Generate the variables using `env.example` as a reference
+2. Clone project, make sure virtual environment is installed and activated, and execute the following command:
 
-3. New environment variables must be added to:
-      - `env.example` because this file is used for validation
-      - `environment` section of the `doi-api` containers in the `docker-compose.<branch>.yml` files
+   ```bash
+    pdm sync --dev
+   ```
 
-### Installation and Dev Server
-
-1. Install dependencies:
-
-```bash
-pip install virtualenv
-python -m venv <virtual-environment-name>
-   or
-Create a virtual environment with PyCharm
-
-<virtual-environment-name>\Scripts\activate
-pip install -r requirements.txt
-```
-
-2. Run the FastAPI development server:
+3. Run the FastAPI development server:
 
    ```bash
    pdm run dev
    ```
-    Alternatively, the development server can be run directly using uvicorn:
 
-   ```bash
-   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-   ```
+4. Access local server at: http://127.0.0.1:8000
 
-3. Access at: http://127.0.0.1:8000
 
 ## Production Usage
 
@@ -56,6 +42,8 @@ pip install -r requirements.txt
    - Create **individual CI/CD variables for each variable** listed in `env.example`
    - `APP_VERSION` **must be incremented** so that a new image is built and the application includes the updated code
      - Create a git tag for the commit that corresponds to the `APP_VERSION`
+     - Update the `version` value in `pyproject.toml`
+     - Also create an entry in the `CHANGELOG`
    - `ROOT_PATH` is an optional environment variable and should only be used to if the application uses a proxy
      - Be sure to include a `/` before the `ROOT_PATH` value
      - Example configuration: `ROOT_PATH=/doi-api`
@@ -70,14 +58,9 @@ pip install -r requirements.txt
      > | `EXTERNAL_REG`             | `docker.io`                      |
      > | `NGINX_IMG_TAG`            | `1.25`                           |
      > | `PYTHON_IMG_TAG`           | `3.10`                           |
-     > | `DEPLOY_HOSTNAME`          | `server.wsl.ch`                  |
-     > | `DEPLOY_SSH_KEY`           | `encryption private key`         |
-     > | `DEPLOY_SSH_USER`          | `test_user`                      |
     
 2. Merge feature/development branch to `main` default branch
-   - The `main` branch has a pipeline set up in `.gitlab-ci.yml` that automatically deploys changes to production server
-   - The pipeline also requires CI/CD variables that are used to that are used to build and register a Docker image of the application: `IMAGE_REGISTRY_USER` and `IMAGE_REGISTRY_PASS`
-     - The image related variables can be group variables inherited from the parent group
+   - The image related variables can be group variables inherited from the parent group
 
 ## Pre-commit hooks
 
@@ -98,7 +81,7 @@ pip install -r requirements.txt
 
 The following employees of the Swiss Federal Institute for Forest, Snow and Landscape Research WSL:
 - Ranita Pal
-- [Rebecca Buchholz](https://www.linkedin.com/in/rebeccabuchholz/)
+- Rebecca Buchholz
 - Sam Woodcock
 
 ## License
