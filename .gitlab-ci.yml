@@ -115,8 +115,6 @@ proxy-build:
       "${IMAGE_NAME}-unverified" "${IMAGE_NAME}"
 
 app-retag:
-  needs:
-    - set-vars
   extends:
     - .triggers
     - .retag
@@ -124,8 +122,6 @@ app-retag:
     IMAGE_NAME: $APP_IMAGE
 
 proxy-retag:
-  needs:
-    - set-vars
   extends:
     - .triggers
     - .retag
