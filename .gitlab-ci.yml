@@ -97,6 +97,8 @@ proxy-build:
 
 .retag:
   stage: package
+  needs:
+    - build
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/regclient/regctl:alpine
   variables:
