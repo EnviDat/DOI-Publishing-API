@@ -42,12 +42,12 @@ set-vars:
 
 .build:
   stage: build
-  image: docker:29.2.0-rc.1-cli
+  image: docker:24.0.5
   environment: $CI_COMMIT_REF_NAME
   needs:
     - set-vars
   services:
-    - name: docker:29.2.0-rc.1-dind
+    - name: docker:24.0.5-dind
       pull_policy: if-not-present
       # the following setting is for tls disabled
       #command: ["--tls=false"]
@@ -136,7 +136,7 @@ remote-docker:
       - job: app-retag
       - job: proxy-retag
   environment: $CI_COMMIT_REF_NAME
-  image: docker:29.2.0-rc.1-cli
+  image: docker.io/docker:24.0
   extends:
     - .triggers
   variables:
@@ -188,7 +188,7 @@ manual-remote-docker:
       artifacts: true
       optional: true
   environment: $CI_COMMIT_REF_NAME
-  image: docker:29.2.0-rc.1-cli
+  image: docker.io/docker:24.0
   rules:
     - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: always
