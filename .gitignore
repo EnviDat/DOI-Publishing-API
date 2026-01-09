@@ -7,3 +7,8 @@ __pycache__/
 
 # Packaging
 __pypackages__/
+
+.idea
+.pdm-python
+.venv
+.python-version

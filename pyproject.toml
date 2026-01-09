@@ -1,0 +1,32 @@
+[project]
+name = "doi-publishing-api"
+version = "1.1.0"
+description = "API for publishing EnviDat DOIs to DataCite."
+authors = [
+    {name = "EnviDat", email = "envidat@wsl.ch"},
+]
+dependencies = [
+    "asyncpg>=0.31.0",
+    "ckanapi>=4.8",
+    "envidat-converter>=0.2.0",
+    "fastapi>=0.119.1",
+    "pydantic==2.8.0",
+    "python-dotenv>=1.2.1",
+    "requests>=2.32.5",
+    "uvicorn>=0.38.0",
+    "tortoise-orm>=0.25.1"
+]
+requires-python = ">=3.10, <=3.13"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.scripts]
+dev = "uvicorn app.main:app --reload"
+lint = "ruff check ."

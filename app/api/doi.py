@@ -4,7 +4,6 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from tortoise.contrib.fastapi import HTTPNotFoundError
 
 from app.auth import get_admin
 from app.config import config_app
@@ -36,7 +35,6 @@ async def get_all_dois():
 @router.get(
     "/{id}",
     response_model=DoiRealisationPydantic,
-    responses={404: {"model": HTTPNotFoundError}},
 )
 async def get_doi_by_id(id: str):
     """Get specific doi."""
@@ -49,7 +47,6 @@ async def get_doi_by_id(id: str):
 @router.get(
     "/{prefix}/{suffix}",
     response_model=DoiRealisationPydantic,
-    responses={404: {"model": HTTPNotFoundError}},
 )
 async def get_doi_by_prefix_suffix(prefix: str, suffix: str):
     """Get specific doi by prefix/suffix combo."""
@@ -77,7 +74,7 @@ async def create_doi_db_only(doi: DoiRealisationInPydantic):
 
 
 @router.delete(
-    "/{id}", response_model=Status, responses={404: {"model": HTTPNotFoundError}}
+    "/{id}", response_model=Status
 )
 async def delete_doi(id: str):
     """Delete specific doi."""
@@ -92,7 +89,6 @@ async def delete_doi(id: str):
 @router.put(
     "/update/{id}",
     response_model=DoiRealisationEditPydantic,
-    responses={404: {"model": HTTPNotFoundError}},
 )
 async def update_doi(package_id: str, doi: DoiRealisationEditPydantic):
     """Update specific DOI in DB and Datacite for CKAN Package ID."""

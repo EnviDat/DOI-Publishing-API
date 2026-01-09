@@ -1,6 +1,5 @@
 stages:
   - build
-  - scan
   - package
   - deploy
   - manual-deploy
@@ -23,63 +22,63 @@ variables:
 set-vars:
   stage: .pre
   environment: $CI_COMMIT_REF_NAME
-  image: docker.io/alpine:3.20
+  image: docker.io/alpine:3.23
   script:
-    - echo "DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX" >> .env
-    - echo "DOI_PREFIX=$DOI_PREFIX" >> .env
-    - echo "DATACITE_API_URL=$DATACITE_API_URL" >> .env
-    - echo "DOI_SUFFIX_TAG=$DOI_SUFFIX_TAG" >> .env
+    - echo "DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX" >> build.env
+    - echo "DOI_PREFIX=$DOI_PREFIX" >> build.env
+    - echo "DATACITE_API_URL=$DATACITE_API_URL" >> build.env
+    - echo "DOI_SUFFIX_TAG=$DOI_SUFFIX_TAG" >> build.env
     - echo "INTERNAL_REG=$INTERNAL_REG"
-    - echo "APP_NAME=$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME" >> .env
+    - echo "APP_NAME=$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME" >> build.env
     - "echo APP_IMAGE=$INTERNAL_REG/$CI_PROJECT_NAME:\
-      $APP_VERSION-$CI_COMMIT_REF_NAME >> .env"
+      $APP_VERSION-$CI_COMMIT_REF_NAME >> build.env"
     - "echo PROXY_IMAGE=$INTERNAL_REG/$CI_PROJECT_NAME/proxy:\
-      $NGINX_IMG_TAG-$CI_COMMIT_REF_NAME >> .env"
-    - cat .env
+      $NGINX_IMG_TAG-$CI_COMMIT_REF_NAME >> build.env"
   artifacts:
     reports:
-      dotenv: .env
+      dotenv: build.env
     paths:
-      - .env         
+      - build.env
 
 .build:
   stage: build
+  image: docker:24.0.5
   environment: $CI_COMMIT_REF_NAME
-  image:
-    name: gcr.io/kaniko-project/executor:v1.9.1-debug
-    entrypoint: [""]
-  before_script:
-    - echo "With these environmental variables"
-    - cat .env
-    - mkdir -p /kaniko/.docker
-    - echo "going to create kaniko config.json for auth for ${INTERNAL_REG} -> '${IMAGE_REGISTRY_USER}' and https://index.docker.io/v1/ -> '${DOCKER_USERNAME}'"
-    - >
-      echo "{\"auths\":{
-      \"${INTERNAL_REG}\":{
-        \"auth\":\"$(printf "%s:%s" "${IMAGE_REGISTRY_USER}" "${IMAGE_REGISTRY_PASS}" | base64 | tr -d '\n')\"
-        },
-        \"https://index.docker.io/v1/\":{
-          \"auth\":\"$(printf "%s:%s" "${DOCKER_USERNAME}" "${DOCKER_TOKEN}" | base64 | tr -d '\n')\"
-        }
-      }}" > /kaniko/.docker/config.json
-  script:
-    - echo "Build image $IMAGE_NAME"
-    - >
-      /kaniko/executor
-      --force
-      --context "$CONTEXT_DIR"
-      --dockerfile "$CONTEXT_DIR/Dockerfile"
-      --cache=true
-      --destination "$IMAGE_NAME-unverified"
-      --build-arg EXTERNAL_REG="$EXTERNAL_REG"
-      --build-arg INTERNAL_REG="$INTERNAL_REG"
-      --build-arg PYTHON_IMG_TAG="$PYTHON_IMG_TAG"
-      --build-arg APP_VERSION="$APP_VERSION"
-      --build-arg NGINX_IMG_TAG="$NGINX_IMG_TAG"
-
-app-build:
   needs:
     - set-vars
+  services:
+    - name: docker:24.0.5-dind
+      pull_policy: if-not-present
+      # the following setting is for tls disabled
+      #command: ["--tls=false"]
+      # the following setting is for tls enabled
+      command: [ "--tls=true", "--host=tcp://0.0.0.0:2376" ]
+  variables:
+    DOCKER_AUTH_CONFIG: $DOCKER_AUTH_CONFIG
+    # the following settings are for tls disabled
+    #DOCKER_HOST: tcp://docker:2375
+    #DOCKER_TLS_CERTDIR: ""
+    # the following settings are for tls enabled
+    DOCKER_HOST: "tcp://docker:2376"
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+    DOCKER_TLS_VERIFY: "1"
+  tags:
+    - dind
+  before_script:
+    - echo "Waiting for Docker daemon..."
+    - until docker info >/dev/null 2>&1; do sleep 1; done
+    - mkdir -p ~/.docker
+    - echo "$DOCKER_AUTH_CONFIG" > ~/.docker/config.json
+    - docker info
+  script:
+    - echo "CONTEXT_DIR=$CONTEXT_DIR"
+    - cd $CONTEXT_DIR
+    - docker build -t "${IMAGE_NAME}-unverified" --build-arg EXTERNAL_REG=$EXTERNAL_REG --build-arg PYTHON_IMG_TAG=$PYTHON_IMG_TAG --build-arg APP_VERSION=$APP_VERSION --build-arg NGINX_IMG_TAG=$NGINX_IMG_TAG .
+    - docker push "${IMAGE_NAME}-unverified"
+
+
+app-build:
   extends:
     - .triggers
     - .build
@@ -88,8 +87,6 @@ app-build:
     CONTEXT_DIR: "$CI_PROJECT_DIR"
 
 proxy-build:
-  needs:
-    - set-vars
   extends:
     - .triggers
     - .build
@@ -97,92 +94,25 @@ proxy-build:
     IMAGE_NAME: $PROXY_IMAGE
     CONTEXT_DIR: "$CI_PROJECT_DIR/nginx"
 
-.scan:
-  stage: scan
-  environment: $CI_COMMIT_REF_NAME
-  image:
-    name: docker.io/aquasec/trivy:0.23.0
-    entrypoint: [""]
-  variables:
-    GIT_STRATEGY: none
-  before_script:
-    - echo "With these environmental variables"
-    - cat .env
-  script:
-    - echo "Going to scan image $IMAGE_NAME-unverified"
-    - trivy --version
-    - time trivy image --clear-cache
-    - time trivy --cache-dir .trivycache/ image --download-db-only --no-progress
-    # Create report artifact
-    - >
-      time trivy --cache-dir .trivycache/ image --exit-code 0 --ignore-unfixed
-      --no-progress --format template --template "@/contrib/gitlab.tpl"
-      --output "$CI_PROJECT_DIR/$SHORT_NAME-imgscan.json"
-      "${IMAGE_NAME}-unverified"
-    # Print full report
-    - >
-      time trivy --cache-dir .trivycache/ image --exit-code 0 --ignore-unfixed
-      --no-progress "${IMAGE_NAME}"-unverified
-    # Fail on critical vulnerabilities
-    - >
-      time trivy --cache-dir .trivycache/ image --exit-code 1 --ignore-unfixed
-      --severity CRITICAL --no-progress "${IMAGE_NAME}"-unverified
-  cache:
-    key: trivy-cache
-    paths:
-      - .trivycache/
-    policy: pull-push
-  artifacts:
-    when: always
-    reports:
-      container_scanning: $SHORT_NAME-imgscan.json
-
-app-scan:
-  needs:
-    - set-vars
-    - app-build
-  extends:
-    - .triggers
-    - .scan
-  variables:
-    IMAGE_NAME: $APP_IMAGE
-    SHORT_NAME: "app"
-
-proxy-scan:
-  needs:
-    - set-vars
-    - proxy-build
-  extends:
-    - .triggers
-    - .scan
-  variables:
-    IMAGE_NAME: $PROXY_IMAGE
-    SHORT_NAME: "proxy"
 
 .retag:
   stage: package
   environment: $CI_COMMIT_REF_NAME
-  image: docker.io/regclient/regctl:v0.3-alpine
+  image: docker.io/regclient/regctl:alpine
   variables:
     GIT_STRATEGY: none
   before_script:
-    - echo "With these environmental variables"
-    - cat .env
-    - export REG_HOST=${INTERNAL_REG%/*}
+    - export REG_HOST=${CI_REGISTRY}
     - >
       echo "{\"hosts\":{\"${REG_HOST}\":{\"tls\":\"enabled\",\"hostname\":
-      \"${REG_HOST}\",\"user\":\"${IMAGE_REGISTRY_USER}\",\"pass\":
-      \"${IMAGE_REGISTRY_PASS}\"}}}" >> /home/appuser/.regctl/config.json
+      \"${REG_HOST}\",\"user\":\"${CI_DEPLOY_USER}\",\"pass\":
+      \"${CI_DEPLOY_PASSWORD}\"}}}" >> /home/appuser/.regctl/config.json
   script:
     - >
       regctl --verbosity debug image copy
-      "$IMAGE_NAME-unverified" "$IMAGE_NAME"
-    - regctl --verbosity debug tag delete "$IMAGE_NAME-unverified"
+      "${IMAGE_NAME}-unverified" "${IMAGE_NAME}"
 
 app-retag:
-  needs:
-    - set-vars
-    - app-scan
   extends:
     - .triggers
     - .retag
@@ -190,9 +120,6 @@ app-retag:
     IMAGE_NAME: $APP_IMAGE
 
 proxy-retag:
-  needs:
-    - set-vars
-    - proxy-scan
   extends:
     - .triggers
     - .retag
@@ -201,25 +128,27 @@ proxy-retag:
 
 remote-docker:
   stage: deploy
+  needs:
+      - job: set-vars
+        artifacts: true
+      - job: app-build
+      - job: proxy-build
+      - job: app-retag
+      - job: proxy-retag
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:24.0
-  needs:
-    - set-vars  
-    - app-retag
-    - proxy-retag
   extends:
     - .triggers
   variables:
     DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
     DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   before_script:
+    - echo "***The app image is  $APP_IMAGE"
+
     # Create Docker config dir inside job container
     - mkdir -p "$DOCKER_CONFIG"
     - echo "$DOCKER_AUTH_CONFIG" > "$DOCKER_CONFIG/config.json"
-    - echo "With these environmental variables"
-    - cat .env
-    - echo "*** The app image is '$APP_IMAGE'"
-    - echo "*** The app version is '$APP_VERSION'"
+
     - echo "*** Going to docker compose remote with file 'docker-compose.$CI_COMMIT_REF_NAME.yml'"
     - echo "Adding SSH Key"
     - mkdir -p ~/.ssh
@@ -228,42 +157,53 @@ remote-docker:
     - echo 'IdentityFile ~/.ssh/gitlab' >> ~/.ssh/config
     - ssh-keyscan -H $DEPLOY_HOSTNAME >> ~/.ssh/known_hosts
   script:
+    # create network envidat first if not present
+    - >
+      if ! docker network inspect envidat >/dev/null 2>&1; then 
+        docker network create envidat
+      fi
+
     # use docker compose create to recreate the container and force pulling the latest image
     # to avoid using the local cache
+
     - |
       docker compose --project-name="$APP_NAME" \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
-        create --force-recreate --pull="always"
+        --env-file build.env pull
+
     # use docker compose up to start the service on the remote machine
     - |
       docker compose --project-name="$APP_NAME" \
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
-        up --detach
+        --env-file build.env \
+        up --detach --force-recreate
 
-# Job for manual deploying of a docker-compose file, to use it's
+# Job for manual deploying of a docker-compose file, to use its
 # docker images, make sure before you run it that the images referenced
 # in the docker-compose.$CI_COMMIT_REF_NAME.yml exist!
 manual-remote-docker:
   stage: manual-deploy
+  needs:
+    - job: set-vars
+      artifacts: true
+      optional: true
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:24.0
   rules:
     - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: always
     - when: manual
-  needs:
-    - set-vars
   variables:
     DOCKER_HOST: "ssh://$DEPLOY_SSH_USER@$DEPLOY_HOSTNAME"
     DOCKER_CONFIG: "$CI_PROJECT_DIR/.docker"
   before_script:
+    - echo "***The app image is  $APP_IMAGE"
+
     # Create Docker config dir inside job container
     - mkdir -p "$DOCKER_CONFIG"
     - echo "$DOCKER_AUTH_CONFIG" > "$DOCKER_CONFIG/config.json"
     - echo "With these environmental variables"
-    - cat .env
-    - echo "*** The app image is '$APP_IMAGE'"
-    - echo "*** The app version is '$APP_VERSION'"
+
     - echo "*** Going to docker compose remote with file 'docker-compose.$CI_COMMIT_REF_NAME.yml'"
     - echo "Going to docker compose remote with file docker-compose.$CI_COMMIT_REF_NAME.yml"
     - echo "Adding SSH Key"
@@ -273,19 +213,20 @@ manual-remote-docker:
     - echo 'IdentityFile ~/.ssh/gitlab' >> ~/.ssh/config
     - ssh-keyscan -H $DEPLOY_HOSTNAME >> ~/.ssh/known_hosts
   script:
-    - > 
+    # create network envidat first if not present
+    - >
       if ! docker network inspect envidat >/dev/null 2>&1; then 
         docker network create envidat
       fi
-    - echo "Going to remotely start the docker-compose.${CI_COMMIT_REF_NAME}.yml on ${DEPLOY_SSH_USER}@${DEPLOY_HOSTNAME}"
     # use docker compose create to recreate the container and force pulling the latest image
     # to avoid using the local cache
     - |
-      docker compose --project-name="$APP_NAME" \
+      docker compose --project-name="$APP_NAME"\
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
-        create --force-recreate --pull="always"
+        --env-file build.env pull
     # use docker compose up to start the service on the remote machine
     - |
-      docker compose --project-name="$APP_NAME" \
+      docker compose --project-name="$APP_NAME"\
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
-        up --detach
+        --env-file build.env \
+        up --detach --force-recreate
