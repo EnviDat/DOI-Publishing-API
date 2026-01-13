@@ -3,7 +3,7 @@
 import asyncio
 
 from app.logic.forest3d import publish_forest3d_to_datacite, \
-    prepare_dataset_for_envidat, doi_exists_in_dc
+    prepare_dataset_for_envidat, doi_exists_in_dc, format_doi
 from fastapi import APIRouter, Depends, HTTPException
 import aiohttp
 
@@ -62,8 +62,17 @@ async def publish_bulk_forest3d():
             # TODO handle updating existing and registered datasets, possibly as a
             #  query parameter boolean flag
             # TODO start dev here
-            if await doi_exists_in_dc(session, doi):
-                return {"doi": doi, "status": "DOI already registered with DataCite"}
+            # TODO remove
+            doi_formatted = format_doi(doi)
+            if await doi_exists_in_dc(session, doi_formatted):
+                return {
+                    "doi": doi_formatted,
+                    "status": "DOI already registered with DataCite"
+                }
+
+            # TODO reimplement
+            # if await doi_exists_in_dc(session, doi):
+            #     return {"doi": doi, "status": "DOI already registered with DataCite"}
 
             formatted_dataset = prepare_dataset_for_envidat(dataset)
             result = await publish_forest3d_to_datacite(session, formatted_dataset)
