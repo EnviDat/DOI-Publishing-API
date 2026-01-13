@@ -15,12 +15,19 @@ import logging
 log = logging.getLogger(__name__)
 
 
-async def doi_exists(session: aiohttp.ClientSession, doi: str) -> bool:
+# TODO test, start dev here and add log.debug status
+async def doi_exists_in_dc(session: aiohttp.ClientSession, doi: str) -> bool:
     """Check if a DOI is already registered in the DataCite API."""
     async with session.get(f"{config_app.DATACITE_API_URL}/{doi}") as resp:
         if resp.status == 200:
             return True
         return False
+
+
+# TODO remove
+def format_doi(doi: str) -> str:
+    """Format a DOI for DataCite."""
+    return doi.split()[0]
 
 
 def prepare_dataset_for_envidat(dataset):
@@ -54,6 +61,9 @@ def prepare_dataset_for_envidat(dataset):
             for key in ["name", "display_name"]:
                 if key in tag and not isinstance(tag[key], str):
                     tag[key] = str(tag[key])
+
+    # TODO remove
+    dataset_copy["doi"] = format_doi(dataset_copy["doi"])
 
     return dataset_copy
 
@@ -139,13 +149,13 @@ async def publish_forest3d_to_datacite(
                 request_url,
                 data=payload_json,
                 headers=headers,
-                timeout=timeout
+                timeout=timeout,
         ) as resp:
 
-            if resp.status == 200:
+            if resp.status == 200 or resp.status == 201:
                 return {
                     "status_code": resp.status,
-                    "result": "DOI successfully published/updated"
+                    "result": f"DOI '{doi}' successfully published/updated"
                 }
             else:
                 try:

@@ -2,8 +2,8 @@
 
 import asyncio
 
-from app.logic.forest3d import doi_exists, publish_forest3d_to_datacite, \
-    prepare_dataset_for_envidat
+from app.logic.forest3d import publish_forest3d_to_datacite, \
+    prepare_dataset_for_envidat, doi_exists_in_dc
 from fastapi import APIRouter, Depends, HTTPException
 import aiohttp
 
@@ -14,16 +14,18 @@ import logging
 log = logging.getLogger(__name__)
 
 
-router = APIRouter(prefix="/forest3d", tags=["forest3d"])
+router = APIRouter(
+    prefix="/forest3d",
+    tags=["forest3d"],
+    # dependencies=[Depends(get_admin)]   # TODO test on staging, start dev here
+)
 
 
 # TODO specify and return a data type
 @router.get(
     "/publish-bulk-datacite"
 )
-async def publish_bulk_forest3d(
-    # admin=Depends(get_admin),  # TODO start dev here, implement
-):
+async def publish_bulk_forest3d():
     """Publish or update several Forest3D datasets with Datacite.
 
     The metadata for Forest3D datasets are read from an external online JSON file.
@@ -59,7 +61,8 @@ async def publish_bulk_forest3d(
 
             # TODO handle updating existing and registered datasets, possibly as a
             #  query parameter boolean flag
-            if await doi_exists(session, doi):
+            # TODO start dev here
+            if await doi_exists_in_dc(session, doi):
                 return {"doi": doi, "status": "DOI already registered with DataCite"}
 
             formatted_dataset = prepare_dataset_for_envidat(dataset)
