@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.2.1 (2026-01-16)
+### Refactor
+- Allow 'doi' validation to optionally accept non-EnviDat DOI prefixes
+
 
 ## 1.2.0 (2026-01-16)
 ### Feature
