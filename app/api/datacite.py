@@ -338,7 +338,8 @@ async def publish_or_update_datacite(
 
         return JSONResponse(
             status_code=200,
-            content=f"DOI ''"  # add doi to message
+            content=f"CKAN package '{package_id}' with external DOI '{doi}' "
+                    f"published and visible in EnviDat system"
         )
 
     #################  Publish internal EnviDat DOIs  ####################
