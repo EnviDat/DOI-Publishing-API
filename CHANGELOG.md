@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 1.2.2 (2026-01-16)
+### Refactor
+- Clarify external 'doi' publish response message 
+
+
 ## 1.2.1 (2026-01-16)
 ### Refactor
 - Allow 'doi' validation to optionally accept non-EnviDat DOI prefixes
