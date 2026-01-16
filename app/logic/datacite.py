@@ -280,3 +280,41 @@ def get_error_message(datacite_response: DoiSuccess | DoiErrors) -> str:
     except Exception as e:
         log.exception(f"ERROR getting error message from DataCite response:  {e}")
         return "Unknown error"
+
+
+def is_valid_doi(doi: str) -> bool | None:
+    """Returns True if DOI is valid when called and returns a valid response.
+
+    Else raises HTTP exception.
+
+    Args:
+         doi (str): DOI string in either short format (10.5281/zenodo.6514932) or
+                    full URL format (https://doi.org/10.5281/zenodo.6514932)
+
+    """
+    if not doi.startswith("https://doi.org/"):
+        doi = f"https://doi.org/{doi}"
+
+    try:
+        response = requests.get(doi, timeout=5)
+
+        if response.ok:
+            return True
+
+        if response.status_code == 404:
+            raise HTTPException(status_code=404, detail=f"DOI {doi} does not exist")
+
+        if response.status_code == 408:
+            raise HTTPException(
+                status_code=408,
+                detail=f"Connection timed out for DOI {doi}"
+            )
+
+        response.raise_for_status()
+
+    except Exception as e:
+        log.exception(e)
+        raise HTTPException(
+            status_code=500,
+            detail=f"DOI {doi} did not return valid response"
+        )
