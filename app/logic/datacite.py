@@ -105,9 +105,9 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     site_url = config_app.DATACITE_DATA_URL_PREFIX
     timeout = config_app.DATACITE_TIMEOUT
 
-    # Get doi and validate,
-    # if doi not truthy or has invalid prefix then raises HTTPException
-    doi = validate_doi(package)
+    # Extract and validate doi, if 'doi' does not exist then raises HTTPException
+    # Validate that prefix assigned to 'doi' is the configured EnviDat DOI prefix
+    doi = validate_doi(package, has_envidat_prefix=True)
 
     # Get metadata record URL
     name = package.get("name", package["id"])
@@ -217,13 +217,16 @@ def format_response(response: requests.models.Response) -> DoiSuccess | DoiError
         }
 
 
-def validate_doi(package: dict):
-    """Returns doi if it truthy and has EnviDat doi prefix.
+def validate_doi(package: dict, has_envidat_prefix: bool = False):
+    """Returns doi if it exists in CKAN package.
 
     Else raises HTTPException
 
     Args:
         package (dict): CKAN EnviDat package dictionary
+        has_envidat_prefix (bool): If true 'doi' must have configured EnviDat prefix
+                                   (environment variable DOI_PREFIX).
+                                   Defaults to False.
 
     Returns:
         doi (str): validated doi from input package
@@ -238,12 +241,13 @@ def validate_doi(package: dict):
         log.error(f"Attempted publish, but no DOI exists for package ID: {package_id}")
         raise HTTPException(status_code=500, detail="Package does not have a doi")
 
-    # Validate doi prefix
-    doi_prefix = config_app.DOI_PREFIX
-    prefix = (doi.partition("/"))[0]
-    if prefix != doi_prefix:
-        log.debug(f"DOI prefix is invalid: {prefix}")
-        raise HTTPException(status_code=403, detail="Invalid DOI prefix")
+    if has_envidat_prefix:
+        # Validate doi prefix
+        doi_prefix = config_app.DOI_PREFIX
+        prefix = (doi.partition("/"))[0]
+        if prefix != doi_prefix:
+            log.debug(f"DOI prefix is invalid: {prefix}")
+            raise HTTPException(status_code=403, detail="Invalid DOI prefix")
 
     return doi
 
@@ -280,3 +284,41 @@ def get_error_message(datacite_response: DoiSuccess | DoiErrors) -> str:
     except Exception as e:
         log.exception(f"ERROR getting error message from DataCite response:  {e}")
         return "Unknown error"
+
+
+def is_valid_doi(doi: str) -> bool | None:
+    """Returns True if DOI is valid when called and returns a valid response.
+
+    Else raises HTTP exception.
+
+    Args:
+         doi (str): DOI string in either short format (10.5281/zenodo.6514932) or
+                    full URL format (https://doi.org/10.5281/zenodo.6514932)
+
+    """
+    if not doi.startswith("https://doi.org/"):
+        doi = f"https://doi.org/{doi}"
+
+    try:
+        response = requests.get(doi, timeout=5)
+
+        if response.ok:
+            return True
+
+        if response.status_code == 404:
+            raise HTTPException(status_code=404, detail=f"DOI {doi} does not exist")
+
+        if response.status_code == 408:
+            raise HTTPException(
+                status_code=408,
+                detail=f"Connection timed out for DOI {doi}"
+            )
+
+        response.raise_for_status()
+
+    except Exception as e:
+        log.exception(e)
+        raise HTTPException(
+            status_code=500,
+            detail=f"DOI {doi} did not return valid response"
+        )

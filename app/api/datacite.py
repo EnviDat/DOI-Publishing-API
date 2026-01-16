@@ -8,7 +8,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 
-# from app.api.doi import create_doi_draft
 from app.auth import get_admin, get_user
 from app.config import config_app
 from app.logic.datacite import (
@@ -18,6 +17,7 @@ from app.logic.datacite import (
     publish_datacite,
     reserve_draft_doi_datacite,
     validate_doi,
+    is_valid_doi,
 )
 from app.logic.mail import (
     approval_granted_email,
@@ -169,8 +169,7 @@ async def request_publish_or_update(
 
     package = ckan_package_show(package_id, ckan)
 
-    # Validate doi,
-    # if doi not truthy or has invalid prefix then raises HTTPException
+    # Validate doi, if 'doi' does not exist then raises HTTPException
     validate_doi(package)
 
     # Extract publication_state
@@ -248,9 +247,21 @@ async def publish_or_update_datacite(
     package_id: Annotated[
         str, Query(alias="package-id", description="CKAN package id or name")
     ],
+    is_external_doi: Annotated[
+        bool, Query(
+            alias="is-external-doi",
+            description="Set to True if DOI is imported from an external platform. "
+                        "Default value is False."
+        )
+    ] = False,
     admin=Depends(get_admin),
 ):
     """Publish or update dataset with DataCite.
+
+    (Note: If 'is-external-doi' is set to true then the DOI is imported from an external
+    platform. The dataset will not be published or updated with DataCite.
+    Else it is assumed the DOI was created in the EnviDat system.
+    Default value is false.)
 
     Only authorized admin can use this endpoint.
     Sends email to admin and user.
@@ -287,72 +298,112 @@ async def publish_or_update_datacite(
 
     # Check if publication_state can be processed
     if publication_state not in ["pub_pending", "published", "approved"]:
-        log.error("Publication state is not one of the following:"
-                  " 'pub_pending', 'published', 'approved'")
+        log.error(f"Publication state '{publication_state}' is not one of the "
+                  f"following: 'pub_pending', 'published', 'approved'")
         raise HTTPException(
             status_code=500,
-            detail="Value for 'publication_state' cannot be processed",
+            detail=f"Value for 'publication_state' cannot be processed: "
+                   f"'{publication_state}' is not one of the "
+                   f"following: 'pub_pending', 'published', 'approved'",
         )
 
-    # Publish/update dataset in Datacite,
-    # if response status_code not in successful_status_codes
-    # then try again "retries" times
-    # Send notification email to admin and user
-    successful_status_codes = range(200, 300)
-    datacite_response = {}
-    retry_count = 0
+    #################  Publish external DOIs  ###########################
+    if is_external_doi:
 
-    while retry_count <= config_app.DATACITE_RETRIES:
-        # Send package to DataCite
-        try:
-            datacite_response = publish_datacite(package)
-            log.debug(f"DataCite response: {datacite_response}")
-        except Exception as e:
-            log.error(e)
-            traceback = str(e)
-
-        if datacite_response.get("status_code") in successful_status_codes:
-            log.debug(
-                "DataCite publish successful, patching "
-                f"CKAN package ID: {package_id} to publication_state=published"
+        # Validate DOI exists on package and returns a 200 when called
+        if not (doi := package.get("doi", None)):
+            raise HTTPException(
+                status_code=400,
+                detail=f"'doi' is not available for CKAN package '{package_id}'"
             )
-            ckan_response = ckan_package_patch(
-                package_id,
-                {
-                    "private": False,
-                    "publication_state": "published",
-                },
-                ckan,
-            )
-            log.debug(f"CKAN package_patch response: {ckan_response}")
+        # Raises HTTPException if DOI does not exist or does not
+        # return a successful response when called
+        is_valid_doi(doi)
 
-            # Email user that publication complete
-            await approval_granted_email(
-                package_id, maintainer_name, [maintainer_email, admin_email]
-            )
+        # Publish and make dataset visible in CKAN
+        ckan_response = ckan_package_patch(
+            package_id,
+            {
+                "private": False,
+                "publication_state": "published",
+            },
+            ckan,
+        )
+        log.debug(f"CKAN package_patch response: {ckan_response}")
 
-            # Return successful datacite_response
-            return JSONResponse(
-                datacite_response, status_code=datacite_response.get("status_code")
-            )
+        # Email user that publication complete
+        await approval_granted_email(
+            package_id, maintainer_name, [maintainer_email, admin_email]
+        )
 
-        # Else attempt to call DataCite API again
-        retry_count += 1
+        return JSONResponse(
+            status_code=200,
+            content=f"CKAN package '{package_id}' with external DOI '{doi}' "
+                    f"published and visible in EnviDat system"
+        )
 
-        # Wait sleep_time seconds before trying to call DataCite again
-        time.sleep(config_app.DATACITE_SLEEP_TIME)
-
-    # Get error message
-    if datacite_response:
-        error_msg = get_error_message(datacite_response)
+    #################  Publish internal EnviDat DOIs  ####################
     else:
-        error_msg = traceback
+        # Publish/update dataset in Datacite,
+        # if response status_code not in successful_status_codes
+        # then try again "retries" times
+        successful_status_codes = range(200, 300)
+        datacite_response = {}
+        retry_count = 0
+        err_msg = "Unknown error"
 
-    await datacite_failed_email(
-        package_id, maintainer_name, maintainer_email, error_msg
-    )
+        while retry_count <= config_app.DATACITE_RETRIES:
+            # Send package to DataCite
+            try:
+                datacite_response = publish_datacite(package)
+                log.debug(f"DataCite response: {datacite_response}")
+            except Exception as e:
+                log.error(e)
+                err_msg = str(e)
 
-    # Return error datacite_response
-    return JSONResponse(
-        datacite_response, status_code=datacite_response.get("status_code", 500)
-    )
+            if datacite_response.get("status_code") in successful_status_codes:
+                log.debug(
+                    "DataCite publish successful, patching "
+                    f"CKAN package ID: {package_id} to publication_state=published"
+                )
+                # Publish and make visible dataset in CKAN
+                ckan_response = ckan_package_patch(
+                    package_id,
+                    {
+                        "private": False,
+                        "publication_state": "published",
+                    },
+                    ckan,
+                )
+                log.debug(f"CKAN package_patch response: {ckan_response}")
+
+                # Email user that publication complete
+                await approval_granted_email(
+                    package_id, maintainer_name, [maintainer_email, admin_email]
+                )
+
+                # Return successful datacite_response
+                return JSONResponse(
+                    datacite_response, status_code=datacite_response.get("status_code")
+                )
+
+            # Else attempt to call DataCite API again
+            retry_count += 1
+
+            # Wait sleep_time seconds before trying to call DataCite again
+            time.sleep(config_app.DATACITE_SLEEP_TIME)
+
+        # Get error message
+        if datacite_response:
+            error_msg = get_error_message(datacite_response)
+        else:
+            error_msg = err_msg 
+
+        await datacite_failed_email(
+            package_id, maintainer_name, maintainer_email, error_msg
+        )
+
+        # Return error datacite_response
+        return JSONResponse(
+            datacite_response, status_code=datacite_response.get("status_code", 500)
+        )
