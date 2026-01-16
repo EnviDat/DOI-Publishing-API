@@ -169,8 +169,7 @@ async def request_publish_or_update(
 
     package = ckan_package_show(package_id, ckan)
 
-    # Validate doi,
-    # if doi not truthy or has invalid prefix then raises HTTPException
+    # Validate doi, if 'doi' does not exist then raises HTTPException
     validate_doi(package)
 
     # Extract publication_state

@@ -105,9 +105,9 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     site_url = config_app.DATACITE_DATA_URL_PREFIX
     timeout = config_app.DATACITE_TIMEOUT
 
-    # Get doi and validate,
-    # if doi not truthy or has invalid prefix then raises HTTPException
-    doi = validate_doi(package)
+    # Extract and validate doi, if 'doi' does not exist then raises HTTPException
+    # Validate that prefix assigned to 'doi' is the configured EnviDat DOI prefix
+    doi = validate_doi(package, has_envidat_prefix=True)
 
     # Get metadata record URL
     name = package.get("name", package["id"])
@@ -217,13 +217,16 @@ def format_response(response: requests.models.Response) -> DoiSuccess | DoiError
         }
 
 
-def validate_doi(package: dict):
-    """Returns doi if it truthy and has EnviDat doi prefix.
+def validate_doi(package: dict, has_envidat_prefix: bool = False):
+    """Returns doi if it exists in CKAN package.
 
     Else raises HTTPException
 
     Args:
         package (dict): CKAN EnviDat package dictionary
+        has_envidat_prefix (bool): If true 'doi' must have configured EnviDat prefix
+                                   (environment variable DOI_PREFIX).
+                                   Defaults to False.
 
     Returns:
         doi (str): validated doi from input package
@@ -238,12 +241,13 @@ def validate_doi(package: dict):
         log.error(f"Attempted publish, but no DOI exists for package ID: {package_id}")
         raise HTTPException(status_code=500, detail="Package does not have a doi")
 
-    # Validate doi prefix
-    doi_prefix = config_app.DOI_PREFIX
-    prefix = (doi.partition("/"))[0]
-    if prefix != doi_prefix:
-        log.debug(f"DOI prefix is invalid: {prefix}")
-        raise HTTPException(status_code=403, detail="Invalid DOI prefix")
+    if has_envidat_prefix:
+        # Validate doi prefix
+        doi_prefix = config_app.DOI_PREFIX
+        prefix = (doi.partition("/"))[0]
+        if prefix != doi_prefix:
+            log.debug(f"DOI prefix is invalid: {prefix}")
+            raise HTTPException(status_code=403, detail="Invalid DOI prefix")
 
     return doi
 
