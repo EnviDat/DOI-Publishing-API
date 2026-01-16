@@ -317,8 +317,8 @@ async def publish_or_update_datacite(
                 status_code=400,
                 detail=f"'doi' is not available for CKAN package '{package_id}'"
             )
-        # Raises HTTP Exception is DOI does not exist or return a successful response
-        # when called
+        # Raises HTTPException if DOI does not exist or does not
+        # return a successful response when called
         is_valid_doi(doi)
 
         # Publish and make dataset visible in CKAN
