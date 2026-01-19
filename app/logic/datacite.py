@@ -4,6 +4,7 @@ import base64
 import json
 import requests
 from fastapi import HTTPException
+from requests import HTTPError
 from typing_extensions import TypedDict
 
 from envidat_converters.logic.converter_logic.envidat_to_datacite import EnviDatToDataCite
@@ -315,6 +316,15 @@ def is_valid_doi(doi: str) -> bool | None:
             )
 
         response.raise_for_status()
+
+    except HTTPError as e:
+        status = e.response.status_code if e.response else 500
+        log.exception(f"HTTP error occurred: {e}")
+        raise HTTPException(
+            status_code=status,
+            detail=f"DOI {doi} did not return a valid response,"
+                   f" failed with status {status}: {str(e)}"
+        )
 
     except Exception as e:
         log.exception(e)

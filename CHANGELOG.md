@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.2.3 (2026-01-17)
+### Fix
+- Improve error handling for external doi validation
+
 ## 1.2.2 (2026-01-16)
 ### Refactor
 - Clarify external 'doi' publish response message 
