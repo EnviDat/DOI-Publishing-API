@@ -357,9 +357,13 @@ async def publish_or_update_datacite(
             try:
                 datacite_response = publish_datacite(package)
                 log.debug(f"DataCite response: {datacite_response}")
-            except Exception as e:
+            except HTTPException as e:
                 log.error(e)
-                err_msg = str(e)
+                err_message = str(e)
+                await datacite_failed_email(
+                    package_id, maintainer_name, maintainer_email, err_message
+                )
+                raise HTTPException(status_code=e.status_code, detail=err_message)
 
             if datacite_response.get("status_code") in successful_status_codes:
                 log.debug(
@@ -393,12 +397,7 @@ async def publish_or_update_datacite(
             # Wait sleep_time seconds before trying to call DataCite again
             time.sleep(config_app.DATACITE_SLEEP_TIME)
 
-        # Get error message
-        if datacite_response:
-            error_msg = get_error_message(datacite_response)
-        else:
-            error_msg = err_msg 
-
+        error_msg = get_error_message(datacite_response)
         await datacite_failed_email(
             package_id, maintainer_name, maintainer_email, error_msg
         )

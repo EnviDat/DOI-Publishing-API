@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 async def datacite_failed_email(
     package_id: str, user_name: str, user_email: str, error_msg: str
 ):
-    """Inform the admin that the a DOI task failed."""
+    """Inform the admin that a DOI task failed."""
     params = {
         "from": config_app.EMAIL_FROM,
         "to": config_app.EMAIL_FROM,
