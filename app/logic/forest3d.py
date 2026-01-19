@@ -24,9 +24,8 @@ async def doi_exists_in_dc(session: aiohttp.ClientSession, doi: str) -> bool:
         return False
 
 
-# TODO remove
 def format_doi(doi: str) -> str:
-    """Format a DOI for DataCite."""
+    """Format a DOI for DataCite. Remove anything after a ' ' space character."""
     return doi.split()[0]
 
 

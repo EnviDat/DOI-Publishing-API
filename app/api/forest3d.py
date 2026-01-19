@@ -21,12 +21,14 @@ router = APIRouter(
 )
 
 
-# TODO specify and return a data type
 @router.get(
     "/publish-bulk-datacite"
 )
 async def publish_bulk_forest3d():
-    """Publish or update several Forest3D datasets with Datacite.
+    """Publish several Forest3D datasets with Datacite.
+
+    (Note: This endpoint can currently only be used to publish Forest3D datasets with
+    DataCite but not update them.)
 
     The metadata for Forest3D datasets are read from an external online JSON file.
 
@@ -49,8 +51,6 @@ async def publish_bulk_forest3d():
         raise HTTPException(422,
                             "Remote JSON must be a list of dictionaries")
 
-    # ---- Process DOI with database
-
 
     # ---- Publish DOIs concurrently to DataCite
     async with get_datacite_session() as session:
@@ -61,6 +61,8 @@ async def publish_bulk_forest3d():
 
             # TODO handle updating existing and registered datasets, possibly as a
             #  query parameter boolean flag
+            # TODO make format_doi a default false query param
+            # TODO check for space
             # TODO start dev here
             # TODO remove
             doi_formatted = format_doi(doi)
