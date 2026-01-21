@@ -17,7 +17,6 @@ from app.logic.datacite import (
     publish_datacite,
     reserve_draft_doi_datacite,
     validate_doi,
-    is_existing_envidat_doi,
 )
 from app.logic.mail import (
     approval_granted_email,
@@ -315,15 +314,6 @@ async def publish_or_update_datacite(
             raise HTTPException(
                 status_code=400,
                 detail=f"'doi' is not available for CKAN package '{package_id}'"
-            )
-
-        # Check if DOI exists in any CKAN package
-        is_envidat_doi, doi_pkg_name = is_existing_envidat_doi(doi, ckan)
-        if is_envidat_doi:
-            raise HTTPException(
-                status_code=409,
-                detail=f"DOI '{doi}' is already assigned to "
-                       f"CKAN package '{doi_pkg_name}'",
             )
 
         # Publish and make dataset visible in CKAN
