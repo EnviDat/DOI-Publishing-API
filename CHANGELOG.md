@@ -1,20 +1,29 @@
 # CHANGELOG
 
+## 1.2.7 (2026-01-21)
+### Fix
+- Revert external 'doi' check
+
+
 ## 1.2.6 (2026-01-21)
 ### Refactor
 - 'doi' check error formatting
+
 
 ## 1.2.5 (2026-01-21)
 ### Refactor
 - Check if 'doi' already exists in CKAN if publishing external DOI
 
+
 ## 1.2.4 (2026-01-21)
 ### Refactor
 - Remove external 'doi' API call in publish endpoint 
 
+
 ## 1.2.3 (2026-01-17)
 ### Fix
 - Improve error handling for external doi validation
+
 
 ## 1.2.2 (2026-01-16)
 ### Refactor
