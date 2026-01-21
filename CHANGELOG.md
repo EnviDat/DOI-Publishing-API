@@ -1,8 +1,12 @@
 # CHANGELOG
 
+## 1.2.5 (2026-01-21)
+### Refactor
+- Check if 'doi' already exists in CKAN if publishing external DOI
+
 ## 1.2.4 (2026-01-21)
 ### Refactor
-- Remove external 'doi' publish API call 
+- Remove external 'doi' API call in publish endpoint 
 
 ## 1.2.3 (2026-01-17)
 ### Fix
