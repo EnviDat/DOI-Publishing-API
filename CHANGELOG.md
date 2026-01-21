@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.2.4 (2026-01-21)
+### Refactor
+- Remove external 'doi' publish API call 
+
 ## 1.2.3 (2026-01-17)
 ### Fix
 - Improve error handling for external doi validation

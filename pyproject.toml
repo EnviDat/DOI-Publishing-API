@@ -1,6 +1,6 @@
 [project]
 name = "doi-publishing-api"
-version = "1.2.3"
+version = "1.2.4"
 description = "API for publishing EnviDat DOIs to DataCite."
 authors = [
     {name = "EnviDat", email = "envidat@wsl.ch"},
