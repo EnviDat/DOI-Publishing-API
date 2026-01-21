@@ -322,7 +322,7 @@ async def publish_or_update_datacite(
         if is_envidat_doi:
             raise HTTPException(
                 status_code=409,
-                detail=f"DOI {doi}' is already assigned to "
+                detail=f"DOI '{doi}' is already assigned to "
                        f"CKAN package '{doi_pkg_name}'",
             )
 
