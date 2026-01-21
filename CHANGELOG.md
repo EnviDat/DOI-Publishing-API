@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.2.6 (2026-01-21)
+### Refactor
+- 'doi' check error formatting
+
 ## 1.2.5 (2026-01-21)
 ### Refactor
 - Check if 'doi' already exists in CKAN if publishing external DOI
