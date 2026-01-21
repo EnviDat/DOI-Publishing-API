@@ -3,13 +3,14 @@
 import base64
 import json
 import requests
+from ckanapi import RemoteCKAN
 from fastapi import HTTPException
-from requests import HTTPError
 from typing_extensions import TypedDict
 
 from envidat_converters.logic.converter_logic.envidat_to_datacite import EnviDatToDataCite
 
 from app.config import config_app
+from app.logic.remote_ckan import ckan_current_package_list_with_resources
 
 # Setup logging
 import logging
@@ -251,6 +252,27 @@ def validate_doi(package: dict, has_envidat_prefix: bool = False):
             raise HTTPException(status_code=403, detail="Invalid DOI prefix")
 
     return doi
+
+
+def is_existing_envidat_doi(doi: str, ckan: RemoteCKAN) -> tuple[bool, str]:
+    """Check if 'doi' exists in any CKAN package.
+
+    Args:
+        doi (str): 'doi' to check
+        ckan (RemoteCKAN): authorised RemoteCKAN session
+
+    Returns:
+        If 'doi' exists returns tuple (True, <name of package 'doi' is assigned to>)
+        Else returns tuple (False, "")
+    """
+    packages = ckan_current_package_list_with_resources(ckan)
+
+    for package in packages:
+        if doi == package.get("doi"):
+            name = package.get("name")
+            return True, name
+
+    return False, ""
 
 
 def xml_to_base64(xml: str) -> str:

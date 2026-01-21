@@ -17,6 +17,7 @@ from app.logic.datacite import (
     publish_datacite,
     reserve_draft_doi_datacite,
     validate_doi,
+    is_existing_envidat_doi,
 )
 from app.logic.mail import (
     approval_granted_email,
@@ -309,11 +310,19 @@ async def publish_or_update_datacite(
     #################  Publish external DOIs  ###########################
     if is_external_doi:
 
-        # Validate DOI exists on package and returns a 200 when called
+        # Validate DOI exists in package
         if not (doi := package.get("doi", None)):
             raise HTTPException(
                 status_code=400,
                 detail=f"'doi' is not available for CKAN package '{package_id}'"
+            )
+
+        # Check if DOI exists in any CKAN package
+        is_envidat_doi, doi_pkg_name = is_existing_envidat_doi(doi, ckan)
+        if is_envidat_doi:
+            raise HTTPException(
+                status_code=409,
+                detail=f"'doi' is already assigned to CKAN package '{doi_pkg_name}'",
             )
 
         # Publish and make dataset visible in CKAN
@@ -346,7 +355,6 @@ async def publish_or_update_datacite(
         successful_status_codes = range(200, 300)
         datacite_response = {}
         retry_count = 0
-        err_msg = "Unknown error"
 
         while retry_count <= config_app.DATACITE_RETRIES:
             # Send package to DataCite
