@@ -83,6 +83,8 @@ class ConfigAppModel(BaseModel):
     EMAIL_ENDPOINT: AnyHttpUrl
     EMAIL_FROM: str
 
+    FOREST3D_URL: str
+
 
 @lru_cache
 def get_config_app() -> ConfigAppModel | Exception:

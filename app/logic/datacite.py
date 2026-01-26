@@ -21,7 +21,7 @@ class DoiSuccess(TypedDict):
     """DOI success class."""
 
     status_code: int
-    result: dict
+    result: dict | str
 
 
 class DoiErrors(TypedDict):
@@ -32,7 +32,7 @@ class DoiErrors(TypedDict):
 
 
 def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
-    """Reserve a DOI identifer in "Draft" state with DataCite.
+    """Reserve a DOI identifier in "Draft" state with DataCite.
 
     For relevant DataCite documentation see:
     https://support.datacite.org/docs/api-create-dois#create-an-identifier-in-draft-state
@@ -114,8 +114,6 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     # Get metadata record URL
     name = package.get("name", package["id"])
     url = f"{site_url}/{name}"
-
-    # Assign name_doi_map used in DataCite conversion
 
     # Assign conversion_error to return if conversion of package to
     # DataCite XML fails

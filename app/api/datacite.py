@@ -1,7 +1,6 @@
 """DataCite API Router."""
+
 import json
-# Setup logging
-import logging
 import time
 from typing import Annotated
 
@@ -26,6 +25,7 @@ from app.logic.mail import (
 from app.logic.minter import create_db_doi
 from app.logic.remote_ckan import ckan_package_patch, ckan_package_show
 
+import logging
 log = logging.getLogger(__name__)
 
 
