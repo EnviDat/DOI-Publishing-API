@@ -19,6 +19,7 @@ The EnviDat email microservice can be found [here](https://gitlabext.wsl.ch/Envi
    - New environment variables must be added to:
      - `env.example` because this file is used for validation
      - `environment` section of the `doi-api` containers in the `docker-compose.<branch>.yml` files
+     -  Echoed into `build.env` in the `set-vars` job in `gitlab-ci.yml` 
 
 2. Clone project, make sure virtual environment is installed and activated, and execute the following command:
 

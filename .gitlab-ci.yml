@@ -34,6 +34,7 @@ set-vars:
       $APP_VERSION-$CI_COMMIT_REF_NAME >> build.env"
     - "echo PROXY_IMAGE=$INTERNAL_REG/$CI_PROJECT_NAME/proxy:\
       $NGINX_IMG_TAG-$CI_COMMIT_REF_NAME >> build.env"
+    - echo "FOREST3D_URL=$FOREST3D_URL" >> build.env
   artifacts:
     reports:
       dotenv: build.env
