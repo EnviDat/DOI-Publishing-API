@@ -15,7 +15,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-# TODO test, start dev here and add log.debug status
 async def doi_exists_in_dc(session: aiohttp.ClientSession, doi: str) -> bool:
     """Check if a DOI is already registered in the DataCite API."""
     async with session.get(f"{config_app.DATACITE_API_URL}/{doi}") as resp:
@@ -29,7 +28,7 @@ def format_doi(doi: str) -> str:
     return doi.split()[0]
 
 
-def prepare_dataset_for_envidat(dataset):
+def prepare_dataset_for_envidat(dataset, is_test_doi=False):
     """
     Convert Forest3D dataset into EnviDat-like package format.
     Only stringifies fields EnviDat expects as JSON strings.
@@ -61,8 +60,8 @@ def prepare_dataset_for_envidat(dataset):
                 if key in tag and not isinstance(tag[key], str):
                     tag[key] = str(tag[key])
 
-    # TODO remove
-    dataset_copy["doi"] = format_doi(dataset_copy["doi"])
+    if is_test_doi:
+        dataset_copy["doi"] = format_doi(dataset_copy["doi"])
 
     return dataset_copy
 
@@ -96,7 +95,6 @@ async def publish_forest3d_to_datacite(
             "errors": [{"error": f"Dataset does not have a 'name' field: {dataset}"}]
         }
 
-    # TODO review
     # Get metadata record URL
     record_url = f"{site_url}/{name}?mode=forest3d"
 

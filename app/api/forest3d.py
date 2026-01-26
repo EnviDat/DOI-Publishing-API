@@ -1,10 +1,11 @@
 """Forest3D API Router."""
 
 import asyncio
+from typing import Annotated
 
 from app.logic.forest3d import publish_forest3d_to_datacite, \
     prepare_dataset_for_envidat, doi_exists_in_dc, format_doi
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 import aiohttp
 
 from app.auth import get_admin, get_datacite_session
@@ -17,18 +18,35 @@ log = logging.getLogger(__name__)
 router = APIRouter(
     prefix="/forest3d",
     tags=["forest3d"],
-    # dependencies=[Depends(get_admin)]   # TODO test on staging, start dev here
+    dependencies=[Depends(get_admin)]
 )
 
 
 @router.get(
     "/publish-bulk-datacite"
 )
-async def publish_bulk_forest3d():
+async def publish_bulk_forest3d(
+        is_update: Annotated[
+            bool,
+            Query(
+                alias="is-update",
+                description="If true updates datasets already published in DataCite."
+            )
+        ] = False,
+        is_test_doi: Annotated[
+            bool,
+            Query(
+                alias="is-test-doi",
+                description="If true formats 'doi' value to be compatible with "
+                            "DataCite standards: everything after a ' ' (space) "
+                            "character is removed."
+            )
+        ] = False
+):
     """Publish several Forest3D datasets with Datacite.
 
-    (Note: This endpoint can currently only be used to publish Forest3D datasets with
-    DataCite but not update them.)
+    Optionally if 'is-update' query parameter is true then updates existing Forest3D
+    datasets in DataCite.
 
     The metadata for Forest3D datasets are read from an external online JSON file.
 
@@ -59,24 +77,17 @@ async def publish_bulk_forest3d():
             if not doi:
                 return {"error": "Missing 'doi field", "dataset": dataset}
 
-            # TODO handle updating existing and registered datasets, possibly as a
-            #  query parameter boolean flag
-            # TODO make format_doi a default false query param
-            # TODO check for space
-            # TODO start dev here
-            # TODO remove
-            doi_formatted = format_doi(doi)
-            if await doi_exists_in_dc(session, doi_formatted):
-                return {
-                    "doi": doi_formatted,
-                    "status": "DOI already registered with DataCite"
-                }
+            if is_test_doi:
+                doi = format_doi(doi)
 
-            # TODO reimplement
-            # if await doi_exists_in_dc(session, doi):
-            #     return {"doi": doi, "status": "DOI already registered with DataCite"}
+            if not is_update:
+                if await doi_exists_in_dc(session, doi):
+                    return {
+                        "doi": doi,
+                        "status": "DOI already registered with DataCite"
+                    }
 
-            formatted_dataset = prepare_dataset_for_envidat(dataset)
+            formatted_dataset = prepare_dataset_for_envidat(dataset, is_test_doi)
             result = await publish_forest3d_to_datacite(session, formatted_dataset)
             return result
 
