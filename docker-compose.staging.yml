@@ -29,6 +29,7 @@ services:
       - DOI_SUFFIX_TAG=${DOI_SUFFIX_TAG}
       - EMAIL_ENDPOINT=${EMAIL_ENDPOINT}
       - EMAIL_FROM=${EMAIL_FROM}
+      - FOREST3D_URL=${FOREST3D_URL}
     networks:
       - net
       - envidat
