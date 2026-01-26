@@ -27,6 +27,7 @@ def env_example_keys() -> list[str]:
         equals_char = "="
         keys = [(line.rstrip()).split(equals_char)[0]
                 for line in file if not line.startswith("#")]
+        keys = [k for k in keys if len(k) > 0]
     return keys
 
 
@@ -98,10 +99,12 @@ def get_config_app() -> ConfigAppModel | Exception:
     try:
         if os.getenv("IS_DOCKER") == "True":
             env_keys = env_example_keys()
+            log.debug(f"env_keys: {env_keys}")
             env_dict = {}
             for key in env_keys:
                 if val := os.getenv(key):
                     env_dict[key] = val
+            log.debug(f"env_dict: {env_dict}")
         else:
             env_dict = dotenv_values(".env", verbose=True)
 
