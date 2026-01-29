@@ -1,5 +1,17 @@
 # CHANGELOG
 
+
+## 1.3.0 (2026-01-29)
+### Feat
+- Added new "/forest3d/publish-bulk-datacite" endpoint
+- New endpoint publishes several Forest3D datasets with Datacite
+- Optionally if 'is-update' query parameter is true then updates existing Forest3D datasets in DataCite
+- The metadata for Forest3D datasets are read from an external online JSON file
+- Only authorized admin can use this endpoint
+- Also has a query param to handle test DOIs that need further formatting
+
+
+
 ## 1.2.7 (2026-01-21)
 ### Fix
 - Revert external 'doi' check
