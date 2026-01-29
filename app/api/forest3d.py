@@ -4,7 +4,7 @@ import asyncio
 from typing import Annotated
 
 from app.logic.forest3d import publish_forest3d_to_datacite, \
-    prepare_dataset_for_envidat, doi_exists_in_dc, format_doi
+    prepare_dataset_for_envidat, doi_exists_in_dc, format_doi, is_valid_envidat_name
 from fastapi import APIRouter, Depends, HTTPException, Query
 import aiohttp
 
@@ -73,6 +73,15 @@ async def publish_bulk_forest3d(
     # ---- Publish DOIs concurrently to DataCite
     async with get_datacite_session() as session:
         async def process_dataset(dataset):
+
+            name = dataset.get("name", "")
+            if not is_valid_envidat_name(name):
+                return {
+                    "error": f"Invalid 'name' value '{name}': must be alphanumeric "
+                             f"only and not contain spaces, hyphens are allowed",
+                    "dataset": dataset
+                }
+
             doi = dataset.get("doi")
             if not doi:
                 return {"error": "Missing 'doi field", "dataset": dataset}

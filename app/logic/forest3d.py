@@ -1,6 +1,7 @@
 """Logic and helpers for Forest3D router."""
 
 import json
+import re
 
 import aiohttp
 import asyncio
@@ -13,6 +14,10 @@ from app.logic.datacite import xml_to_base64
 
 import logging
 log = logging.getLogger(__name__)
+
+
+def is_valid_envidat_name(value: str) -> bool:
+    return bool(re.fullmatch(r"[A-Za-z0-9-]+", value))
 
 
 async def doi_exists_in_dc(session: aiohttp.ClientSession, doi: str) -> bool:
