@@ -137,7 +137,7 @@ remote-docker:
       - job: app-retag
       - job: proxy-retag
   environment: $CI_COMMIT_REF_NAME
-  image: docker.io/docker:24.0
+  image: docker.io/docker:27.3
   extends:
     - .triggers
   variables:
@@ -160,7 +160,7 @@ remote-docker:
   script:
     # create network envidat first if not present
     - >
-      if ! docker network inspect envidat >/dev/null 2>&1; then 
+      if ! docker network inspect envidat >/dev/null 2>&1; then
         docker network create envidat
       fi
 
@@ -189,7 +189,7 @@ manual-remote-docker:
       artifacts: true
       optional: true
   environment: $CI_COMMIT_REF_NAME
-  image: docker.io/docker:24.0
+  image: docker.io/docker:27.3
   rules:
     - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: always
@@ -216,7 +216,7 @@ manual-remote-docker:
   script:
     # create network envidat first if not present
     - >
-      if ! docker network inspect envidat >/dev/null 2>&1; then 
+      if ! docker network inspect envidat >/dev/null 2>&1; then
         docker network create envidat
       fi
     # use docker compose create to recreate the container and force pulling the latest image
