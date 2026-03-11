@@ -85,6 +85,7 @@ class ConfigAppModel(BaseModel):
     EMAIL_FROM: str
 
     FOREST3D_URL: str
+    FOREST3D_API_KEY: str
 
 
 @lru_cache

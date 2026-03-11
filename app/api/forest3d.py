@@ -5,10 +5,10 @@ from typing import Annotated
 
 from app.logic.forest3d import publish_forest3d_to_datacite, \
     prepare_dataset_for_envidat, doi_exists_in_dc, format_doi, is_valid_envidat_name
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Header, status
 import aiohttp
 
-from app.auth import get_admin, get_datacite_session
+from app.auth import get_datacite_session
 from app.config import config_app
 
 import logging
@@ -18,7 +18,6 @@ log = logging.getLogger(__name__)
 router = APIRouter(
     prefix="/forest3d",
     tags=["forest3d"],
-    dependencies=[Depends(get_admin)]
 )
 
 
@@ -41,7 +40,15 @@ async def publish_bulk_forest3d(
                             "DataCite standards: everything after a ' ' (space) "
                             "character is removed."
             )
-        ] = False
+        ] = False,
+        forest3d_key: Annotated[
+            str | None,
+            Header(
+                alias="forest3d-key",
+                description="Header parameter that matches environment variable "
+                            "'FOREST3D_API_KEY'."
+            )
+        ] = None
 ):
     """Publish several Forest3D datasets with Datacite.
 
@@ -50,8 +57,12 @@ async def publish_bulk_forest3d(
 
     The metadata for Forest3D datasets are read from an external online JSON file.
 
-    Only authorized admin can use this endpoint.
+    Requires 'forest3d-key' header parameter that matches 'FOREST3D_API_KEY'.
     """
+    # ---- Validate header key
+    if not forest3d_key or forest3d_key != config_app.FOREST3D_API_KEY:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or missing API key")
+
     # ---- Load input Forest3D JSON
     forest3d_url = config_app.FOREST3D_URL
 
