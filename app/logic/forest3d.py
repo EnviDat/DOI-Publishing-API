@@ -28,6 +28,13 @@ async def doi_exists_in_dc(session: aiohttp.ClientSession, doi: str) -> bool:
         return False
 
 
+def ends_in_digit(string: str) -> bool:
+    """Return True if the string ends with a digit, else return False."""
+    if string[-1:].isdigit():
+        return True
+    return False
+
+
 def format_doi(doi: str) -> str:
     """Format a DOI for DataCite. Remove anything after a ' ' space character."""
     return doi.split()[0]

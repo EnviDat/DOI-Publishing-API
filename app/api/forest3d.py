@@ -4,7 +4,8 @@ import asyncio
 from typing import Annotated
 
 from app.logic.forest3d import publish_forest3d_to_datacite, \
-    prepare_dataset_for_envidat, doi_exists_in_dc, format_doi, is_valid_envidat_name
+    prepare_dataset_for_envidat, doi_exists_in_dc, format_doi, is_valid_envidat_name, \
+    ends_in_digit
 from fastapi import APIRouter, HTTPException, Query, Header, status
 import aiohttp
 
@@ -58,6 +59,8 @@ async def publish_bulk_forest3d(
     The metadata for Forest3D datasets are read from an external online JSON file.
 
     Requires 'forest3d-key' header parameter that matches 'FOREST3D_API_KEY'.
+
+    'doi' values must end with a digit to be considered valid.
     """
     # ---- Validate header key
     if not forest3d_key or forest3d_key != config_app.FOREST3D_API_KEY:
@@ -96,6 +99,11 @@ async def publish_bulk_forest3d(
             doi = dataset.get("doi")
             if not doi:
                 return {"error": "Missing 'doi field", "dataset": dataset}
+            if not ends_in_digit(doi):
+                return {
+                    "error": f"'doi' value '{doi}' does not end with a digit",
+                    "dataset": dataset
+                }
 
             if is_test_doi:
                 doi = format_doi(doi)
