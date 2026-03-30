@@ -3,14 +3,12 @@
 import base64
 import json
 import requests
-from ckanapi import RemoteCKAN
 from fastapi import HTTPException
 from typing_extensions import TypedDict
 
 from envidat_converters.logic.converter_logic.envidat_to_datacite import EnviDatToDataCite
 
 from app.config import config_app
-from app.logic.remote_ckan import ckan_current_package_list_with_resources
 
 # Setup logging
 import logging
