@@ -95,17 +95,18 @@ async def publish_bulk_forest3d(
     async with get_datacite_session() as session:
         async def process_dataset(dataset):
 
+            doi = dataset.get("doi")
+            if not doi:
+                return {"error": "Missing 'doi field", "dataset": dataset}
+
             name = dataset.get("name", "")
             if not is_valid_envidat_name(name):
                 return {
                     "error": f"Invalid 'name' value '{name}': must be alphanumeric "
                              f"only and not contain spaces, hyphens are allowed",
-                    "dataset": dataset
+                    "doi": doi,
+                    "name": name
                 }
-
-            doi = dataset.get("doi")
-            if not doi:
-                return {"error": "Missing 'doi field", "dataset": dataset}
 
             if is_test_doi:
                 doi = format_doi(doi)
@@ -113,7 +114,8 @@ async def publish_bulk_forest3d(
             if not ends_in_digit(doi):
                 return {
                     "error": f"'doi' value '{doi}' does not end with a digit",
-                    "dataset": dataset
+                    "doi": doi,
+                    "name": name
                 }
 
             if is_update:
@@ -124,13 +126,15 @@ async def publish_bulk_forest3d(
                     return {
                         "error": f"'metadata_modified' value '{metadata_modified}' is "
                                  f"not within the last 30 days",
-                        "dataset": dataset
+                        "doi": doi,
+                        "name": name
                     }
             else:
                 if await doi_exists_in_dc(session, doi):
                     return {
                         "doi": doi,
-                        "status": "DOI already registered with DataCite"
+                        "status": "DOI already registered with DataCite",
+                        "name": name
                     }
 
             formatted_dataset = prepare_dataset_for_envidat(dataset, is_test_doi)
