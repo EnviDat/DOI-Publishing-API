@@ -29,4 +29,8 @@ distribution = true
 
 [tool.pdm.scripts]
 dev = "uvicorn app.main:app --reload"
-lint = "ruff check ."
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.8",
+]
