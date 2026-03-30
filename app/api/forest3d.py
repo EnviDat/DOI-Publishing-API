@@ -2,6 +2,7 @@
 
 import asyncio
 from typing import Annotated
+from datetime import date
 
 from app.logic.forest3d import publish_forest3d_to_datacite, \
     prepare_dataset_for_envidat, doi_exists_in_dc, format_doi, is_valid_envidat_name, \
@@ -30,7 +31,9 @@ async def publish_bulk_forest3d(
             bool,
             Query(
                 alias="is-update",
-                description="If true updates datasets already published in DataCite."
+                description="If true updates datasets already published in DataCite. "
+                            "The 'metadata_modified' date must be "
+                            "within the last 30 days."
             )
         ] = False,
         is_test_doi: Annotated[
@@ -53,14 +56,16 @@ async def publish_bulk_forest3d(
 ):
     """Publish several Forest3D datasets with Datacite.
 
-    Optionally if 'is-update' query parameter is true then updates existing Forest3D
-    datasets in DataCite.
+    The metadata for Forest3D datasets are read from an external online JSON file that
+    is set in the environment variable 'FOREST3D_URL'.
 
-    The metadata for Forest3D datasets are read from an external online JSON file.
-
-    Requires 'forest3d-key' header parameter that matches 'FOREST3D_API_KEY'.
+    Requires 'forest3d-key' header parameter that matches environment variable
+    'FOREST3D_API_KEY'.
 
     'doi' values must end with a digit to be considered valid.
+
+    Optionally if 'is-update' query parameter is true then updates existing Forest3D
+    datasets in DataCite (if the 'metadata_modified' date is within the last 30 days.)
     """
     # ---- Validate header key
     if not forest3d_key or forest3d_key != config_app.FOREST3D_API_KEY:
@@ -85,6 +90,8 @@ async def publish_bulk_forest3d(
 
 
     # ---- Publish DOIs concurrently to DataCite
+    today = date.today()
+
     async with get_datacite_session() as session:
         async def process_dataset(dataset):
 
@@ -99,16 +106,27 @@ async def publish_bulk_forest3d(
             doi = dataset.get("doi")
             if not doi:
                 return {"error": "Missing 'doi field", "dataset": dataset}
+
+            if is_test_doi:
+                doi = format_doi(doi)
+
             if not ends_in_digit(doi):
                 return {
                     "error": f"'doi' value '{doi}' does not end with a digit",
                     "dataset": dataset
                 }
 
-            if is_test_doi:
-                doi = format_doi(doi)
-
-            if not is_update:
+            if is_update:
+                metadata_modified = dataset.get("metadata_modified")
+                mm_dt_obj = date.fromisoformat(metadata_modified)
+                diff = today - mm_dt_obj
+                if diff.days > 30 or diff.days < 0:
+                    return {
+                        "error": f"'metadata_modified' value '{metadata_modified}' is "
+                                 f"not within the last 30 days",
+                        "dataset": dataset
+                    }
+            else:
                 if await doi_exists_in_dc(session, doi):
                     return {
                         "doi": doi,
