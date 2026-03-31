@@ -3,6 +3,7 @@ stages:
   - package
   - deploy
   - manual-deploy
+  - forest3d
 
 variables:
   ARTIFACT_COMPRESSION_LEVEL: "fast"
@@ -10,6 +11,8 @@ variables:
 
 .triggers:
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: never
     - if: $CI_COMMIT_REF_NAME == "main"
@@ -18,6 +21,15 @@ variables:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: always
+    - when: never
+
+.manual_scheduled_triggers:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+    - when: never
 
 set-vars:
   stage: .pre
@@ -231,3 +243,9 @@ manual-remote-docker:
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
         --env-file build.env \
         up --detach --force-recreate
+
+forest3d-publish:
+  stage: forest3d
+  extends: .manual_scheduled_triggers
+  script:
+    - echo "Running forest3d-publish job"
