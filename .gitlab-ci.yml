@@ -255,11 +255,14 @@ forest3d-publish:
   environment: $CI_COMMIT_REF_NAME
   extends: .manual_scheduled_triggers
   needs: []
-  image: curlimages/curl:latest
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl jq
   script:
+    - set -o pipefail
     - |
       curl --fail \
-           --verbose \
+           --no-progress-meter \
            --insecure \
            --header "forest3d-key: $FOREST3D_API_KEY" \
-           --url "$FOREST3D_API_URL"
+           --url "$FOREST3D_API_URL" | jq '.'
