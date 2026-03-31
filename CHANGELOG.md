@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.4.1 (2026-03-31)
+### Docs
+- Add Forest3D endpoint instructions to README
+
 
 ## 1.4.0 (2026-03-31)
 ### Refactor
