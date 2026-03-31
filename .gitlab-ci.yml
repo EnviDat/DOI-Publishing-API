@@ -247,5 +247,6 @@ manual-remote-docker:
 forest3d-publish:
   stage: forest3d
   extends: .manual_scheduled_triggers
+  needs: []
   script:
     - echo "Running forest3d-publish job"
