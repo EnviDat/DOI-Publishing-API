@@ -35,6 +35,10 @@ set-vars:
   stage: .pre
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/alpine:3.23
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: always
   script:
     - echo "DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX" >> build.env
     - echo "DOI_PREFIX=$DOI_PREFIX" >> build.env
@@ -203,6 +207,8 @@ manual-remote-docker:
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/docker:27.3
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: always
     - when: manual
