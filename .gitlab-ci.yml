@@ -248,5 +248,6 @@ forest3d-publish:
   stage: forest3d
   extends: .manual_scheduled_triggers
   needs: []
+  allow_failure: true
   script:
     - echo "Running forest3d-publish job"
