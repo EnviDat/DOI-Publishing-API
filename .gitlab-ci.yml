@@ -252,8 +252,13 @@ manual-remote-docker:
 
 forest3d-publish:
   stage: forest3d
+  environment: $CI_COMMIT_REF_NAME
   extends: .manual_scheduled_triggers
   needs: []
-  allow_failure: true
+  image: curlimages/curl:latest
   script:
-    - echo "Running forest3d-publish job"
+    - |
+      curl --fail \
+           --verbose \
+           --header "forest3d-key: $FOREST3D_API_KEY" \
+           --url "https://$DEPLOY_HOSTNAME/doi-api/forest3d/publish-bulk-datacite?is-update=true"
