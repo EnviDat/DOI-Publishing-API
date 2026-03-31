@@ -260,5 +260,6 @@ forest3d-publish:
     - |
       curl --fail \
            --verbose \
+           --insecure \
            --header "forest3d-key: $FOREST3D_API_KEY" \
-           --url "https://$DEPLOY_HOSTNAME/doi-api/forest3d/publish-bulk-datacite?is-update=true"
+           --url "$FOREST3D_API_URL"
