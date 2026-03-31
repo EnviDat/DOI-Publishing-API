@@ -54,7 +54,7 @@ async def publish_bulk_forest3d(
             )
         ] = None
 ):
-    """Publish several Forest3D datasets with Datacite.
+    """Bulk publish Forest3D datasets with Datacite.
 
     The metadata for Forest3D datasets are read from an external online JSON file that
     is set in the environment variable 'FOREST3D_URL'.
