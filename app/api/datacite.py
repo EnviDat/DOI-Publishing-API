@@ -1,6 +1,7 @@
 """DataCite API Router."""
-
 import json
+# Setup logging
+import logging
 import time
 from typing import Annotated
 
@@ -16,6 +17,7 @@ from app.logic.datacite import (
     publish_datacite,
     reserve_draft_doi_datacite,
     validate_doi,
+    is_valid_doi,
 )
 from app.logic.mail import (
     approval_granted_email,
@@ -25,7 +27,6 @@ from app.logic.mail import (
 from app.logic.minter import create_db_doi
 from app.logic.remote_ckan import ckan_package_patch, ckan_package_show
 
-import logging
 log = logging.getLogger(__name__)
 
 
@@ -309,12 +310,15 @@ async def publish_or_update_datacite(
     #################  Publish external DOIs  ###########################
     if is_external_doi:
 
-        # Validate DOI exists in package
+        # Validate DOI exists on package and returns a 200 when called
         if not (doi := package.get("doi", None)):
             raise HTTPException(
                 status_code=400,
                 detail=f"'doi' is not available for CKAN package '{package_id}'"
             )
+        # Raises HTTPException if DOI does not exist or does not
+        # return a successful response when called
+        is_valid_doi(doi)
 
         # Publish and make dataset visible in CKAN
         ckan_response = ckan_package_patch(
@@ -346,19 +350,16 @@ async def publish_or_update_datacite(
         successful_status_codes = range(200, 300)
         datacite_response = {}
         retry_count = 0
+        err_msg = "Unknown error"
 
         while retry_count <= config_app.DATACITE_RETRIES:
             # Send package to DataCite
             try:
                 datacite_response = publish_datacite(package)
                 log.debug(f"DataCite response: {datacite_response}")
-            except HTTPException as e:
+            except Exception as e:
                 log.error(e)
-                err_message = str(e)
-                await datacite_failed_email(
-                    package_id, maintainer_name, maintainer_email, err_message
-                )
-                raise HTTPException(status_code=e.status_code, detail=err_message)
+                err_msg = str(e)
 
             if datacite_response.get("status_code") in successful_status_codes:
                 log.debug(
@@ -392,7 +393,12 @@ async def publish_or_update_datacite(
             # Wait sleep_time seconds before trying to call DataCite again
             time.sleep(config_app.DATACITE_SLEEP_TIME)
 
-        error_msg = get_error_message(datacite_response)
+        # Get error message
+        if datacite_response:
+            error_msg = get_error_message(datacite_response)
+        else:
+            error_msg = err_msg 
+
         await datacite_failed_email(
             package_id, maintainer_name, maintainer_email, error_msg
         )

@@ -4,6 +4,7 @@ import base64
 import json
 import requests
 from fastapi import HTTPException
+from requests import HTTPError
 from typing_extensions import TypedDict
 
 from envidat_converters.logic.converter_logic.envidat_to_datacite import EnviDatToDataCite
@@ -19,7 +20,7 @@ class DoiSuccess(TypedDict):
     """DOI success class."""
 
     status_code: int
-    result: dict | str
+    result: dict
 
 
 class DoiErrors(TypedDict):
@@ -30,7 +31,7 @@ class DoiErrors(TypedDict):
 
 
 def reserve_draft_doi_datacite(doi: str) -> DoiSuccess | DoiErrors:
-    """Reserve a DOI identifier in "Draft" state with DataCite.
+    """Reserve a DOI identifer in "Draft" state with DataCite.
 
     For relevant DataCite documentation see:
     https://support.datacite.org/docs/api-create-dois#create-an-identifier-in-draft-state
@@ -112,6 +113,8 @@ def publish_datacite(package: dict) -> DoiSuccess | DoiErrors:
     # Get metadata record URL
     name = package.get("name", package["id"])
     url = f"{site_url}/{name}"
+
+    # Assign name_doi_map used in DataCite conversion
 
     # Assign conversion_error to return if conversion of package to
     # DataCite XML fails
@@ -282,3 +285,50 @@ def get_error_message(datacite_response: DoiSuccess | DoiErrors) -> str:
     except Exception as e:
         log.exception(f"ERROR getting error message from DataCite response:  {e}")
         return "Unknown error"
+
+
+def is_valid_doi(doi: str) -> bool | None:
+    """Returns True if DOI is valid when called and returns a valid response.
+
+    Else raises HTTP exception.
+
+    Args:
+         doi (str): DOI string in either short format (10.5281/zenodo.6514932) or
+                    full URL format (https://doi.org/10.5281/zenodo.6514932)
+
+    """
+    if not doi.startswith("https://doi.org/"):
+        doi = f"https://doi.org/{doi}"
+
+    try:
+        response = requests.get(doi, timeout=5)
+
+        if response.ok:
+            return True
+
+        if response.status_code == 404:
+            raise HTTPException(status_code=404, detail=f"DOI {doi} does not exist")
+
+        if response.status_code == 408:
+            raise HTTPException(
+                status_code=408,
+                detail=f"Connection timed out for DOI {doi}"
+            )
+
+        response.raise_for_status()
+
+    except HTTPError as e:
+        status = e.response.status_code if e.response else 500
+        log.exception(f"HTTP error occurred: {e}")
+        raise HTTPException(
+            status_code=status,
+            detail=f"DOI {doi} did not return a valid response,"
+                   f" failed with status {status}: {str(e)}"
+        )
+
+    except Exception as e:
+        log.exception(e)
+        raise HTTPException(
+            status_code=500,
+            detail=f"DOI {doi} did not return valid response"
+        )
