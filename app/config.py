@@ -44,7 +44,7 @@ class ConfigAppModel(BaseModel):
 
     DATACITE_CLIENT_ID: str
     DATACITE_PASSWORD: str
-    DATACITE_TIMEOUT: int | float = 3
+    DATACITE_TIMEOUT: int | float = 10
     DATACITE_RETRIES: int = 1
     DATACITE_SLEEP_TIME: int = 3
     DATACITE_DATA_URL_PREFIX: str = "https://www.envidat.ch/#/metadata"
