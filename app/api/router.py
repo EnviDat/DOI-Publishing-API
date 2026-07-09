@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.routing import APIRoute
 
-from app.api import datacite, doi, prefix
+from app.api import datacite, doi, prefix, forest3d
 from app.config import config_app
 
 log = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ class RouteErrorHandler(APIRoute):
 
 api_router = APIRouter()
 api_router.include_router(datacite.router)
+api_router.include_router(forest3d.router)
 api_router.include_router(doi.router)
 api_router.include_router(prefix.router)
 

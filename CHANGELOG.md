@@ -1,8 +1,56 @@
 # CHANGELOG
 
+## 1.4.1 (2026-03-31)
+### Docs
+- Add Forest3D endpoint instructions to README
+
+
+## 1.4.0 (2026-03-31)
+### Refactor
+- Modified validation of "/forest3d/publish-bulk-datacite" endpoint
+- Authorization is handled by an environment variable that is set as a header parameter 
+- 'is-update' query parameter only updates datasets that were published within last 30 days
+- Only publishes/updates datasets that have a number at the end (not a string) of the "doi" field
+### CI/CD
+- Set up a forest3d job that is executed by manually triggering the job in a web pipeline or using a scheduled task pipeline
+
+
+
+## 1.3.0 (2026-01-29)
+### Feat
+- Added new "/forest3d/publish-bulk-datacite" endpoint
+- New endpoint publishes several Forest3D datasets with DataCite
+- Optionally if 'is-update' query parameter is true then updates existing Forest3D datasets in DataCite
+- The metadata for Forest3D datasets are read from an external online JSON file
+- Only authorized admin can use this endpoint
+- Also has a query param to handle test DOIs that need further formatting
+
+
+
+## 1.2.7 (2026-01-21)
+### Fix
+- Revert external 'doi' check
+
+
+## 1.2.6 (2026-01-21)
+### Refactor
+- 'doi' check error formatting
+
+
+## 1.2.5 (2026-01-21)
+### Refactor
+- Check if 'doi' already exists in CKAN if publishing external DOI
+
+
+## 1.2.4 (2026-01-21)
+### Refactor
+- Remove external 'doi' API call in publish endpoint 
+
+
 ## 1.2.3 (2026-01-17)
 ### Fix
 - Improve error handling for external doi validation
+
 
 ## 1.2.2 (2026-01-16)
 ### Refactor
