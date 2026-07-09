@@ -136,7 +136,7 @@ remote-docker:
       - job: app-retag
       - job: proxy-retag
   environment: $CI_COMMIT_REF_NAME
-  image: docker.io/docker:24.0
+  image: docker.io/docker:25.0.5
   extends:
     - .triggers
   variables:
@@ -188,7 +188,7 @@ manual-remote-docker:
       artifacts: true
       optional: true
   environment: $CI_COMMIT_REF_NAME
-  image: docker.io/docker:24.0
+  image: docker.io/docker:25.0.5
   rules:
     - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: always
