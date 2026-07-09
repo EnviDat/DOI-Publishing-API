@@ -132,5 +132,5 @@ def ckan_current_package_list_with_resources(ckan: RemoteCKAN):
         ckan (RemoteCKAN): authorised RemoteCKAN session.
     """
     return ckan_call_action_handle_errors(
-        ckan, "current_package_list_with_resources", {"limit": "100000"}
+        ckan, "current_package_list_with_resources", {"limit": "1_000_000"}
     )
