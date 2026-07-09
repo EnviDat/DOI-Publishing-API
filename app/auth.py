@@ -1,18 +1,13 @@
-"""
-Validate authorization header and get user details.
-Can also create client session.
-"""
+"""Validate authorization header and get user details."""
 
-from typing import Annotated, AsyncGenerator
-from contextlib import asynccontextmanager
-import aiohttp
+import logging
+from typing import Annotated
+
 from ckanapi import NotFound
 from fastapi import Depends, Header, HTTPException
 
 from app.logic.remote_ckan import get_ckan
-from app.config import config_app
 
-import logging
 log = logging.getLogger(__name__)
 
 
@@ -53,21 +48,3 @@ def get_admin(user=Depends(get_user)) -> dict:
 
     return user
 
-
-@asynccontextmanager
-async def get_datacite_session() -> AsyncGenerator[aiohttp.ClientSession, None]:
-    """
-    Shared aiohttp client session for DataCite API.
-    Supports client_id/client_secret or username/password auth.
-    """
-    client_id = config_app.DATACITE_CLIENT_ID
-    password = config_app.DATACITE_PASSWORD
-    timeout = config_app.DATACITE_TIMEOUT
-
-    auth = aiohttp.BasicAuth(client_id, password)
-
-    session = aiohttp.ClientSession(auth=auth, timeout=aiohttp.ClientTimeout(total=timeout))
-    try:
-        yield session
-    finally:
-        await session.close()

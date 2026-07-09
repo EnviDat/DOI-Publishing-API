@@ -27,7 +27,6 @@ def env_example_keys() -> list[str]:
         equals_char = "="
         keys = [(line.rstrip()).split(equals_char)[0]
                 for line in file if not line.startswith("#")]
-        keys = [k for k in keys if len(k) > 0]
     return keys
 
 
@@ -44,7 +43,7 @@ class ConfigAppModel(BaseModel):
 
     DATACITE_CLIENT_ID: str
     DATACITE_PASSWORD: str
-    DATACITE_TIMEOUT: int | float = 10
+    DATACITE_TIMEOUT: int | float = 3
     DATACITE_RETRIES: int = 1
     DATACITE_SLEEP_TIME: int = 3
     DATACITE_DATA_URL_PREFIX: str = "https://www.envidat.ch/#/metadata"
@@ -83,9 +82,6 @@ class ConfigAppModel(BaseModel):
 
     EMAIL_ENDPOINT: AnyHttpUrl
     EMAIL_FROM: str
-
-    FOREST3D_URL: str
-    FOREST3D_API_KEY: str
 
 
 @lru_cache
