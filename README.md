@@ -38,14 +38,14 @@ The EnviDat email microservice can be found [here](https://gitlabext.wsl.ch/Envi
 
 ## Production Usage
 
-1. Configure environment variables used in production server (`main` environment) or staging server (`staging` environment)
+1. Configure CI/CD variables used in production server (`main` environment) or staging server (`staging` environment)
 
    - Create **individual CI/CD variables for each variable** listed in `env.example`
    - `APP_VERSION` **must be incremented** so that a new image is built and the application includes the updated code
      - Create a git tag for the commit that corresponds to the `APP_VERSION`
      - Update the `version` value in `pyproject.toml`
      - Also create an entry in the `CHANGELOG`
-   - `ROOT_PATH` is an optional environment variable and should only be used to if the application uses a proxy
+   - `ROOT_PATH` is an optional CI/CD variable and should only be used to if the application uses a proxy
      - Be sure to include a `/` before the `ROOT_PATH` value
      - Example configuration: `ROOT_PATH=/doi-api`
      - [Click here for the FastAPI documentation about using a proxy server](https://fastapi.tiangolo.com/advanced/behind-a-proxy/)
@@ -67,8 +67,8 @@ The EnviDat email microservice can be found [here](https://gitlabext.wsl.ch/Envi
 ### Forest3D Datasets
 
 The `/forest3d/publish-bulk-datacite` endpoint bulk publishes Forest3D endpoints to DataCite. 
-- The metadata for Forest3D datasets are read from an external online JSON file that is set in the environment variable `FOREST3D_URL`.
-- Requires `forest3d-key` header parameter that matches the value for environment variable `FOREST3D_API_KEY`.
+- The metadata for Forest3D datasets are read from an external online JSON file that is set in the CI/CD variable `FOREST3D_URL`.
+- Requires `forest3d-key` header parameter that matches the value for CI/CD variable `FOREST3D_API_KEY`.
 - Forest3D datasets' `doi` values must end with a digit to be considered valid.
 - Optionally if `is-update` query parameter is `true` then updates existing Forest3D datasets in DataCite (if the `metadata_modified` date is within the last 30 days.)
 - The GitLab scheduled pipeline executes every 24 hours and requires that the CI/CD variable `FOREST3D_API_URL` is set for the corresponding server/environment. 

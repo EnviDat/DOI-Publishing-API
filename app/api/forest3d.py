@@ -42,7 +42,8 @@ async def publish_bulk_forest3d(
                 alias="is-test-doi",
                 description="If true formats 'doi' value to be compatible with "
                             "DataCite standards: everything after a ' ' (space) "
-                            "character is removed."
+                            "character is removed. Should only be used while testing "
+                            "publishing/updating DOIs with DataCite test account."
             )
         ] = False,
         forest3d_key: Annotated[
