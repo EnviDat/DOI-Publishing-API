@@ -3,6 +3,7 @@ stages:
   - package
   - deploy
   - manual-deploy
+  - forest3d
 
 variables:
   ARTIFACT_COMPRESSION_LEVEL: "fast"
@@ -10,6 +11,8 @@ variables:
 
 .triggers:
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: never
     - if: $CI_COMMIT_REF_NAME == "main"
@@ -18,11 +21,24 @@ variables:
       when: always
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: always
+    - when: never
+
+.manual_scheduled_triggers:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: always
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+    - when: never
 
 set-vars:
   stage: .pre
   environment: $CI_COMMIT_REF_NAME
   image: docker.io/alpine:3.23
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - when: always
   script:
     - echo "DATACITE_DATA_URL_PREFIX=$DATACITE_DATA_URL_PREFIX" >> build.env
     - echo "DOI_PREFIX=$DOI_PREFIX" >> build.env
@@ -34,6 +50,7 @@ set-vars:
       $APP_VERSION-$CI_COMMIT_REF_NAME >> build.env"
     - "echo PROXY_IMAGE=$INTERNAL_REG/$CI_PROJECT_NAME/proxy:\
       $NGINX_IMG_TAG-$CI_COMMIT_REF_NAME >> build.env"
+    - echo "FOREST3D_URL=$FOREST3D_URL" >> build.env
   artifacts:
     reports:
       dotenv: build.env
@@ -136,7 +153,7 @@ remote-docker:
       - job: app-retag
       - job: proxy-retag
   environment: $CI_COMMIT_REF_NAME
-  image: docker.io/docker:24.0
+  image: docker.io/docker:27.3
   extends:
     - .triggers
   variables:
@@ -159,7 +176,7 @@ remote-docker:
   script:
     # create network envidat first if not present
     - >
-      if ! docker network inspect envidat >/dev/null 2>&1; then 
+      if ! docker network inspect envidat >/dev/null 2>&1; then
         docker network create envidat
       fi
 
@@ -188,8 +205,10 @@ manual-remote-docker:
       artifacts: true
       optional: true
   environment: $CI_COMMIT_REF_NAME
-  image: docker.io/docker:24.0
+  image: docker.io/docker:27.3
   rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
     - if: '$CI_PIPELINE_SOURCE == "pipeline"'
       when: always
     - when: manual
@@ -215,7 +234,7 @@ manual-remote-docker:
   script:
     # create network envidat first if not present
     - >
-      if ! docker network inspect envidat >/dev/null 2>&1; then 
+      if ! docker network inspect envidat >/dev/null 2>&1; then
         docker network create envidat
       fi
     # use docker compose create to recreate the container and force pulling the latest image
@@ -230,3 +249,20 @@ manual-remote-docker:
         --file "docker-compose.$CI_COMMIT_REF_NAME.yml" \
         --env-file build.env \
         up --detach --force-recreate
+
+forest3d-publish:
+  stage: forest3d
+  environment: $CI_COMMIT_REF_NAME
+  extends: .manual_scheduled_triggers
+  needs: []
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl jq
+  script:
+    - set -o pipefail
+    - |
+      curl --fail \
+           --no-progress-meter \
+           --insecure \
+           --header "forest3d-key: $FOREST3D_API_KEY" \
+           --url "$FOREST3D_API_URL" | jq '.'
