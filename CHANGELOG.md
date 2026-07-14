@@ -1,5 +1,15 @@
 # CHANGELOG
 
+
+## 1.4.2 (2026-07-09)
+### Docs
+- Update Forest3 instructions in README
+### Refactor
+- Default DataCite requests timeout increased
+### CI/CD
+- Update docker image versions
+
+
 ## 1.4.1 (2026-03-31)
 ### Docs
 - Add Forest3D endpoint instructions to README
