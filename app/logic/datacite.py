@@ -6,12 +6,15 @@ import requests
 from fastapi import HTTPException
 from typing_extensions import TypedDict
 
-from envidat_converters.logic.converter_logic.envidat_to_datacite import EnviDatToDataCite
+from envidat_converters.logic.converter_logic.envidat_to_datacite import (
+    EnviDatToDataCite,
+)
 
 from app.config import config_app
 
 # Setup logging
 import logging
+
 log = logging.getLogger(__name__)
 
 

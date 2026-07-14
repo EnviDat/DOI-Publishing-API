@@ -4,6 +4,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 def fix_url_double_slash(url):
     """Removed double slashes from a URL.
 

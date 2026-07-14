@@ -65,7 +65,8 @@ async def update_species(id: int, doi_prefix: DoiPrefixEditPydantic):
 
 
 @router.delete(
-    "/{id}", response_model=Status,
+    "/{id}",
+    response_model=Status,
 )
 async def delete_doi_prefix(id: str):
     """Delete specific doi prefix."""

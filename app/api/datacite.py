@@ -26,6 +26,7 @@ from app.logic.minter import create_db_doi
 from app.logic.remote_ckan import ckan_package_patch, ckan_package_show
 
 import logging
+
 log = logging.getLogger(__name__)
 
 
@@ -55,11 +56,11 @@ async def reserve_draft_doi(
 ):
     """Generate new DOI from DB and reserve draft DOI in DataCite.
 
-       Updates 'publication_state' from '' to 'reserved'.
+    Updates 'publication_state' from '' to 'reserved'.
 
-       This also updates the field 'doi' from a '' to the new doi from the db.
+    This also updates the field 'doi' from a '' to the new doi from the db.
 
-       If call to DataCite API fails then send error email to envidat@wsl.ch
+    If call to DataCite API fails then send error email to envidat@wsl.ch
     """
     user_info = user.get("info")
     ckan = user.get("ckan")
@@ -75,16 +76,19 @@ async def reserve_draft_doi(
 
     # Validate publication_state is "" (value for newly created package is empty string)
     if publication_state := package.get("publication_state", None):
-        log.error(f"Package '{package_id} already has value assigned for "
-                  f"publication_state '{publication_state}'")
-        raise HTTPException(status_code=400,
-                            detail=f"Cannot reserve DOI because "
-                                   f"package '{package_id}' already has value assigned "
-                                   f"for publication_state: '{publication_state}'")
+        log.error(
+            f"Package '{package_id} already has value assigned for "
+            f"publication_state '{publication_state}'"
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot reserve DOI because "
+            f"package '{package_id}' already has value assigned "
+            f"for publication_state: '{publication_state}'",
+        )
 
     # Check if doi has already been assigned
     if not (doi := package.get("doi", None)):
-
         # Mint new DOI in DOI database if it does not exist
         if (doi := await create_db_doi(user_name, package)) is None:
             log.error("Failed creating new DOI in database")
@@ -129,7 +133,7 @@ async def reserve_draft_doi(
         # Else attempt to call DataCite API again
         retry_count += 1
         log.debug(
-            "Failure publishing draft DOI, attempting again. " f"Retry: {retry_count}"
+            f"Failure publishing draft DOI, attempting again. Retry: {retry_count}"
         )
 
         # Wait sleep_time seconds before trying to call DataCite again
@@ -247,11 +251,12 @@ async def publish_or_update_datacite(
         str, Query(alias="package-id", description="CKAN package id or name")
     ],
     is_external_doi: Annotated[
-        bool, Query(
+        bool,
+        Query(
             alias="is-external-doi",
             description="Set to True if DOI is imported from an external platform. "
-                        "Default value is False."
-        )
+            "Default value is False.",
+        ),
     ] = False,
     admin=Depends(get_admin),
 ):
@@ -297,23 +302,24 @@ async def publish_or_update_datacite(
 
     # Check if publication_state can be processed
     if publication_state not in ["pub_pending", "published", "approved"]:
-        log.error(f"Publication state '{publication_state}' is not one of the "
-                  f"following: 'pub_pending', 'published', 'approved'")
+        log.error(
+            f"Publication state '{publication_state}' is not one of the "
+            f"following: 'pub_pending', 'published', 'approved'"
+        )
         raise HTTPException(
             status_code=500,
             detail=f"Value for 'publication_state' cannot be processed: "
-                   f"'{publication_state}' is not one of the "
-                   f"following: 'pub_pending', 'published', 'approved'",
+            f"'{publication_state}' is not one of the "
+            f"following: 'pub_pending', 'published', 'approved'",
         )
 
     #################  Publish external DOIs  ###########################
     if is_external_doi:
-
         # Validate DOI exists in package
         if not (doi := package.get("doi", None)):
             raise HTTPException(
                 status_code=400,
-                detail=f"'doi' is not available for CKAN package '{package_id}'"
+                detail=f"'doi' is not available for CKAN package '{package_id}'",
             )
 
         # Publish and make dataset visible in CKAN
@@ -335,7 +341,7 @@ async def publish_or_update_datacite(
         return JSONResponse(
             status_code=200,
             content=f"CKAN package '{package_id}' with external DOI '{doi}' "
-                    f"published and visible in EnviDat system"
+            f"published and visible in EnviDat system",
         )
 
     #################  Publish internal EnviDat DOIs  ####################
