@@ -23,7 +23,7 @@ router = APIRouter(
 )
 
 
-@router.get("/publish-bulk-datacite")
+@router.get("/datacite/publish")
 async def publish_bulk_forest3d(
     is_update: Annotated[
         bool,
