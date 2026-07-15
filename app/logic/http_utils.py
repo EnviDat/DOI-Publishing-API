@@ -43,8 +43,8 @@ async def fetch_remote_json(
 
                 try:
                     data = await resp.json(content_type=None)
-                except json.JSONDecodeError:
-                    raise HTTPException(422, f"Remote JSON is invalid: {url}")
+                except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+                    raise HTTPException(422, f"Remote JSON is invalid: {url}") from exc
 
     except asyncio.TimeoutError:
         raise HTTPException(

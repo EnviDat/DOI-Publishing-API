@@ -97,7 +97,7 @@ def extract_tria_url(dataset: dict) -> str:
     """
     resources = dataset.get("resources", [])
 
-    if not resources:
+    if not resources or not isinstance(resources[0], dict):
         return ""
 
     return resources[0].get("url", "")
@@ -156,13 +156,10 @@ async def publish_dataset_to_datacite(
     # DataCite XML fails
     conversion_error = {
         "status_code": 500,
-        "errors": [
-            {"error": "Failed to convert Forest3D dataset to DataCite format XML"}
-        ],
+        "errors": [{"error": "Failed to convert dataset to DataCite format XML"}],
     }
 
-    # Convert Forest3D dataset to DataCite formatted XML
-    # and encode to base64 formatted string
+    # Convert dataset to DataCite formatted XML and encode to base64 formatted string
     try:
         if datacite_dataset := EnviDatToDataCite(dataset):
             xml_datacite_dataset = datacite_dataset.__str__()
@@ -171,8 +168,8 @@ async def publish_dataset_to_datacite(
                 return conversion_error
         else:
             return conversion_error
-    except ValueError as e:
-        log.error(e)
+    except (ValueError, KeyError, AttributeError, TypeError) as e:
+        log.exception(e)
         return conversion_error
 
     payload = {
@@ -263,7 +260,15 @@ async def process_datacite_dataset(
 
     if is_update:
         metadata_modified = dataset.get("metadata_modified")
-        mm_dt_obj = date.fromisoformat(metadata_modified)
+        try:
+            mm_dt_obj = date.fromisoformat(metadata_modified)
+        except (TypeError, ValueError):
+            return {
+                "error": f"'metadata_modified' value '{metadata_modified}' "
+                f"is missing or not a valid ISO date",
+                "doi": doi,
+                "name": name,
+            }
         diff = today - mm_dt_obj
         if diff.days > 30 or diff.days < 0:
             return {
@@ -273,7 +278,16 @@ async def process_datacite_dataset(
                 "name": name,
             }
     else:
-        if await doi_exists_in_dc(session, doi):
+        try:
+            doi_registered = await doi_exists_in_dc(session, doi)
+        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            log.exception(e)
+            return {
+                "error": f"Could not check DataCite for existing DOI '{doi}': {e}",
+                "doi": doi,
+                "name": name,
+            }
+        if doi_registered:
             return {
                 "doi": doi,
                 "status": "DOI already registered with DataCite",
