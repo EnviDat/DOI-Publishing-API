@@ -1,8 +1,10 @@
 # doi-publishing-api
 
-Microservice API to publish DOIs on Datacite.
+Microservice API to publish DOIs on DataCite.
 
-[View the API docs](https://www.envidat.ch/doi-api/docs)
+[Read the API docs](https://www.envidat.ch/doi-api/docs)
+
+ ---
 
 ## Email 
 
@@ -51,27 +53,37 @@ The EnviDat email microservice can be found [here](https://gitlabext.wsl.ch/Envi
      - [Click here for the FastAPI documentation about using a proxy server](https://fastapi.tiangolo.com/advanced/behind-a-proxy/)
    - Create **individual CI/CD variables for each the following variables** (apart from the ones in env.example) that are used for deployment or scheduled pipelines:
 
-     > | Key                | Example Value                                                                 |
-     > |--------------------|-------------------------------------------------------------------------------|
-     > | `APP_VERSION`      | `1.1.2`                                                                       |
-     > | `ROOT_PATH`        | `""`                                                                          |
-     > | `INTERNAL_REG`     | `registry-gitlab.org.ch/orgname`                                              |
-     > | `EXTERNAL_REG`     | `docker.io`                                                                   |
-     > | `NGINX_IMG_TAG`    | `1.25`                                                                        |
-     > | `PYTHON_IMG_TAG`   | `3.10`                                                                        |
-     > | `FOREST3D_API_URL` | `https://my-server.com/doi-api/forest3d/publish-bulk-datacite?is-update=true` |
+     > | Key                | Example Value                                                            |
+     > |--------------------|--------------------------------------------------------------------------|
+     > | `APP_VERSION`      | `1.1.2`                                                                  |
+     > | `ROOT_PATH`        | `""`                                                                     |
+     > | `INTERNAL_REG`     | `registry-gitlab.org.ch/orgname`                                         |
+     > | `EXTERNAL_REG`     | `docker.io`                                                              |
+     > | `NGINX_IMG_TAG`    | `1.25`                                                                   |
+     > | `PYTHON_IMG_TAG`   | `3.10`                                                                   |
+     > | `FOREST3D_API_URL` | `https://my-server.com/doi-api/forest3d/datacite/publish?is-update=true` |
+     > | `TRIA_API_URL`     | `https://my-server.com/doi-api/tria/datacite/publish?is-update=true`     |
 
 2. Merge feature/development branch to `main` default branch
    - The image related variables can be group variables inherited from the parent group
 
 ### Forest3D Datasets
 
-The `/forest3d/publish-bulk-datacite` endpoint bulk publishes Forest3D endpoints to DataCite. 
+The `/forest3d/datacite/publish` endpoint bulk publishes Forest3D endpoints to DataCite. 
 - The metadata for Forest3D datasets are read from an external online JSON file that is set in the CI/CD variable `FOREST3D_URL`.
 - Requires `forest3d-key` header parameter that matches the value for CI/CD variable `FOREST3D_API_KEY`.
 - Forest3D datasets' `doi` values must end with a digit to be considered valid.
 - Optionally if `is-update` query parameter is `true` then updates existing Forest3D datasets in DataCite (if the `metadata_modified` date is within the last 30 days.)
 - The GitLab scheduled pipeline executes every 24 hours and requires that the CI/CD variable `FOREST3D_API_URL` is set for the corresponding server/environment. 
+
+### TRIA Datasets
+
+The `/tria/datacite/publish` endpoint bulk publishes TRIA datasets to DataCite.
+- The metadata for TRIA datasets are read from an external online JSON file that is set in the CI/CD variable `TRIA_URL`.
+- Requires `tria-key` header parameter that matches the value for CI/CD variable `TRIA_API_KEY`.
+- TRIA datasets' `doi` values must end with a digit to be considered valid.
+- Optionally if `is-update` query parameter is `true` then updates existing TRIA datasets in DataCite (if the `metadata_modified` date is within the last 30 days.)
+- The GitLab scheduled pipeline executes every 24 hours and requires that the CI/CD variable `TRIA_API_URL` is set for the corresponding server/environment. 
 
 ## Pre-commit hooks
 

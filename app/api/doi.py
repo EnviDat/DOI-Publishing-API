@@ -73,9 +73,7 @@ async def create_doi_db_only(doi: DoiRealisationInPydantic):
     return await DoiRealisationInPydantic.from_tortoise_orm(doi_obj)
 
 
-@router.delete(
-    "/{id}", response_model=Status
-)
+@router.delete("/{id}", response_model=Status)
 async def delete_doi(id: str):
     """Delete specific doi."""
     log.debug(f"Attempting to delete doi ID {id}")

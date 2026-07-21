@@ -33,4 +33,3 @@ def init_db(app: FastAPI) -> None:
         config=TORTOISE_ORM,
         add_exception_handlers=True,
     )
-

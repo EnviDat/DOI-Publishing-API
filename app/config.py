@@ -25,8 +25,11 @@ def env_example_keys() -> list[str]:
     """
     with open("env.example") as file:
         equals_char = "="
-        keys = [(line.rstrip()).split(equals_char)[0]
-                for line in file if not line.startswith("#")]
+        keys = [
+            (line.rstrip()).split(equals_char)[0]
+            for line in file
+            if not line.startswith("#")
+        ]
         keys = [k for k in keys if len(k) > 0]
     return keys
 
@@ -86,6 +89,9 @@ class ConfigAppModel(BaseModel):
 
     FOREST3D_URL: str
     FOREST3D_API_KEY: str
+
+    TRIA_URL: str
+    TRIA_API_KEY: str
 
 
 @lru_cache

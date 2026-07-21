@@ -56,6 +56,7 @@ init_db(app)
 app.include_router(api_router)
 app.include_router(error_router)
 
+
 @app.on_event("startup")
 async def startup_event():
     """Commands to run on server startup."""

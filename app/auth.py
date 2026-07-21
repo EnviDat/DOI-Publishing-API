@@ -13,6 +13,7 @@ from app.logic.remote_ckan import get_ckan
 from app.config import config_app
 
 import logging
+
 log = logging.getLogger(__name__)
 
 
@@ -66,7 +67,9 @@ async def get_datacite_session() -> AsyncGenerator[aiohttp.ClientSession, None]:
 
     auth = aiohttp.BasicAuth(client_id, password)
 
-    session = aiohttp.ClientSession(auth=auth, timeout=aiohttp.ClientTimeout(total=timeout))
+    session = aiohttp.ClientSession(
+        auth=auth, timeout=aiohttp.ClientTimeout(total=timeout)
+    )
     try:
         yield session
     finally:

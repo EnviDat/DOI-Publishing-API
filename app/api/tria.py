@@ -1,4 +1,4 @@
-"""Forest3D API Router."""
+"""TRIA API Router."""
 
 import asyncio
 from typing import Annotated
@@ -18,18 +18,18 @@ log = logging.getLogger(__name__)
 
 
 router = APIRouter(
-    prefix="/forest3d",
-    tags=["forest3d"],
+    prefix="/tria",
+    tags=["tria"],
 )
 
 
 @router.get("/datacite/publish")
-async def publish_bulk_forest3d(
+async def publish_bulk_tria(
     is_update: Annotated[
         bool,
         Query(
             alias="is-update",
-            description="If true updates Forest3D datasets already published in "
+            description="If true updates TRIA datasets already published in "
             "DataCite. "
             "The 'metadata_modified' date must be "
             "within the last 30 days.",
@@ -45,37 +45,42 @@ async def publish_bulk_forest3d(
             "publishing/updating DOIs with DataCite test account.",
         ),
     ] = False,
-    forest3d_key: Annotated[
+    tria_key: Annotated[
         str | None,
         Header(
-            alias="forest3d-key",
+            alias="tria-key",
             description="Header parameter that matches environment variable "
-            "'FOREST3D_API_KEY'.",
+            "'TRIA_API_KEY'.",
         ),
     ] = None,
 ):
-    """Bulk publish Forest3D datasets with Datacite.
+    """Bulk publish TRIA datasets with Datacite.
 
-    The metadata for Forest3D datasets are read from an external online JSON file that
-    is set in the environment variable 'FOREST3D_URL'.
+    TRIA is a modern, flexible repository tailored to intra-annually resolved wood
+    cell anatomical data and associated images developed and maintained by the WSL.
 
-    Requires 'forest3d-key' header parameter that matches environment variable
-    'FOREST3D_API_KEY'.
+    To learn more about TRIA see: https://webapps.wsl.ch/tria
+
+    The metadata for TRIA datasets are read from an external online JSON file that
+    is set in the environment variable 'TRIA_URL'.
+
+    Requires 'tria-key' header parameter that matches environment variable
+    'TRIA_API_KEY'.
 
     'doi' values must end with a digit to be considered valid.
 
-    Optionally if 'is-update' query parameter is true then updates existing Forest3D
+    Optionally if 'is-update' query parameter is true then updates existing TRIA
     datasets in DataCite (if the 'metadata_modified' date is within the last 30 days.)
     """
     # ---- Validate header key
-    if not forest3d_key or forest3d_key != config_app.FOREST3D_API_KEY:
+    if not tria_key or tria_key != config_app.TRIA_API_KEY:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid or missing API key")
 
-    # ---- Load input Forest3D JSON
-    forest3d_url = config_app.FOREST3D_URL
-    forest3d_datasets = await fetch_remote_json(forest3d_url)
+    # ---- Load input TRIA JSON
+    tria_url = config_app.TRIA_URL
+    tria_datasets = await fetch_remote_json(tria_url)
 
-    if not isinstance(forest3d_datasets, list):
+    if not isinstance(tria_datasets, list):
         raise HTTPException(422, "Parsed JSON must be a list")
 
     # ---- Publish DOIs concurrently to DataCite
@@ -90,10 +95,10 @@ async def publish_bulk_forest3d(
                     is_update,
                     is_test_doi,
                     today,
-                    validate_name=True,
-                    is_forest3d=True,
+                    validate_name=False,
+                    is_tria=True,
                 )
-                for record in forest3d_datasets
+                for record in tria_datasets
             )
         )
 

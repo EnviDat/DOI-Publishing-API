@@ -68,6 +68,7 @@ class DoiRealisation(models.Model):
         table = "doi_realisation"
         unique_together = ["prefix_id", "suffix_id"]
 
+
 DoiPrefixPydantic = pydantic_model_creator(DoiPrefix, name="DoiPrefix")
 DoiPrefixInPydantic = pydantic_model_creator(
     DoiPrefix,
