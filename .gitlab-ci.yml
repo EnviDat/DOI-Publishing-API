@@ -4,6 +4,7 @@ stages:
   - deploy
   - manual-deploy
   - forest3d
+  - tria
 
 variables:
   ARTIFACT_COMPRESSION_LEVEL: "fast"
@@ -266,3 +267,20 @@ forest3d-publish:
            --insecure \
            --header "forest3d-key: $FOREST3D_API_KEY" \
            --url "$FOREST3D_API_URL" | jq '.'
+
+tria-publish:
+  stage: tria
+  environment: $CI_COMMIT_REF_NAME
+  extends: .manual_scheduled_triggers
+  needs: []
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl jq
+  script:
+    - set -o pipefail
+    - |
+      curl --fail \
+           --no-progress-meter \
+           --insecure \
+           --header "tria-key: $TRIA_API_KEY" \
+           --url "$TRIA_API_URL" | jq '.'
