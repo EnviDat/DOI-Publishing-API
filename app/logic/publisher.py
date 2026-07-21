@@ -89,20 +89,6 @@ def prepare_dataset_for_envidat(dataset, is_test_doi=False):
     return dataset_copy
 
 
-def extract_tria_url(dataset: dict) -> str:
-    """Extract TRIA dataset URL from a dataset.
-    URL is assumed to be the "url" value in the first resource.
-
-    Empty string returned if no "url" value can be extracted.
-    """
-    resources = dataset.get("resources", [])
-
-    if not resources or not isinstance(resources[0], dict):
-        return ""
-
-    return resources[0].get("url", "")
-
-
 async def publish_dataset_to_datacite(
     session: aiohttp.ClientSession,
     dataset: dict,
@@ -138,7 +124,7 @@ async def publish_dataset_to_datacite(
     if is_forest3d:
         record_url = f"{site_url}/{name}?mode=forest3d"
     elif is_tria:
-        record_url = extract_tria_url(dataset)
+        record_url = (dataset.get("url") or "").strip()
         if not record_url:
             return {
                 "status_code": 422,
